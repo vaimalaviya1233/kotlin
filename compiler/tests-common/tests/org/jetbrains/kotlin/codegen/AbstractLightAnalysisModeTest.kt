@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.resolve.jvm.AsmTypes
 import org.jetbrains.kotlin.resolve.jvm.ReplaceWithSupertypeAnonymousTypeTransformer
 import org.jetbrains.kotlin.resolve.jvm.extensions.AnalysisHandlerExtension
 import org.jetbrains.kotlin.resolve.jvm.extensions.PartialAnalysisHandlerExtension
+import org.jetbrains.kotlin.test.TargetBackend
 import org.jetbrains.kotlin.test.util.KtTestUtil.getAnnotationsJar
 import org.jetbrains.org.objectweb.asm.Opcodes.*
 import org.jetbrains.org.objectweb.asm.tree.ClassNode
@@ -40,13 +41,15 @@ abstract class AbstractLightAnalysisModeTest : CodegenTestCase() {
         )
     }
 
+    override val backend: TargetBackend
+        get() = TargetBackend.JVM_IR
+
     override fun doMultiFileTest(wholeFile: File, files: List<TestFile>) {
         for (file in files) {
             if (ignoreDirectives.any { file.content.contains(it) }) return
         }
 
         val fullTxt = compileWithFullAnalysis(files)
-            .replace("final enum class", "enum class")
 
         val liteTxt = compileWithLightAnalysis(wholeFile, files)
             .replace("@synthetic.kotlin.jvm.GeneratedByJvmOverloads ", "")
@@ -64,6 +67,7 @@ abstract class AbstractLightAnalysisModeTest : CodegenTestCase() {
         // Fail if this test is not under codegen/box
         assert(!relativePath.startsWith(".."))
 
+        configurationKind = extractConfigurationKind(files)
         val configuration = createConfiguration(
             configurationKind, getTestJdkKind(files), backend, listOf(getAnnotationsJar()), listOfNotNull(writeJavaFiles(files)), files
         )
@@ -113,10 +117,12 @@ abstract class AbstractLightAnalysisModeTest : CodegenTestCase() {
         }
 
         override fun shouldWriteMethod(access: Int, name: String, desc: String) = when {
+            access and ACC_SYNTHETIC != 0 -> false
+            access and ACC_PRIVATE != 0 -> false
             name == "<clinit>" -> false
             name.contains("\$\$forInline") -> false
             AsmTypes.DEFAULT_CONSTRUCTOR_MARKER.descriptor in desc -> false
-            name.startsWith("access$") && (access and ACC_STATIC != 0) && (access and ACC_SYNTHETIC != 0) -> false
+            name.startsWith("access$") && (access and ACC_STATIC != 0) -> false
             else -> true
         }
 
@@ -124,11 +130,15 @@ abstract class AbstractLightAnalysisModeTest : CodegenTestCase() {
             name == "\$assertionsDisabled" -> false
             name == "\$VALUES" && (access and ACC_PRIVATE != 0) && (access and ACC_FINAL != 0) && (access and ACC_SYNTHETIC != 0) -> false
             name == JvmAbi.DELEGATED_PROPERTIES_ARRAY_NAME && (access and ACC_SYNTHETIC != 0) -> false
+            name.endsWith("\$receiver") -> false
+            JvmAbi.DELEGATED_PROPERTY_NAME_SUFFIX in name -> false
             else -> true
         }
 
-        override fun shouldWriteInnerClass(name: String, outerName: String?, innerName: String?) =
-            outerName != null && innerName != null
+        // Generated InnerClasses attributes depend on which types are used in method bodies, so they can easily be non-equal
+        // among full and light analysis modes.
+        override fun shouldWriteInnerClass(name: String, outerName: String?, innerName: String?, access: Int): Boolean =
+            false
 
         override val shouldTransformAnonymousTypes: Boolean
             get() = true
