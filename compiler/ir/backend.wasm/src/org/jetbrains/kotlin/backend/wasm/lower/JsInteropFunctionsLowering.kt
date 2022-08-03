@@ -261,7 +261,6 @@ class JsInteropFunctionsLowering(val context: WasmBackendContext) : DeclarationT
             builtIns.doubleType,
             context.wasmSymbols.voidType ->
                 return null
-
         }
 
         if (isExternalType(this))
@@ -824,7 +823,11 @@ class JsInteropFunctionsLowering(val context: WasmBackendContext) : DeclarationT
                             ),
                             this@irBlock
                         )
-                        +irCall(symbols.jsArrayPush).apply {
+                        val jsArrayPush =
+                            if (elementAdapter?.toType?.makeNotNull() != symbols.wasmStringRefType) symbols.jsArrayPush
+                            else symbols.jsArrayPushString
+
+                        +irCall(jsArrayPush).apply {
                             putValueArgument(0, irGet(newJsArrayVar))
                             putValueArgument(1, adaptedValue)
                         }

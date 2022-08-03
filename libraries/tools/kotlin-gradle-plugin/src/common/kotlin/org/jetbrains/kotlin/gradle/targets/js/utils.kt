@@ -113,4 +113,5 @@ internal fun writeWasmUnitTestRunner(compiledFile: File): File {
 
 internal fun MutableList<String>.addWasmExperimentalArguments() {
     add("--experimental-wasm-gc")
+    add("--experimental-wasm-stringref")
 }
