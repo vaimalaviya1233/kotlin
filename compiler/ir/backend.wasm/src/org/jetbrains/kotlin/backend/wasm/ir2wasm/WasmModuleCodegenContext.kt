@@ -25,9 +25,6 @@ class WasmModuleCodegenContext(
     val scratchMemAddr: WasmSymbol<Int>
         get() = wasmFragment.scratchMemAddr
 
-    val stringPoolSize: WasmSymbol<Int>
-        get() = wasmFragment.stringPoolSize
-
     fun transformType(irType: IrType): WasmType {
         return with(typeTransformer) { irType.toWasmValueType() }
     }
@@ -58,11 +55,11 @@ class WasmModuleCodegenContext(
         return with(typeTransformer) { irType.toWasmBlockResultType() }
     }
 
-    fun referenceStringLiteralAddressAndId(string: String): Pair<WasmSymbol<Int>, WasmSymbol<Int>> {
-        val address = wasmFragment.stringLiteralAddress.reference(string)
-        val id = wasmFragment.stringLiteralPoolId.reference(string)
-        return address to id
-    }
+    fun referenceStringLiteralAddress(string: String): WasmSymbol<Int> =
+        wasmFragment.stringLiteralAddress.reference(string)
+
+    fun referenceConstStringLiteral(string: String): WasmSymbol<Int> =
+        wasmFragment.constStringLiteralId.reference(string)
 
     fun referenceConstantArray(resource: Pair<List<Long>, WasmType>): WasmSymbol<Int> =
         wasmFragment.constantArrayDataSegmentId.reference(resource)

@@ -252,6 +252,7 @@ abstract class BasicWasmBoxTest(
                 ExternalTool(System.getProperty("javascript.engine.path.V8"))
                     .run(
                         "--experimental-wasm-gc",
+                        "--experimental-wasm-stringref",
                         *jsFilesBefore.map { File(it).absolutePath }.toTypedArray(),
                         "--module",
                         "./${entryMjs}",

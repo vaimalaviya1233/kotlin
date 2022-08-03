@@ -39,10 +39,10 @@ class WasmCompiledModuleFragment(val irBuiltIns: IrBuiltIns) {
         ReferencableElements<IrClassSymbol, Int>()
     val stringLiteralAddress =
         ReferencableElements<String, Int>()
-    val stringLiteralPoolId =
-        ReferencableElements<String, Int>()
     val constantArrayDataSegmentId =
         ReferencableElements<Pair<List<Long>, WasmType>, Int>()
+    val constStringLiteralId =
+        ReferencableElements<String, Int>()
 
     private val tagFuncType = WasmFunctionType(
         listOf(
@@ -66,8 +66,6 @@ class WasmCompiledModuleFragment(val irBuiltIns: IrBuiltIns) {
     val initFunctions = mutableListOf<FunWithPriority>()
 
     val scratchMemAddr = WasmSymbol<Int>()
-
-    val stringPoolSize = WasmSymbol<Int>()
 
     open class ReferencableElements<Ir, Wasm : Any> {
         val unbound = mutableMapOf<Ir, WasmSymbol<Wasm>>()
@@ -127,6 +125,12 @@ class WasmCompiledModuleFragment(val irBuiltIns: IrBuiltIns) {
             currentDataSectionAddress += typeInfoElement.sizeInBytes
         }
 
+        val constStringsList = mutableListOf<String>()
+        constStringLiteralId.unbound.onEachIndexed { index, entry ->
+            constStringsList.add(entry.key)
+            entry.value.bind(index)
+        }
+
         currentDataSectionAddress = alignUp(currentDataSectionAddress, INT_SIZE_BYTES)
         scratchMemAddr.bind(currentDataSectionAddress)
 
@@ -135,16 +139,12 @@ class WasmCompiledModuleFragment(val irBuiltIns: IrBuiltIns) {
 
         val stringDataSectionBytes = mutableListOf<Byte>()
         var stringDataSectionStart = 0
-        var stringLiteralCount = 0
         for ((string, symbol) in stringLiteralAddress.unbound) {
             symbol.bind(stringDataSectionStart)
-            stringLiteralPoolId.reference(string).bind(stringLiteralCount)
             val constData = ConstantDataCharArray("string_literal", string.toCharArray())
             stringDataSectionBytes += constData.toBytes().toList()
             stringDataSectionStart += constData.sizeInBytes
-            stringLiteralCount++
         }
-        stringPoolSize.bind(stringLiteralCount)
 
         val data = mutableListOf<WasmData>()
         data.add(WasmData(WasmDataMode.Passive, stringDataSectionBytes.toByteArray()))
@@ -225,7 +225,8 @@ class WasmCompiledModuleFragment(val irBuiltIns: IrBuiltIns) {
             elements = emptyList(),
             data = data,
             dataCount = true,
-            tags = listOf(tag)
+            tags = listOf(tag),
+            constantStrings = constStringsList,
         )
         module.calculateIds()
         return module

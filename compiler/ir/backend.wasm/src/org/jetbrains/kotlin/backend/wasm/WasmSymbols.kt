@@ -192,9 +192,6 @@ class WasmSymbols(
     val boxIntrinsic: IrSimpleFunctionSymbol = getInternalFunction("boxIntrinsic")
     val unboxIntrinsic: IrSimpleFunctionSymbol = getInternalFunction("unboxIntrinsic")
 
-    val stringGetLiteral = getFunction("stringLiteral", builtInsPackage)
-    val stringGetPoolSize = getInternalFunction("stringGetPoolSize")
-
     val testFun = maybeGetFunction("test", kotlinTestPackage)
     val suiteFun = maybeGetFunction("suite", kotlinTestPackage)
     val startUnitTests = maybeGetFunction("startUnitTests", kotlinTestPackage)
@@ -214,6 +211,7 @@ class WasmSymbols(
 
     val newJsArray = getInternalFunction("newJsArray")
     val jsArrayPush = getInternalFunction("jsArrayPush")
+    val jsArrayPushString = getInternalFunction("jsArrayPushString")
 
     val startCoroutineUninterceptedOrReturnIntrinsics =
         (0..2).map { getInternalFunction("startCoroutineUninterceptedOrReturnIntrinsic$it") }
@@ -281,6 +279,9 @@ class WasmSymbols(
 
     private val wasmDataRefClass = getIrClass(FqName("kotlin.wasm.internal.reftypes.dataref"))
     val wasmDataRefType by lazy { wasmDataRefClass.defaultType }
+
+    private val wasmStringRefClass = getIrClass(FqName("kotlin.wasm.internal.reftypes.stringref"))
+    val wasmStringRefType by lazy { wasmStringRefClass.defaultType }
 
     val wasmAnyRefClass = getIrClass(FqName("kotlin.wasm.internal.reftypes.anyref"))
 
@@ -357,7 +358,7 @@ class WasmSymbols(
     private fun getInternalFunction(name: String) = getFunction(name, wasmInternalPackage)
 
     private fun getIrClass(fqName: FqName): IrClassSymbol = symbolTable.referenceClass(getClass(fqName))
-    private fun getInternalClass(name: String): IrClassSymbol = getIrClass(FqName("kotlin.wasm.internal.$name"))
+    fun getInternalClass(name: String): IrClassSymbol = getIrClass(FqName("kotlin.wasm.internal.$name"))
     fun getKFunctionType(type: IrType, list: List<IrType>): IrType {
         return irBuiltIns.functionN(list.size).typeWith(list + type)
     }

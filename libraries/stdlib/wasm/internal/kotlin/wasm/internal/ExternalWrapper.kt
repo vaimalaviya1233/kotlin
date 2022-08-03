@@ -8,6 +8,7 @@ package kotlin.wasm.internal
 import kotlin.wasm.internal.reftypes.anyref
 import kotlin.wasm.unsafe.withScopedMemoryAllocator
 import kotlin.wasm.unsafe.UnsafeWasmMemoryApi
+import kotlin.wasm.internal.reftypes.stringref
 
 internal external interface ExternalInterfaceType
 
@@ -169,98 +170,10 @@ internal fun anyToExternRef(x: Any): ExternalInterfaceType {
         x.asWasmExternRef()
 }
 
-@JsFun("x => x.length")
-internal external fun stringLength(x: ExternalInterfaceType): Int
-
-// kotlin string to js string export
-// TODO Uint16Array may work with byte endian different with Wasm (i.e. little endian)
-@JsFun("""(address, length, prefix) => {
-    const mem16 = new Uint16Array(wasmExports.memory.buffer, address, length);
-    const str = String.fromCharCode.apply(null, mem16);
-    return (prefix == null) ? str : prefix + str;
-}
-""")
-internal external fun importStringFromWasm(address: Int, length: Int, prefix: ExternalInterfaceType?): ExternalInterfaceType
-
-internal fun kotlinToJsStringAdapter(x: String?): ExternalInterfaceType? {
-    // Using nullable String to represent default value
-    // for parameters with default values
-    if (x == null) return null
-    if (x.isEmpty()) return jsEmptyString
-
-    val srcArray = x.chars
-    val stringLength = srcArray.len()
-    val maxStringLength = STRING_INTEROP_MEM_BUFFER_SIZE / CHAR_SIZE_BYTES
-
-    @OptIn(UnsafeWasmMemoryApi::class)
-    withScopedMemoryAllocator { allocator ->
-        val memBuffer = allocator.allocate(stringLength.coerceAtMost(maxStringLength) * CHAR_SIZE_BYTES).address.toInt()
-
-        var result: ExternalInterfaceType? = null
-        var srcStartIndex = 0
-        while (srcStartIndex < stringLength - maxStringLength) {
-            unsafeWasmCharArrayToRawMemory(srcArray, srcStartIndex, maxStringLength, memBuffer)
-            result = importStringFromWasm(memBuffer, maxStringLength, result)
-            srcStartIndex += maxStringLength
-        }
-
-        unsafeWasmCharArrayToRawMemory(srcArray, srcStartIndex, stringLength - srcStartIndex, memBuffer)
-        return importStringFromWasm(memBuffer, stringLength - srcStartIndex, result)
-    }
-}
-
 internal fun jsCheckIsNullOrUndefinedAdapter(x: ExternalInterfaceType?): ExternalInterfaceType? =
     x.takeIf { !isNullish(it) }
 
-// js string to kotlin string import
-// TODO Uint16Array may work with byte endian different with Wasm (i.e. little endian)
-//language=js
-@JsFun(
-    """ (src, srcOffset, srcLength, dstAddr) => {
-        const mem16 = new Uint16Array(wasmExports.memory.buffer, dstAddr, srcLength);
-        let arrayIndex = 0;
-        let srcIndex = srcOffset;
-        while (arrayIndex < srcLength) {
-            mem16.set([src.charCodeAt(srcIndex)], arrayIndex);
-            srcIndex++;
-            arrayIndex++;
-        }
-    }
-"""
-)
-internal external fun jsExportStringToWasm(src: ExternalInterfaceType, srcOffset: Int, srcLength: Int, dstAddr: Int)
-
 private const val STRING_INTEROP_MEM_BUFFER_SIZE = 65_536 // 1 page 4KiB
-
-internal fun jsToKotlinStringAdapter(x: ExternalInterfaceType): String {
-    val stringLength = stringLength(x)
-    val dstArray = WasmCharArray(stringLength)
-    if (stringLength == 0) {
-        return dstArray.createString()
-    }
-
-    @OptIn(UnsafeWasmMemoryApi::class)
-    withScopedMemoryAllocator { allocator ->
-        val maxStringLength = STRING_INTEROP_MEM_BUFFER_SIZE / CHAR_SIZE_BYTES
-        val memBuffer = allocator.allocate(stringLength.coerceAtMost(maxStringLength) * CHAR_SIZE_BYTES).address.toInt()
-
-        var srcStartIndex = 0
-        while (srcStartIndex < stringLength - maxStringLength) {
-            jsExportStringToWasm(x, srcStartIndex, maxStringLength, memBuffer)
-            unsafeRawMemoryToWasmCharArray(memBuffer, srcStartIndex, maxStringLength, dstArray)
-            srcStartIndex += maxStringLength
-        }
-
-        jsExportStringToWasm(x, srcStartIndex, stringLength - srcStartIndex, memBuffer)
-        unsafeRawMemoryToWasmCharArray(memBuffer, srcStartIndex, stringLength - srcStartIndex, dstArray)
-    }
-
-    return dstArray.createString()
-}
-
-
-@JsFun("() => ''")
-private external fun getJsEmptyString(): ExternalInterfaceType
 
 @JsFun("() => true")
 private external fun getJsTrue(): ExternalInterfaceType
@@ -268,7 +181,6 @@ private external fun getJsTrue(): ExternalInterfaceType
 @JsFun("() => false")
 private external fun getJsFalse(): ExternalInterfaceType
 
-private val jsEmptyString by lazy(::getJsEmptyString)
 private val jsTrue by lazy(::getJsTrue)
 private val jsFalse by lazy(::getJsFalse)
 
@@ -325,8 +237,17 @@ internal fun kotlinShortToExternRefAdapter(x: Short): ExternalInterfaceType =
 internal fun kotlinCharToExternRefAdapter(x: Char): ExternalInterfaceType =
     intToExternref(x.toInt())
 
+internal fun kotlinToJsStringAdapter(x: String?): stringref? =
+    x?.reference
+
+internal fun jsToKotlinStringAdapter(x: stringref): String =
+    String(x)
+
 @JsFun("() => []")
 internal external fun newJsArray(): ExternalInterfaceType
 
 @JsFun("(array, element) => { array.push(element); }")
 internal external fun jsArrayPush(array: ExternalInterfaceType, element: ExternalInterfaceType)
+
+@JsFun("(array, element) => { array.push(element); }")
+internal external fun jsArrayPushString(array: ExternalInterfaceType, element: stringref?)

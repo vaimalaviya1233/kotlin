@@ -5,9 +5,6 @@
 
 package kotlin
 
-import kotlin.wasm.internal.ExternalInterfaceType
-import kotlin.wasm.internal.jsToKotlinStringAdapter
-
 /**
  * The base class for all errors and exceptions. Only instances of this class can be thrown or caught.
  *
@@ -21,11 +18,7 @@ public open class Throwable(open val message: String?, open val cause: kotlin.Th
 
     constructor() : this(null, null)
 
-    private val jsStack: ExternalInterfaceType = captureStackTrace()
-
-    internal val stack: String by lazy {
-        jsToKotlinStringAdapter(jsStack).removePrefix("Error\n")
-    }
+    internal val stack: String = captureStackTrace()
 
     internal var suppressedExceptionsList: MutableList<Throwable>? = null
 
@@ -40,5 +33,5 @@ public open class Throwable(open val message: String?, open val cause: kotlin.Th
     }
 }
 
-@JsFun("() => new Error().stack")
-private external fun captureStackTrace(): ExternalInterfaceType
+@JsFun("() => new Error().stack.replace(/^Error\\n/, '')")
+private external fun captureStackTrace(): String
