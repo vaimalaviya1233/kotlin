@@ -1,0 +1,266 @@
+import java.lang.System;
+
+@kotlin.Metadata()
+public final class A {
+    @org.jetbrains.annotations.Nullable()
+    private final A x;
+
+    public A() {
+        super();
+    }
+
+    @org.jetbrains.annotations.Nullable()
+    public final A getX() {
+        return null;
+    }
+
+    @org.jetbrains.annotations.Nullable()
+    public final A f1(@org.jetbrains.annotations.NotNull()
+    A a, @org.jetbrains.annotations.NotNull()
+    A.B b) {
+        return null;
+    }
+
+    @kotlin.Metadata()
+    public static abstract interface B {
+
+        @org.jetbrains.annotations.Nullable()
+        public abstract A.B getY();
+
+        @org.jetbrains.annotations.Nullable()
+        public default A.B.A f2(@org.jetbrains.annotations.NotNull()
+        A.B.A a, @org.jetbrains.annotations.NotNull()
+        A.B b) {
+            return null;
+        }
+
+        @kotlin.Metadata()
+        public static final class A {
+            @org.jetbrains.annotations.Nullable()
+            private final A.B.A x;
+            @org.jetbrains.annotations.Nullable()
+            private final A.B.A.B y;
+
+            public A() {
+                super();
+            }
+
+            @org.jetbrains.annotations.Nullable()
+            public final A.B.A getX() {
+                return null;
+            }
+
+            @org.jetbrains.annotations.Nullable()
+            public final A.B.A.B getY() {
+                return null;
+            }
+
+            public final void f3(@org.jetbrains.annotations.NotNull()
+            A.B.A a, @org.jetbrains.annotations.NotNull()
+            A.B.A.B b) {
+            }
+
+            @kotlin.Metadata()
+            public static final class B {
+                @org.jetbrains.annotations.NotNull()
+                public static final A.B.A.B INSTANCE = null;
+
+                private B() {
+                    super();
+                }
+            }
+        }
+
+        @kotlin.Metadata()
+        public static final class DefaultImpls {
+
+            public DefaultImpls() {
+                super();
+            }
+
+            @org.jetbrains.annotations.Nullable()
+            public abstract A.B getY();
+
+            @org.jetbrains.annotations.Nullable()
+            public A.B.A f2(@org.jetbrains.annotations.NotNull()
+            A.B.A a, @org.jetbrains.annotations.NotNull()
+            A.B b) {
+                return null;
+            }
+        }
+    }
+
+    @kotlin.Metadata()
+    public static final class C {
+        @org.jetbrains.annotations.NotNull()
+        public static final A.C INSTANCE = null;
+
+        private C() {
+            super();
+        }
+
+        @kotlin.Metadata()
+        public static abstract interface C {
+        }
+    }
+}
+
+////////////////////
+
+
+import java.lang.System;
+
+@kotlin.Metadata()
+public final class A2 {
+
+    public A2() {
+        super();
+    }
+
+    @kotlin.Metadata()
+    public static final class B {
+
+        public B() {
+            super();
+        }
+
+        @kotlin.Metadata()
+        public static final class C {
+
+            public C() {
+                super();
+            }
+
+            @kotlin.Metadata()
+            public static final class D {
+
+                public D() {
+                    super();
+                }
+
+                @kotlin.Metadata()
+                public static final class A2 {
+
+                    public A2() {
+                        super();
+                    }
+                }
+
+                @kotlin.Metadata()
+                public static final class B {
+
+                    public B() {
+                        super();
+                    }
+                }
+
+                @kotlin.Metadata()
+                public static final class Cme {
+
+                    public Cme() {
+                        super();
+                    }
+                }
+
+                @kotlin.Metadata()
+                public static final class D {
+
+                    public D() {
+                        super();
+                    }
+                }
+
+                @kotlin.Metadata()
+                public static final class E {
+
+                    public E() {
+                        super();
+                    }
+                }
+            }
+        }
+    }
+}
+
+////////////////////
+
+
+import java.lang.System;
+
+@kotlin.Metadata()
+public final class Foo {
+    @org.jetbrains.annotations.NotNull()
+    public static final Foo.Foo Foo = null;
+
+    public Foo() {
+        super();
+    }
+
+    @kotlin.Metadata()
+    public static final class Foo {
+
+        private Foo() {
+            super();
+        }
+    }
+}
+
+////////////////////
+
+
+import java.lang.System;
+
+@kotlin.Metadata()
+public final class Test {
+
+    public Test() {
+        super();
+    }
+
+    @kotlin.Metadata()
+    public static final class Nested {
+
+        public Nested() {
+            super();
+        }
+
+        @kotlin.Metadata()
+        public static final class NestedNested {
+
+            public NestedNested() {
+                super();
+            }
+        }
+    }
+
+    @kotlin.Metadata()
+    public final class Inner {
+
+        public Inner() {
+            super();
+        }
+    }
+
+    @kotlin.Metadata()
+    public static final class NestedObject {
+        @org.jetbrains.annotations.NotNull()
+        public static final Test.NestedObject INSTANCE = null;
+
+        private NestedObject() {
+            super();
+        }
+    }
+
+    @kotlin.Metadata()
+    public static abstract interface NestedInterface {
+    }
+
+    @kotlin.Metadata()
+    public static enum NestedEnum {
+        /*public static final*/ BLACK /* = new NestedEnum() */,
+        /*public static final*/ WHITE /* = new NestedEnum() */;
+
+        NestedEnum() {
+        }
+    }
+}

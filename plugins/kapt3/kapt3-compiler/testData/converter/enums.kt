@@ -1,3 +1,6 @@
+// FIR_ALMOST_DONE
+package some
+
 enum class Enum1 {
     BLACK, WHITE
 }
@@ -21,3 +24,4 @@ enum class Nested1 {
         }
     };
 }
+
