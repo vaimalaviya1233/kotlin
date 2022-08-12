@@ -37,6 +37,7 @@ import org.jetbrains.kotlin.kapt3.test.runners.AbstractClassFileToSourceStubConv
 import org.jetbrains.kotlin.kapt3.test.runners.AbstractIrClassFileToSourceStubConverterTest
 import org.jetbrains.kotlin.kapt3.test.runners.AbstractIrKotlinKaptContextTest
 import org.jetbrains.kotlin.kapt3.test.runners.AbstractKotlinKaptContextTest
+import org.jetbrains.kotlin.kapt4.AbstractKotlinKapt4ContextTest
 import org.jetbrains.kotlin.lombok.*
 import org.jetbrains.kotlin.noarg.*
 import org.jetbrains.kotlin.parcelize.test.runners.*
@@ -390,6 +391,11 @@ fun main(args: Array<String>) {
             }
 
             testClass<AbstractIrClassFileToSourceStubConverterTest> {
+                model("converter")
+            }
+        }
+        testGroup("plugins/kapt4/kapt4-compiler/tests-gen", "plugins/kapt3/kapt3-compiler/testData") {
+            testClass<AbstractKotlinKapt4ContextTest> {
                 model("converter")
             }
         }
