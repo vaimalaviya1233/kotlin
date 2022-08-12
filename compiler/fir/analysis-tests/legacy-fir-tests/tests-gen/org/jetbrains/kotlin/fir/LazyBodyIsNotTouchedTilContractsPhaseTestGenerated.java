@@ -956,6 +956,11 @@ public class LazyBodyIsNotTouchedTilContractsPhaseTestGenerated extends Abstract
             runTest("compiler/fir/analysis-tests/testData/resolve/cfg/emptyWhen.kt");
         }
 
+        @TestMetadata("enumInsideEnum.kt")
+        public void testEnumInsideEnum() throws Exception {
+            runTest("compiler/fir/analysis-tests/testData/resolve/cfg/enumInsideEnum.kt");
+        }
+
         @TestMetadata("flowFromInplaceLambda.kt")
         public void testFlowFromInplaceLambda() throws Exception {
             runTest("compiler/fir/analysis-tests/testData/resolve/cfg/flowFromInplaceLambda.kt");

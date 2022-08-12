@@ -1106,6 +1106,12 @@ public class FirDiagnosticsWithLightTreeTestGenerated extends AbstractFirDiagnos
             }
 
             @Test
+            @TestMetadata("enumInsideEnum.kt")
+            public void testEnumInsideEnum() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolve/cfg/enumInsideEnum.kt");
+            }
+
+            @Test
             @TestMetadata("flowFromInplaceLambda.kt")
             public void testFlowFromInplaceLambda() throws Exception {
                 runTest("compiler/fir/analysis-tests/testData/resolve/cfg/flowFromInplaceLambda.kt");
