@@ -95,6 +95,7 @@ class SymbolLightClassForFacade(
                     if ((callableSymbol as? KtAnnotatedSymbol)?.hasInlineOnlyAnnotation() == true) continue
                     val isPrivate = callableSymbol.toPsiVisibilityForMember() == PsiModifier.PRIVATE
                     if (isPrivate && multiFileClass) continue
+                    if (callableSymbol.hasTypeForValueClassInSignature(ignoreReturnType = true)) continue
                     yield(callableSymbol)
                 }
             }

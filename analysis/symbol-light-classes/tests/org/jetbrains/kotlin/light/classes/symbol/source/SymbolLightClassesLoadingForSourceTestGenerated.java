@@ -235,6 +235,12 @@ public class SymbolLightClassesLoadingForSourceTestGenerated extends AbstractSym
     }
 
     @Test
+    @TestMetadata("valueClassInSignature.kt")
+    public void testValueClassInSignature() throws Exception {
+        runTest("compiler/testData/asJava/ultraLightClasses/valueClassInSignature.kt");
+    }
+
+    @Test
     @TestMetadata("wildcardOptimization.kt")
     public void testWildcardOptimization() throws Exception {
         runTest("compiler/testData/asJava/ultraLightClasses/wildcardOptimization.kt");

@@ -103,6 +103,12 @@ public class SymbolLightClassesFacadeForSourceTestGenerated extends AbstractSymb
     }
 
     @Test
+    @TestMetadata("valueClassInSignature.kt")
+    public void testValueClassInSignature() throws Exception {
+        runTest("compiler/testData/asJava/ultraLightFacades/valueClassInSignature.kt");
+    }
+
+    @Test
     @TestMetadata("wildcardOptimization.kt")
     public void testWildcardOptimization() throws Exception {
         runTest("compiler/testData/asJava/ultraLightFacades/wildcardOptimization.kt");

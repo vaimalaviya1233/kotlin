@@ -320,7 +320,7 @@ internal fun SymbolLightClassBase.createPropertyAccessors(
         !isAnnotationType && it.needToCreateAccessor(AnnotationUseSiteTarget.PROPERTY_SETTER)
     }
 
-    if (isMutable && setter != null) {
+    if (isMutable && setter != null && !declaration.returnType.typeForValueClass) {
         val lightMemberOrigin = originalElement?.let {
             LightMemberOriginForDeclaration(
                 originalElement = it,
@@ -499,3 +499,10 @@ internal fun KtClassOrObject.checkIsInheritor(superClassOrigin: KtClassOrObject,
 
 private val KtSymbolWithTypeParameters.hasReifiedParameters: Boolean
     get() = typeParameters.any { it.isReified }
+
+context(KtAnalysisSession)
+internal val KtType.typeForValueClass: Boolean
+    get() {
+        val symbol = expandedClassSymbol as? KtNamedClassOrObjectSymbol ?: return false
+        return symbol.isInline
+    }

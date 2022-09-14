@@ -21,6 +21,11 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
+import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.providers.createProjectWideOutOfBlockModificationTracker
 import org.jetbrains.kotlin.asJava.classes.*
 import org.jetbrains.kotlin.asJava.toLightClass
@@ -198,5 +203,14 @@ abstract class SymbolLightClassBase protected constructor(
         } else {
             visitor.visitElement(this)
         }
+    }
+
+    protected fun KtCallableSymbol.hasTypeForValueClassInSignature(ignoreReturnType: Boolean = false): Boolean = withValidityAssertion {
+        if (!ignoreReturnType && returnType.typeForValueClass) return@withValidityAssertion true
+        if (receiverType?.typeForValueClass == true) return@withValidityAssertion true
+        if (this is KtFunctionLikeSymbol) {
+            return@withValidityAssertion valueParameters.any { it.returnType.typeForValueClass }
+        }
+        false
     }
 }
