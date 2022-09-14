@@ -15,7 +15,7 @@ public static final class Companion /* A.Companion*/ {
   @kotlin.jvm.JvmName(name = "realName")
   public final void realName();//  realName()
 
-  @kotlin.jvm.JvmName(name = 1L)
+  @kotlin.jvm.JvmName(name = 1)
   public final void f2();//  f2()
 
   @kotlin.jvm.JvmOverloads()
