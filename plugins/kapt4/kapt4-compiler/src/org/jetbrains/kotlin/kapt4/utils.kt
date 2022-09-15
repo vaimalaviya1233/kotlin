@@ -95,7 +95,7 @@ val PsiField.signature: String
     get() = getAsmFieldSignature(this)
 
 val PsiMethod.hasVarargs: Boolean
-    get() = TODO() //
+    get() = this.parameters.any { (it as? PsiParameter)?.isVarArgs == true }
 
 private fun getAsmFieldSignature(field: PsiField): String {
     return ClassUtil.getBinaryPresentation(Optional.ofNullable<PsiType>(field.type).orElse(PsiType.VOID))
@@ -118,7 +118,6 @@ val PsiElement.ktOrigin: KtElement
 
 val PsiClass.defaultType: PsiType
     get() = PsiTypesUtil.getClassType(this)
-
 
 val PsiType.resolvedClass: PsiClass?
     get() = (this as? PsiClassType)?.resolve()

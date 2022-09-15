@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.fir.backend.jvm.FirJvmSerializerExtension
 import org.jetbrains.kotlin.fir.declarations.FirClass
 import org.jetbrains.kotlin.fir.declarations.FirRegularClass
 import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
+import org.jetbrains.kotlin.fir.declarations.utils.classId
 import org.jetbrains.kotlin.fir.languageVersionSettings
 import org.jetbrains.kotlin.fir.packageFqName
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
@@ -58,16 +59,16 @@ internal class KtFirMetadataCalculator(
     }
 
     override fun calculate(ktFile: KtFile): Metadata {
-        val firFile = ktFile.getOrBuildFirFile(firResolveSession)
-        firFile.symbol.lazyResolveToPhase(FirResolvePhase.IMPLICIT_TYPES_BODY_RESOLVE)
-        val (serializer, stringTable) = createTopLevelSerializer(FirMetadataSource.File(firFile))
-        val fileProto = serializer.packagePartProto(firFile.packageFqName, firFile)
-
-        return generateAnnotation(fileProto.build(), stringTable, Kind.File)
+        return calculate(listOf(ktFile))
     }
 
-    override fun calculate(ktFiles: Collection<KtFile>): Metadata? {
-        TODO("support multifile facades")
+    override fun calculate(ktFiles: Collection<KtFile>): Metadata {
+        val firFiles = ktFiles.map { it.getOrBuildFirFile(firResolveSession) }
+        firFiles.forEach { it.symbol.lazyResolveToPhase(FirResolvePhase.IMPLICIT_TYPES_BODY_RESOLVE) }
+        val (serializer, stringTable) = createTopLevelSerializer(FirMetadataSource.File(firFiles))
+        val fileProto = serializer.packagePartProto(firFiles.first().packageFqName, firFiles)
+
+        return generateAnnotation(fileProto.build(), stringTable, Kind.File)
     }
 
     private enum class Kind(val value: Int) {
@@ -123,7 +124,7 @@ internal class KtFirMetadataCalculator(
 
     private class FirJvmElementAwareStringTableForLightClasses : JvmStringTable(), FirElementAwareStringTable {
         override fun getLocalClassIdReplacement(firClass: FirClass): ClassId {
-            error("Should not be called")
+            return firClass.classId
         }
     }
 }

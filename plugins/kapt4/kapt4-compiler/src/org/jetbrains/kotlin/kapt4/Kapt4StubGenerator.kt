@@ -8,6 +8,7 @@
 package org.jetbrains.kotlin.kapt4
 
 import com.intellij.psi.*
+import com.intellij.psi.util.PsiTypesUtil
 import com.sun.tools.javac.code.Flags
 import com.sun.tools.javac.code.TypeTag
 import com.sun.tools.javac.parser.Tokens
@@ -1006,14 +1007,13 @@ class Kapt4StubGenerator {
         class SuperTypeCalculationFailure : RuntimeException()
 
         fun nonErrorType(ref: () -> PsiClass?): JCExpression {
-            TODO()
-//            assert(correctErrorTypes)
-//
-//            return getNonErrorType<JCExpression>(
-//                ErrorUtils.createErrorType(ErrorTypeKind.ERROR_SUPER_TYPE),
-//                ErrorTypeCorrector.TypeKind.SUPER_TYPE,
-//                ref
-//            ) { throw SuperTypeCalculationFailure() }
+            assert(correctErrorTypes)
+
+            return getNonErrorType<JCExpression>(
+                null, // TODO: ErrorUtils.createErrorType(ErrorTypeKind.ERROR_SUPER_TYPE),
+                ErrorTypeCorrector.TypeKind.SUPER_TYPE,
+                { null }, // TODO: ref
+            ) { throw SuperTypeCalculationFailure() }
         }
 
         return try {
