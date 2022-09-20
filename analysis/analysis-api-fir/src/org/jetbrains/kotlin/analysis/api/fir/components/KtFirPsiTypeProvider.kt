@@ -221,9 +221,7 @@ private class AnonymousTypesSubstitutor(
 
         val firClassNode = type.lookupTag.toSymbol(session) as? FirClassSymbol
         if (firClassNode != null) {
-            val superTypesCones = firClassNode.resolvedSuperTypes
-            val superClass = superTypesCones.firstOrNull { (it as? ConeClassLikeType)?.isNotInterface() == true }
-            if (superClass != null) return superClass
+            firClassNode.resolvedSuperTypes.singleOrNull()?.let { return it }
         }
 
         return if (type.nullability.isNullable) session.builtinTypes.nullableAnyType.type
