@@ -51,5 +51,7 @@ abstract class Assertions {
 
     abstract fun assertAll(exceptions: List<Throwable>)
 
+    abstract fun assertAll(vararg blocks: () -> Unit)
+
     abstract fun fail(message: () -> String): Nothing
 }

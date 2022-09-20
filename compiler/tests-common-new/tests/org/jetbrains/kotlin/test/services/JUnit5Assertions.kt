@@ -63,6 +63,11 @@ object JUnit5Assertions : AssertionsService() {
         JUnit5PlatformAssertions.assertAll(exceptions.sortedWith(FileComparisonFailureFirst).map { Executable { throw it } })
     }
 
+    override fun assertAll(vararg blocks: () -> Unit) {
+        blocks.singleOrNull()?.invoke()
+        JUnit5PlatformAssertions.assertAll(blocks.map { Executable { it.invoke() } })
+    }
+
     override fun assertNotNull(value: Any?, message: (() -> String)?) {
         JUnit5PlatformAssertions.assertNotNull(value, message)
     }

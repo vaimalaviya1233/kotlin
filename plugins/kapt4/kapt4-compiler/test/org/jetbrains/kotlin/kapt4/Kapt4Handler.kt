@@ -40,7 +40,6 @@ class Kapt4Handler(testServices: TestServices) : AnalysisHandler<Kapt4ContextBin
     override fun processModule(module: TestModule, info: Kapt4ContextBinaryArtifact) {
         val generateNonExistentClass = KaptTestDirectives.NON_EXISTENT_CLASS in module.directives
         val validate = KaptTestDirectives.NO_VALIDATION !in module.directives
-        val expectedErrors = module.directives[KaptTestDirectives.EXPECTED_ERROR].sorted()
 
         val (kaptContext, kaptStubs) = info
         val convertedFiles = getJavaFiles(info, module)
@@ -55,41 +54,53 @@ class Kapt4Handler(testServices: TestServices) : AnalysisHandler<Kapt4ContextBin
             .trimTrailingWhitespacesAndAddNewlineAtEOF()
             .let { removeMetadataAnnotationContents(it, complexCheck = false) }
 
-        assertions.checkTxtAccordingToBackendAndFrontend(module, actual)
-
-        if (kaptContext.compiler.shouldStop(CompileStates.CompileState.ENTER)) {
-            val log = Log.instance(kaptContext.context) as KaptJavaLogBase
-
-            val actualErrors = log.reportedDiagnostics
-                .filter { it.type == JCDiagnostic.DiagnosticType.ERROR }
-                .map {
-                    // Unfortunately, we can't use the file name as it can contain temporary prefix
-                    val name = it.source?.name?.substringAfterLast("/") ?: ""
-                    val kind = when (name.substringAfterLast(".").lowercase()) {
-                        "kt" -> "kotlin"
-                        "java" -> "java"
-                        else -> "other"
-                    }
-
-                    val javaLocation = "($kind:${it.lineNumber}:${it.columnNumber}) "
-                    javaLocation + it.getMessage(Locale.US).lines().first()
+        assertions.assertAll(
+            { assertions.checkTxtAccordingToBackendAndFrontend(module, actual) },
+            {
+                if (kaptContext.compiler.shouldStop(CompileStates.CompileState.ENTER)) {
+                    checkJavaCompilerErrors(module, kaptContext, actual)
                 }
-                .sorted()
+            }
+        )
+    }
 
-            log.flush()
+    private fun checkJavaCompilerErrors(
+        module: TestModule,
+        kaptContext: Kapt4ContextForStubGeneration,
+        actualDump: String
+    ) {
+        val expectedErrors = module.directives[KaptTestDirectives.EXPECTED_ERROR].sorted()
+        val log = Log.instance(kaptContext.context) as KaptJavaLogBase
 
-            val lineSeparator = System.getProperty("line.separator")
-            val actualErrorsStr = actualErrors.joinToString(lineSeparator) { it.toDirectiveView() }
+        val actualErrors = log.reportedDiagnostics
+            .filter { it.type == JCDiagnostic.DiagnosticType.ERROR }
+            .map {
+                // Unfortunately, we can't use the file name as it can contain temporary prefix
+                val name = it.source?.name?.substringAfterLast("/") ?: ""
+                val kind = when (name.substringAfterLast(".").lowercase()) {
+                    "kt" -> "kotlin"
+                    "java" -> "java"
+                    else -> "other"
+                }
 
-            if (expectedErrors.isEmpty()) {
-                assertions.fail { "There were errors during analysis:\n$actualErrorsStr\n\nStubs:\n\n$actual" }
-            } else {
-                val expectedErrorsStr = expectedErrors.joinToString(lineSeparator) { it.toDirectiveView() }
-                if (expectedErrorsStr != actualErrorsStr) {
-                    assertions.assertEquals(expectedErrorsStr, actualErrorsStr) {
-                        System.err.println(testServices.messageCollectorProvider.getErrorStream(module).toString("UTF8"))
-                        "Expected error matching failed"
-                    }
+                val javaLocation = "($kind:${it.lineNumber}:${it.columnNumber}) "
+                javaLocation + it.getMessage(Locale.US).lines().first()
+            }
+            .sorted()
+
+        log.flush()
+
+        val lineSeparator = System.getProperty("line.separator")
+        val actualErrorsStr = actualErrors.joinToString(lineSeparator) { it.toDirectiveView() }
+
+        if (expectedErrors.isEmpty()) {
+            assertions.fail { "There were errors during analysis:\n$actualErrorsStr\n\nStubs:\n\n$actualDump" }
+        } else {
+            val expectedErrorsStr = expectedErrors.joinToString(lineSeparator) { it.toDirectiveView() }
+            if (expectedErrorsStr != actualErrorsStr) {
+                assertions.assertEquals(expectedErrorsStr, actualErrorsStr) {
+                    System.err.println(testServices.messageCollectorProvider.getErrorStream(module).toString("UTF8"))
+                    "Expected error matching failed"
                 }
             }
         }
