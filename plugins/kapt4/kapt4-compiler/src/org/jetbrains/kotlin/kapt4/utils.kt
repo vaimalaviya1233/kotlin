@@ -8,7 +8,9 @@ package org.jetbrains.kotlin.kapt4
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.psi.*
 import com.intellij.psi.util.ClassUtil
+import com.intellij.psi.util.PsiClassUtil
 import com.intellij.psi.util.PsiTypesUtil
+import com.intellij.psi.util.PsiUtil
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.psi.KtElement
@@ -257,3 +259,11 @@ private fun computeFieldAccessFlags(field: PsiField): Int {
     return access
 }
 
+val PsiClass.qualifiedNameWithDollars: String?
+    get() {
+        val packageName = PsiUtil.getPackageName(this) ?: return null
+        val qualifiedName = this.qualifiedName ?: return null
+        val className = qualifiedName.substringAfter(packageName)
+        val classNameWithDollars = className.replace(".", "$")
+        return "$packageName$classNameWithDollars"
+    }

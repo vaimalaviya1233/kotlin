@@ -18,7 +18,7 @@ fun Assertions.checkTxtAccordingToBackendAndFrontend(module: TestModule, actual:
     val irTxtFile = testDataFile.withSuffixAndExtension("${fileSuffix}_ir", ".txt")
     val firTxtFile = testDataFile.withSuffixAndExtension("${fileSuffix}.fir", ".txt")
     val isFir = module.frontendKind == FrontendKinds.FIR
-    val isIr = !isFir && (module.targetBackend?.isIR == true)
+    val isIr = module.targetBackend?.isIR == true
 
     val expectedFile = when {
         isFir && firTxtFile.exists() -> firTxtFile
@@ -40,7 +40,7 @@ fun Assertions.checkTxtAccordingToBackendAndFrontend(module: TestModule, actual:
         }
     }
 
-    if (isIr && irText != null && irText == classicText) {
+    if (!isFir && isIr && irText != null && irText == classicText) {
         fail { "JVM and JVM_IR golden files are identical. Remove $irTxtFile." }
     }
 }

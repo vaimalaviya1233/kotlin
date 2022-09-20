@@ -178,7 +178,7 @@ class Kapt4StubGenerator {
         isTopLevel: Boolean
     ): JCClassDecl? {
 //        if (isSynthetic(lightClass.access)) return null
-//        if (!checkIfValidTypeName(lightClass, Type.getObjectType(lightClass.name))) return null
+        if (!checkIfValidTypeName(lightClass, lightClass.defaultType)) return null
 
         val isInnerOrNested = lightClass.parent is PsiClass
         val isNested = isInnerOrNested && lightClass.isStatic
@@ -879,7 +879,7 @@ class Kapt4StubGenerator {
         if (internalName.split('/', '.').any { it in JAVA_KEYWORDS }) {
             if (strictMode) {
                 reportKaptError(
-                    "Can't generate a stub for '${containingClass.qualifiedName}'.",
+                    "Can't generate a stub for '${containingClass.qualifiedNameWithDollars}'.",
                     "Type name '${type.qualifiedName}' contains a Java keyword."
                 )
             }
@@ -892,7 +892,7 @@ class Kapt4StubGenerator {
         if (doesInnerClassNameConflictWithOuter(clazz)) {
             if (strictMode) {
                 reportKaptError(
-                    "Can't generate a stub for '${containingClass.name}'.",
+                    "Can't generate a stub for '${containingClass.qualifiedNameWithDollars}'.",
                     "Its name '${clazz.name}' is the same as one of the outer class names.",
                     "Java forbids it. Please change one of the class names."
                 )
@@ -907,9 +907,7 @@ class Kapt4StubGenerator {
     }
 
     private fun findContainingClassNode(clazz: PsiClass): PsiClass? {
-        val innerClassForOuter = clazz.innerClasses.firstOrNull { it.name == clazz.name } ?: return null
-        // return compiledClassByName[innerClassForOuter.outerName]
-        TODO()
+        return clazz.parent as? PsiClass
     }
 
     // Java forbids outer and inner class names to be the same. Check if the names are different
