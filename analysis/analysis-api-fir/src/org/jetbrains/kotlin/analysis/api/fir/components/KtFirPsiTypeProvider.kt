@@ -211,13 +211,11 @@ private class AnonymousTypesSubstitutor(
     override fun substituteType(type: ConeKotlinType): ConeKotlinType? {
         if (type !is ConeClassLikeType) return null
 
-        val isAnonymous = type.classId.let { it?.shortClassName?.asString() == SpecialNames.ANONYMOUS_STRING }
-        if (!isAnonymous) return null
+//        val isAnonymous = type.classId.let { it?.shortClassName?.asString() == SpecialNames.ANONYMOUS_STRING }
+//        if (!isAnonymous) return null
 
-        fun ConeClassLikeType.isNotInterface(): Boolean {
-            val firClassNode = lookupTag.toSymbol(session) as? FirClassSymbol<*> ?: return false
-            return firClassNode.classKind != ClassKind.INTERFACE
-        }
+        val hasStableName = type.classId?.isLocal == true
+        if (!hasStableName) return null
 
         val firClassNode = type.lookupTag.toSymbol(session) as? FirClassSymbol
         if (firClassNode != null) {
