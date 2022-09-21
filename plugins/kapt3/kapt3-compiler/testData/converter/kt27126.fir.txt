@@ -73,7 +73,8 @@ public abstract class NullableBundleProperty<EE extends java.lang.Object> implem
         super();
     }
 
-    private final java.lang.String toKey(kotlin.reflect.KProperty<?> $this$toKey) {
+    private final java.lang.String toKey(@org.jetbrains.annotations.NotNull()
+    kotlin.reflect.KProperty<?> $this$toKey) {
         return null;
     }
 

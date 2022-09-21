@@ -1,3 +1,4 @@
+// FIR_BLOCKED: LC don't support DefaultImpls
 // !JVM_DEFAULT_MODE: all
 
 interface Foo {

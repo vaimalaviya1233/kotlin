@@ -34,7 +34,7 @@ public final class Kt14997Kt {
     }
 
     @org.jetbrains.annotations.NotNull()
-    public static final CrashMe c() {
+    public static final java.lang.Object c() {
         return null;
     }
 
