@@ -37,7 +37,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.ifTrue
 context(KtAnalysisSession)
 internal class SymbolLightAccessorMethod(
     private val propertyAccessorSymbol: KtPropertyAccessorSymbol,
-    private val containingPropertySymbol: KtPropertySymbol,
+    internal val containingPropertySymbol: KtPropertySymbol,
     lightMemberOrigin: LightMemberOrigin?,
     containingClass: SymbolLightClassBase,
     private val isTopLevel: Boolean,
@@ -47,7 +47,7 @@ internal class SymbolLightAccessorMethod(
     containingClass,
     if (propertyAccessorSymbol is KtPropertyGetterSymbol) METHOD_INDEX_FOR_GETTER else METHOD_INDEX_FOR_SETTER
 ) {
-    private val isGetter: Boolean get() = propertyAccessorSymbol is KtPropertyGetterSymbol
+    internal val isGetter: Boolean get() = propertyAccessorSymbol is KtPropertyGetterSymbol
 
     private fun String.abiName() =
         if (isGetter) getterName(this) else setterName(this)

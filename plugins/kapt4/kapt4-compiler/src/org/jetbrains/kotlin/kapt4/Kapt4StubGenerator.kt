@@ -597,7 +597,7 @@ class Kapt4StubGenerator {
         lineMappings.registerField(containingClass, field)
 
         val initializer = explicitInitializer ?: convertPropertyInitializer(containingClass, field)
-        return treeMaker.VarDef(modifiers, treeMaker.name(name), typeExpression, initializer) // TODO: .keepKdocCommentsIfNecessary(field)
+        return treeMaker.VarDef(modifiers, treeMaker.name(name), typeExpression, initializer).keepKdocCommentsIfNecessary(field)
     }
 
     private fun convertPropertyInitializer(containingClass: PsiClass, field: PsiField): JCExpression? {
@@ -856,8 +856,8 @@ class Kapt4StubGenerator {
         return this
     }
 
-    private fun <T : JCTree> T.keepKdocCommentsIfNecessary(node: Any): T {
-        kdocCommentKeeper?.saveKDocComment(this, node)
+    private fun <T : JCTree> T.keepKdocCommentsIfNecessary(element: PsiElement): T {
+        kdocCommentKeeper?.saveKDocComment(this, element)
         return this
     }
 

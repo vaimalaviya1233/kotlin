@@ -5,131 +5,151 @@
 
 package org.jetbrains.kotlin.kapt4
 
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiRecursiveElementVisitor
+import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.sun.tools.javac.parser.Tokens
 import com.sun.tools.javac.tree.DCTree
 import com.sun.tools.javac.tree.DocCommentTable
 import com.sun.tools.javac.tree.JCTree
+import com.sun.tools.javac.tree.TreeScanner
+import org.jetbrains.kotlin.asJava.elements.KtLightDeclaration
+import org.jetbrains.kotlin.asJava.elements.KtLightElement
+import org.jetbrains.kotlin.asJava.elements.KtLightMember
+import org.jetbrains.kotlin.kdoc.lexer.KDocTokens
+import org.jetbrains.kotlin.kdoc.psi.api.KDoc
+import org.jetbrains.kotlin.light.classes.symbol.correspondingPropertyHasBackingField
+import org.jetbrains.kotlin.light.classes.symbol.isFieldForObjectInstance
+import org.jetbrains.kotlin.light.classes.symbol.isPropertyAccessor
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.org.objectweb.asm.Opcodes
 
+// TODO: unify with KDocCommentKeeper
 context(Kapt4ContextForStubGeneration)
 class Kapt4KDocCommentKeeper {
     private val docCommentTable = Kapt4DocCommentTable()
 
     fun getDocTable(file: JCTree.JCCompilationUnit): DocCommentTable {
+        val map = docCommentTable.takeIf { it.map.isNotEmpty() } ?: return docCommentTable
+
+        // Enum values with doc comments are rendered incorrectly in javac pretty print,
+        // so we delete the comments.
+        file.accept(object : TreeScanner() {
+            var removeComments = false
+
+            override fun visitVarDef(def: JCTree.JCVariableDecl) {
+                if (!removeComments && (def.modifiers.flags and Opcodes.ACC_ENUM.toLong()) != 0L) {
+                    map.removeComment(def)
+
+                    removeComments = true
+                    super.visitVarDef(def)
+                    removeComments = false
+                    return
+                }
+
+                super.visitVarDef(def)
+            }
+
+            override fun scan(tree: JCTree?) {
+                if (removeComments && tree != null) {
+                    map.removeComment(tree)
+                }
+
+                super.scan(tree)
+            }
+        })
+
         return docCommentTable
-//        TODO()
-//        val map = docCommentTable.takeIf { it.map.isNotEmpty() } ?: return docCommentTable
-//
-//        // Enum values with doc comments are rendered incorrectly in javac pretty print,
-//        // so we delete the comments.
-//        file.accept(object : TreeScanner() {
-//            var removeComments = false
-//
-//            override fun visitVarDef(def: JCTree.JCVariableDecl) {
-//                if (!removeComments && (def.modifiers.flags and Opcodes.ACC_ENUM.toLong()) != 0L) {
-//                    map.removeComment(def)
-//
-//                    removeComments = true
-//                    super.visitVarDef(def)
-//                    removeComments = false
-//                    return
-//                }
-//
-//                super.visitVarDef(def)
-//            }
-//
-//            override fun scan(tree: JCTree?) {
-//                if (removeComments && tree != null) {
-//                    map.removeComment(tree)
-//                }
-//
-//                super.scan(tree)
-//            }
-//        })
-//
-//        return docCommentTable
     }
 
-    fun saveKDocComment(tree: JCTree, node: Any) {
-//        TODO()
-//        val origin = kaptContext.origins[node] ?: return
-//        val psiElement = origin.element as? KtDeclaration ?: return
-//        val descriptor = origin.descriptor
-//        val docComment = psiElement.docComment ?: return
-//
-//        if (descriptor is ConstructorDescriptor && psiElement is KtClassOrObject) {
-//            // We don't want the class comment to be duplicated on <init>()
-//            return
-//        }
-//
-//        if (node is MethodNode
-//            && psiElement is KtProperty
-//            && descriptor is PropertyAccessorDescriptor
-//            && kaptContext.bindingContext[BindingContext.BACKING_FIELD_REQUIRED, descriptor.correspondingProperty] == true
-//        ) {
-//            // Do not place documentation on backing field and property accessors
-//            return
-//        }
-//
-//        if (node is FieldNode && psiElement is KtObjectDeclaration && descriptor == null) {
-//            // Do not write KDoc on object instance field
-//            return
-//        }
-//
-//        docCommentTable.putComment(tree, KDocComment(escapeNestedComments(extractCommentText(docComment))))
+    fun saveKDocComment(tree: JCTree, psiElement: PsiElement) {
+        val ktElement = when (psiElement) {
+            is KtLightMember<*> -> {
+                val origin = psiElement.lightMemberOrigin
+                origin?.auxiliaryOriginalElement ?: origin?.originalElement ?: psiElement.kotlinOrigin
+            }
+            is KtLightElement<*, *> -> psiElement.kotlinOrigin as? KtDeclaration
+            else -> null
+        } ?: return
+        val docComment = ktElement.docComment ?: return
+        if (psiElement is PsiMethod && psiElement.isConstructor && ktElement is KtClassOrObject) {
+            // We don't want the class comment to be duplicated on <init>()
+            return
+        }
+
+        if (psiElement is PsiMethod
+            && ktElement is KtProperty
+            && psiElement.isPropertyAccessor
+            && psiElement.correspondingPropertyHasBackingField
+        ) {
+            // Do not place documentation on default property accessors of property with backing field
+            return
+        }
+
+        if (psiElement is PsiField && psiElement.isFieldForObjectInstance) {
+            // Do not write KDoc on object instance field
+            return
+        }
+
+        docCommentTable.putComment(tree, KDocComment(escapeNestedComments(extractCommentText(docComment))))
     }
 
-//    private fun escapeNestedComments(text: String): String {
-//        val result = StringBuilder()
-//
-//        var index = 0
-//        var commentLevel = 0
-//
-//        while (index < text.length) {
-//            val currentChar = text[index]
-//            fun nextChar() = text.getOrNull(index + 1)
-//
-//            if (currentChar == '/' && nextChar() == '*') {
-//                commentLevel++
-//                index++
-//                result.append("/ *")
-//            } else if (currentChar == '*' && nextChar() == '/') {
-//                commentLevel = maxOf(0, commentLevel - 1)
-//                index++
-//                result.append("* /")
-//            } else {
-//                result.append(currentChar)
-//            }
-//
-//            index++
-//        }
-//
-//        return result.toString()
-//    }
-//
-//    private fun extractCommentText(docComment: KDoc): String {
-//        return buildString {
-//            docComment.accept(object : PsiRecursiveElementVisitor() {
-//                override fun visitElement(element: PsiElement) {
-//                    if (element is LeafPsiElement) {
-//                        if (element.isKDocLeadingAsterisk()) {
-//                            val indent = takeLastWhile { it == ' ' || it == '\t' }.length
-//                            if (indent > 0) {
-//                                delete(length - indent, length)
-//                            }
-//                        } else if (!element.isKDocStart() && !element.isKDocEnd()) {
-//                            append(element.text)
-//                        }
-//                    }
-//
-//                    super.visitElement(element)
-//                }
-//            })
-//        }.trimIndent().trim()
-//    }
-//
-//    private fun LeafPsiElement.isKDocStart() = elementType == KDocTokens.START
-//    private fun LeafPsiElement.isKDocEnd() = elementType == KDocTokens.END
-//    private fun LeafPsiElement.isKDocLeadingAsterisk() = elementType == KDocTokens.LEADING_ASTERISK
+    private fun escapeNestedComments(text: String): String {
+        val result = StringBuilder()
+
+        var index = 0
+        var commentLevel = 0
+
+        while (index < text.length) {
+            val currentChar = text[index]
+            fun nextChar() = text.getOrNull(index + 1)
+
+            if (currentChar == '/' && nextChar() == '*') {
+                commentLevel++
+                index++
+                result.append("/ *")
+            } else if (currentChar == '*' && nextChar() == '/') {
+                commentLevel = maxOf(0, commentLevel - 1)
+                index++
+                result.append("* /")
+            } else {
+                result.append(currentChar)
+            }
+
+            index++
+        }
+
+        return result.toString()
+    }
+
+    private fun extractCommentText(docComment: KDoc): String {
+        return buildString {
+            docComment.accept(object : PsiRecursiveElementVisitor() {
+                override fun visitElement(element: PsiElement) {
+                    if (element is LeafPsiElement) {
+                        if (element.isKDocLeadingAsterisk()) {
+                            val indent = takeLastWhile { it == ' ' || it == '\t' }.length
+                            if (indent > 0) {
+                                delete(length - indent, length)
+                            }
+                        } else if (!element.isKDocStart() && !element.isKDocEnd()) {
+                            append(element.text)
+                        }
+                    }
+
+                    super.visitElement(element)
+                }
+            })
+        }.trimIndent().trim()
+    }
+
+    private fun LeafPsiElement.isKDocStart() = elementType == KDocTokens.START
+    private fun LeafPsiElement.isKDocEnd() = elementType == KDocTokens.END
+    private fun LeafPsiElement.isKDocLeadingAsterisk() = elementType == KDocTokens.LEADING_ASTERISK
 }
 
 
@@ -152,4 +172,11 @@ private class Kapt4DocCommentTable(map: Map<JCTree, Tokens.Comment> = emptyMap()
     fun removeComment(tree: JCTree) {
         table.remove(tree)
     }
+}
+
+private class KDocComment(val body: String) : Tokens.Comment {
+    override fun getSourcePos(index: Int) = -1
+    override fun getStyle() = Tokens.Comment.CommentStyle.JAVADOC
+    override fun getText() = body
+    override fun isDeprecated() = false
 }
