@@ -754,13 +754,6 @@ class Kapt4StubGenerator {
 
         if (method.isSynthetic && !isAnnotationHolderForProperty) return null
 
-        val isOverridden = false //TODO: descriptor.overriddenDescriptors.isNotEmpty()
-        val visibleAnnotations = if (isOverridden) {
-            (method.annotations.toList()) // TODO + AnnotationNode(Type.getType(Override::class.java).descriptor)
-        } else {
-            method.annotations.toList()
-        }
-
         val isConstructor = method.isConstructor
 
         val name = method.name
@@ -772,8 +765,10 @@ class Kapt4StubGenerator {
                 (method.accessFlags.toLong() and VISIBILITY_MODIFIERS.inv())
             else
                 method.accessFlags.toLong(),
-            ElementKind.METHOD, packageFqName, visibleAnnotations,
-            metadata = null
+            ElementKind.METHOD,
+            packageFqName,
+            method.annotations.toList(),
+            metadata = null,
         )
 
         if (containingClass.isInterface && !method.isAbstract && !method.isStatic) {

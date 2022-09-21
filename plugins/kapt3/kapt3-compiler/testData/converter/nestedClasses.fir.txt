@@ -27,50 +27,6 @@ public final class A {
         @org.jetbrains.annotations.Nullable()
         public abstract A.B getY();
 
-        @org.jetbrains.annotations.Nullable()
-        public default A.B.A f2(@org.jetbrains.annotations.NotNull()
-        A.B.A a, @org.jetbrains.annotations.NotNull()
-        A.B b) {
-            return null;
-        }
-
-        @kotlin.Metadata()
-        public static final class A {
-            @org.jetbrains.annotations.Nullable()
-            private final A.B.A x;
-            @org.jetbrains.annotations.Nullable()
-            private final A.B.A.B y;
-
-            public A() {
-                super();
-            }
-
-            @org.jetbrains.annotations.Nullable()
-            public final A.B.A getX() {
-                return null;
-            }
-
-            @org.jetbrains.annotations.Nullable()
-            public final A.B.A.B getY() {
-                return null;
-            }
-
-            public final void f3(@org.jetbrains.annotations.NotNull()
-            A.B.A a, @org.jetbrains.annotations.NotNull()
-            A.B.A.B b) {
-            }
-
-            @kotlin.Metadata()
-            public static final class B {
-                @org.jetbrains.annotations.NotNull()
-                public static final A.B.A.B INSTANCE = null;
-
-                private B() {
-                    super();
-                }
-            }
-        }
-
         @kotlin.Metadata()
         public static final class DefaultImpls {
 
@@ -80,13 +36,6 @@ public final class A {
 
             @org.jetbrains.annotations.Nullable()
             public abstract A.B getY();
-
-            @org.jetbrains.annotations.Nullable()
-            public A.B.A f2(@org.jetbrains.annotations.NotNull()
-            A.B.A a, @org.jetbrains.annotations.NotNull()
-            A.B b) {
-                return null;
-            }
         }
     }
 
@@ -97,10 +46,6 @@ public final class A {
 
         private C() {
             super();
-        }
-
-        @kotlin.Metadata()
-        public static abstract interface C {
         }
     }
 }
@@ -139,33 +84,9 @@ public final class A2 {
                 }
 
                 @kotlin.Metadata()
-                public static final class A2 {
-
-                    public A2() {
-                        super();
-                    }
-                }
-
-                @kotlin.Metadata()
-                public static final class B {
-
-                    public B() {
-                        super();
-                    }
-                }
-
-                @kotlin.Metadata()
                 public static final class Cme {
 
                     public Cme() {
-                        super();
-                    }
-                }
-
-                @kotlin.Metadata()
-                public static final class D {
-
-                    public D() {
                         super();
                     }
                 }
@@ -194,14 +115,6 @@ public final class Foo {
 
     public Foo() {
         super();
-    }
-
-    @kotlin.Metadata()
-    public static final class Foo {
-
-        private Foo() {
-            super();
-        }
     }
 }
 
