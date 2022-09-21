@@ -30,6 +30,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.resolve.ArrayFqNames
+import org.jetbrains.kotlin.utils.addToStdlib.applyIf
 import org.jetbrains.kotlin.utils.addToStdlib.runIf
 import org.jetbrains.kotlin.utils.addToStdlib.runUnless
 import org.jetbrains.org.objectweb.asm.Opcodes
@@ -987,7 +988,9 @@ class Kapt4StubGenerator {
             return defaultSuperTypes
         }
 
-        val superInterfaces = clazz.supers.filter { it.isInterface }
+        val superInterfaces = clazz.supers
+            .filter { it.isInterface }
+            .applyIf(clazz.isAnnotationType) { filterNot { it.qualifiedName == "java.lang.annotation.Annotation" }}
 
 //        TODO
 //
