@@ -21,6 +21,7 @@ import com.intellij.psi.*
 internal class ParameterInfo(
     val flags: Long,
     val name: String,
+    val parameter: PsiParameter,
     val type: PsiType,
     val visibleAnnotations: List<PsiAnnotation>,
     val invisibleAnnotations: List<PsiAnnotation>
@@ -32,7 +33,7 @@ internal fun PsiMethod.getParametersInfo(
 ): List<ParameterInfo> {
     val typeConverter = JvmPsiConversionHelper.getInstance(project)
     return this.parameterList.parameters.map {
-        ParameterInfo(0, it.name, typeConverter.convertType(it.type), it.annotations.asList(), emptyList())
+        ParameterInfo(0, it.name, it, typeConverter.convertType(it.type), it.annotations.asList(), emptyList())
     }
 //    val localVariables = this.localVariables ?: emptyList()
 //    val parameters = this.parameters ?: emptyList()

@@ -48,6 +48,11 @@ inline fun <T, R> mapJList(values: Iterable<T>?, f: (T) -> R?): JavacList<R> {
     return result
 }
 
+@JvmName("mapJListWithReceiver")
+inline fun <T, R> Iterable<T>.mapJList(f: (T) -> R?): JavacList<R> {
+    return mapJList(this, f)
+}
+
 inline fun <T, R> mapJListIndexed(values: Iterable<T>?, f: (Int, T) -> R?): JavacList<R> {
     if (values == null) return JavacList.nil()
 
@@ -107,13 +112,19 @@ val PsiModifierListOwner.isConstructor: Boolean
     get() = (this is PsiMethod) && this.isConstructor
 
 val PsiType.qualifiedName: String
+    get() = qualifiedNameOrNull ?: canonicalText.replace("""<.*>""".toRegex(), "")
+
+val PsiType.qualifiedNameOrNull: String?
     get() {
         if (this is PsiPrimitiveType) return name
         return when (val resolvedClass = resolvedClass) {
             is PsiTypeParameter -> resolvedClass.name
             else -> resolvedClass?.qualifiedName
-        } ?: NO_NAME_PROVIDED
+        }
     }
+
+val PsiType.isErrorType: Boolean
+    get() = qualifiedNameOrNull == null
 
 val PsiElement.ktOrigin: KtElement
     get() = (this as? KtLightElement<*, *>)?.kotlinOrigin ?: TODO()

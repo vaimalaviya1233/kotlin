@@ -18,6 +18,7 @@ import com.sun.tools.javac.tree.TreeScanner
 import org.jetbrains.kotlin.asJava.elements.KtLightDeclaration
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.asJava.elements.KtLightMember
+import org.jetbrains.kotlin.asJava.elements.KtLightParameter
 import org.jetbrains.kotlin.kdoc.lexer.KDocTokens
 import org.jetbrains.kotlin.kdoc.psi.api.KDoc
 import org.jetbrains.kotlin.light.classes.symbol.correspondingPropertyHasBackingField
@@ -67,14 +68,7 @@ class Kapt4KDocCommentKeeper {
     }
 
     fun saveKDocComment(tree: JCTree, psiElement: PsiElement) {
-        val ktElement = when (psiElement) {
-            is KtLightMember<*> -> {
-                val origin = psiElement.lightMemberOrigin
-                origin?.auxiliaryOriginalElement ?: origin?.originalElement ?: psiElement.kotlinOrigin
-            }
-            is KtLightElement<*, *> -> psiElement.kotlinOrigin as? KtDeclaration
-            else -> null
-        } ?: return
+        val ktElement = psiElement.extractOriginalKtDeclaration<KtDeclaration>() ?: return
         val docComment = ktElement.docComment ?: return
         if (psiElement is PsiMethod && psiElement.isConstructor && ktElement is KtClassOrObject) {
             // We don't want the class comment to be duplicated on <init>()
@@ -179,4 +173,24 @@ private class KDocComment(val body: String) : Tokens.Comment {
     override fun getStyle() = Tokens.Comment.CommentStyle.JAVADOC
     override fun getText() = body
     override fun isDeprecated() = false
+}
+
+inline fun <reified T : KtDeclaration> PsiElement.extractOriginalKtDeclaration(): T? {
+    // This when is needed to avoid recursion
+    val elementToExtract = when (this) {
+        is KtLightParameter -> when (kotlinOrigin) {
+            null -> method
+            else -> return kotlinOrigin as? T
+        }
+        else -> this
+    }
+
+    return when (elementToExtract) {
+        is KtLightMember<*> -> {
+            val origin = elementToExtract.lightMemberOrigin
+            origin?.auxiliaryOriginalElement ?: origin?.originalElement ?: elementToExtract.kotlinOrigin
+        }
+        is KtLightElement<*, *> -> elementToExtract.kotlinOrigin
+        else -> null
+    } as? T
 }

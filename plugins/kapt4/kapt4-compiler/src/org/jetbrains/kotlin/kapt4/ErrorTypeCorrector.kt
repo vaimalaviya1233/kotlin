@@ -5,10 +5,15 @@
 
 package org.jetbrains.kotlin.kapt4
 
+import com.intellij.psi.PsiArrayType
+import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiType
+import com.intellij.psi.util.PsiTreeUtil
 import com.sun.tools.javac.tree.JCTree
-import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.types.*
+import org.jetbrains.kotlin.utils.addToStdlib.runIf
+import org.jetbrains.kotlin.utils.addToStdlib.zipWithDefault
 
 private typealias SubstitutionMap = Map<String, Pair<KtTypeParameter, KtTypeProjection>>
 
@@ -40,106 +45,45 @@ class ErrorTypeCorrector(
         RETURN_TYPE, METHOD_PARAMETER_TYPE, SUPER_TYPE, ANNOTATION
     }
 
-    fun convert(type: KtTypeElement, substitutions: SubstitutionMap): JCTree.JCExpression {
-        return when (type) {
-            is KtUserType -> convertUserType(type, substitutions)
-            is KtNullableType -> convert(type.innerType ?: return defaultType, substitutions)
-            is KtFunctionType -> convertFunctionType(type, substitutions)
+    fun convert(
+        psiType: PsiType?,
+        ktType: KtTypeElement?
+    ): JCTree.JCExpression {
+        return when (ktType) {
+            is KtUserType -> convertUserType(psiType, ktType)
+            is KtNullableType -> convert(psiType, ktType.innerType ?: return defaultType)
+            is KtFunctionType -> TODO() // convertFunctionType(ktType, substitutions)
+            null -> if (psiType == null) defaultType else treeMaker.TypeWithArguments(psiType)
             else -> defaultType
         }
     }
 
-    private fun convert(typeReference: KtTypeReference?, substitutions: SubstitutionMap): JCTree.JCExpression {
-        val type = typeReference?.typeElement ?: return defaultType
-        return convert(type, substitutions)
-    }
+    private fun convertUserType(
+        psiType: PsiType?,
+        ktType: KtUserType
+    ): JCTree.JCExpression {
+        val typeName = psiType?.qualifiedNameOrNull ?: ktType.referencedName ?: NO_NAME_PROVIDED
+        val baseJType = treeMaker.SimpleName(typeName)
 
-    private fun convert(type: SimpleType): JCTree.JCExpression {
-        // TODO now the raw Java type is returned. In future we need to properly convert all type parameters
-        // return treeMaker.Type(KaptTypeMapper.mapType(type))
-        TODO()
-    }
+        val psiArguments = when (psiType) {
+            is PsiClassType -> psiType.parameters.asList()
+            is PsiArrayType -> listOf(psiType.componentType)
+            else -> emptyList()
+        }
 
-    private fun convertUserType(type: KtUserType, substitutions: SubstitutionMap): JCTree.JCExpression {
-        TODO()
-//        val target = bindingContext[BindingContext.REFERENCE_TARGET, type.referenceExpression]
-//
-//        val baseExpression: JCTree.JCExpression
-//
-//        when (target) {
-//            is TypeAliasDescriptor -> {
-//                val typeAlias = target.source.getPsi() as? KtTypeAlias
-//                val actualType = typeAlias?.getTypeReference() ?: return convert(target.expandedType)
-//                return convert(actualType, typeAlias.getSubstitutions(type))
-//            }
-//
-//            is ClassConstructorDescriptor -> {
-//                val asmType = KaptTypeMapper.mapType(target.constructedClass.defaultType, TypeMappingMode.GENERIC_ARGUMENT)
-//
-//                baseExpression = converter.treeMaker.Type(asmType)
-//            }
-//
-//            is ClassDescriptor -> {
-//                // We only get here if some type were an error type. In other words, 'type' is either an error type or its argument,
-//                // so it's impossible it to be unboxed primitive.
-//                val asmType = KaptTypeMapper.mapType(target.defaultType, TypeMappingMode.GENERIC_ARGUMENT)
-//
-//                baseExpression = converter.treeMaker.Type(asmType)
-//            }
-//
-//            else -> {
-//                val referencedName = type.referencedName ?: return defaultType
-//                val qualifier = type.qualifier
-//
-//                if (qualifier == null) {
-//                    if (referencedName in substitutions) {
-//                        val (typeParameter, projection) = substitutions.getValue(referencedName)
-//                        return convertTypeProjection(projection, typeParameter.variance, emptyMap())
-//                    }
-//
-//                    aliasedImports[referencedName]?.let { return it }
-//                }
-//
-//                baseExpression = when {
-//                    qualifier != null -> {
-//                        val qualifierType = convertUserType(qualifier, substitutions)
-//                        if (qualifierType === defaultType) return defaultType // Do not allow to use 'defaultType' as a qualifier
-//                        treeMaker.Select(qualifierType, treeMaker.name(referencedName))
-//                    }
-//
-//                    else -> treeMaker.SimpleName(referencedName)
-//                }
-//            }
-//        }
-//
-//        val arguments = type.typeArguments
-//        if (arguments.isEmpty()) return baseExpression
-//
-//        val typeReference = PsiTreeUtil.getParentOfType(type, KtTypeReference::class.java, true)
-//        val kotlinType = bindingContext[BindingContext.TYPE, typeReference] ?: ErrorUtils.createErrorType(ErrorTypeKind.KAPT_ERROR_TYPE)
-//
-//        val typeSystem = SimpleClassicTypeSystemContext
-//        val typeMappingMode = when (typeKind) {
-//            //TODO figure out if the containing method is an annotation method
-//            RETURN_TYPE -> typeSystem.getOptimalModeForReturnType(kotlinType, false)
-//            METHOD_PARAMETER_TYPE -> typeSystem.getOptimalModeForValueParameter(kotlinType)
-//            SUPER_TYPE -> TypeMappingMode.SUPER_TYPE
-//            ANNOTATION -> TypeMappingMode.DEFAULT // see genAnnotation in org/jetbrains/kotlin/codegen/AnnotationCodegen.java
-//        }.updateArgumentModeFromAnnotations(kotlinType, typeSystem)
-//
-//        val typeParameters = (target as? ClassifierDescriptor)?.typeConstructor?.parameters
-//        return treeMaker.TypeApply(baseExpression, mapJListIndexed(arguments) { index, projection ->
-//            val typeParameter = typeParameters?.getOrNull(index)
-//            val typeArgument = kotlinType.arguments.getOrNull(index)
-//
-//            val variance = if (typeArgument != null && typeParameter != null) {
-//                KotlinTypeMapper.getVarianceForWildcard(typeParameter, typeArgument, typeMappingMode)
-//            } else {
-//                null
-//            }
-//
-//            convertTypeProjection(projection, variance, substitutions)
-//        })
+        val ktArguments = ktType.typeArgumentsAsTypes
+
+        if (psiArguments.isEmpty() && ktArguments.isEmpty()) return baseJType
+
+        val jArguments = psiArguments.zipWithDefault(
+            ktArguments,
+            { null },
+            { null }
+        ).mapJList { (psiArgument, ktArgumentReference) ->
+            convert(psiArgument, ktArgumentReference?.typeElement)
+        }
+
+        return treeMaker.TypeApply(baseJType, jArguments)
     }
 
     private fun convertTypeProjection(
@@ -209,15 +153,3 @@ class ErrorTypeCorrector(
 //        return substitutionMap
     }
 }
-
-fun KotlinType.containsErrorTypes(allowedDepth: Int = 10): Boolean {
-    // Need to limit recursion depth in case of complex recursive generics
-    if (allowedDepth <= 0) {
-        return false
-    }
-
-    if (this.isError) return true
-    if (this.arguments.any { !it.isStarProjection && it.type.containsErrorTypes(allowedDepth - 1) }) return true
-    return false
-}
-

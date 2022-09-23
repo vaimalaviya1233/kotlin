@@ -8,7 +8,6 @@
 package org.jetbrains.kotlin.kapt4
 
 import com.intellij.psi.*
-import com.intellij.psi.util.PsiTypesUtil
 import com.sun.tools.javac.code.Flags
 import com.sun.tools.javac.code.TypeTag
 import com.sun.tools.javac.parser.Tokens
@@ -27,7 +26,10 @@ import org.jetbrains.kotlin.light.classes.symbol.classes.SymbolLightClassForClas
 import org.jetbrains.kotlin.light.classes.symbol.classes.SymbolLightClassForFacade
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.resolve.ArrayFqNames
 import org.jetbrains.kotlin.utils.addToStdlib.applyIf
@@ -410,12 +412,13 @@ class Kapt4StubGenerator {
             if (BLACKLISTED_ANNOTATIONS.any { fqName.startsWith(it) }) return null
             if (stripMetadata && fqName == KOTLIN_METADATA_ANNOTATION) return null
         }
-//        TODO()
-//        val ktAnnotation = annotationDescriptor?.source?.getPsi() as? KtAnnotationEntry
+
         val annotationFqName = getNonErrorType(
             annotation.resolveAnnotationType()?.defaultType,
             ANNOTATION,
-            { TODO()/*ktAnnotation?.typeReference*/ },
+            {
+                TODO()/*ktAnnotation?.typeReference*/
+            },
             {
                 val useSimpleName = '.' in fqName && fqName.substringBeforeLast('.', "") == packageFqName
 
@@ -591,7 +594,12 @@ class Kapt4StubGenerator {
         val typeExpression = if (isEnum(access)) {
             treeMaker.SimpleName(treeMaker.getQualifiedName(type).substringAfterLast('.'))
         } else {
-            treeMaker.TypeWithArguments(type)
+            getNonErrorType(
+                type,
+                RETURN_TYPE,
+                ktTypeProvider = { field.extractOriginalKtDeclaration<KtCallableDeclaration>()?.typeReference },
+                ifNonError = { treeMaker.TypeWithArguments(type) }
+            )
         }
 
         lineMappings.registerField(containingClass, field)
@@ -801,12 +809,25 @@ class Kapt4StubGenerator {
             )
 
             val name = info.name.takeIf { isValidIdentifier(it) } ?: "p$index"
-            val type = treeMaker.TypeWithArguments(info.type)
+
+            val type = getNonErrorType(
+                info.type,
+                METHOD_PARAMETER_TYPE,
+                ktTypeProvider = { info.parameter.extractOriginalKtDeclaration<KtCallableDeclaration>()?.typeReference },
+                ifNonError = { treeMaker.TypeWithArguments(info.type) }
+            )
             treeMaker.VarDef(modifiers, treeMaker.name(name), type, null)
         }
         val jTypeParameters = mapJList(method.typeParameters) { signatureParser.convertTypeParameter(it) }
         val jExceptionTypes = mapJList(method.throwsTypes) { treeMaker.TypeWithArguments(it as PsiType) }
-        val jReturnType = if (isConstructor) null else treeMaker.TypeWithArguments(returnType) // TODO: handle error type
+        val jReturnType = runUnless(isConstructor) {
+            getNonErrorType(
+                returnType,
+                RETURN_TYPE,
+                ktTypeProvider = { method.extractOriginalKtDeclaration<KtCallableDeclaration>()?.typeReference },
+                ifNonError = { treeMaker.TypeWithArguments(returnType) }
+            )
+        }
 
         val defaultValue = (method as? PsiAnnotationMethod)?.defaultValue?.let {
             convertPsiAnnotationMemberValue(containingClass, it, packageFqName)
@@ -941,16 +962,15 @@ class Kapt4StubGenerator {
             return ifNonError()
         }
 
-//        TODO
-//        if (type?.containsErrorTypes() == true) {
-//            val typeFromSource = ktTypeProvider()?.typeElement
-//            val ktFile = typeFromSource?.containingKtFile
-//            if (ktFile != null) {
-//                @Suppress("UNCHECKED_CAST")
-//                return ErrorTypeCorrector(this, kind, ktFile).convert(typeFromSource, emptyMap()) as T
-//            }
-//        }
-//
+        if (type?.containsErrorTypes() == true) {
+            val ktType = ktTypeProvider()?.typeElement
+            val ktFile = ktType?.containingKtFile
+            if (ktFile != null) {
+                @Suppress("UNCHECKED_CAST")
+                return ErrorTypeCorrector(this, kind, ktFile).convert(type, ktType) as T
+            }
+        }
+
         val nonErrorType = ifNonError()
 
         if (nonErrorType is JCFieldAccess) {
@@ -1098,5 +1118,14 @@ class Kapt4StubGenerator {
             if (nameComparison != 0) return nameComparison
             return m1.descriptor.compareTo(m2.descriptor)
         }
+    }
+}
+
+fun PsiType.containsErrorTypes(): Boolean {
+    if (this.isErrorType) return true
+    return when (this) {
+        is PsiClassType -> typeArguments().any { (it as? PsiType)?.containsErrorTypes() == true }
+        is PsiArrayType -> componentType.containsErrorTypes()
+        else -> false
     }
 }
