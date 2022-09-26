@@ -14,25 +14,36 @@ class SignatureParser(private val treeMaker: Kapt4TreeMaker) {
     class ClassGenericSignature(
         val typeParameters: JavacList<JCTypeParameter>,
         val superClass: JCExpression,
-        val interfaces: JavacList<JCExpression>
+        val interfaces: JavacList<JCExpression>,
+        val superClassIsObject: Boolean
     )
 
     fun parseClassSignature(psiClass: PsiClass): ClassGenericSignature {
         val superClasses = mutableListOf<JCExpression>()
-        val interfaces = mutableListOf<JCExpression>()
-        for (superType in psiClass.superTypes) {
-            if (psiClass.isAnnotationType && superType.qualifiedName == "java.lang.annotation.Annotation") continue
-            val jType = treeMaker.TypeWithArguments(superType)
-            if (superType.resolvedClass?.isInterface == false) {
-                superClasses += jType
-            } else {
-                interfaces += jType
-            }
+        val superInterfaces = mutableListOf<JCExpression>()
+
+        val superPsiClasses = psiClass.extendsListTypes.toList()
+        val superPsiInterfaces = psiClass.implementsListTypes.toList()
+
+        fun addSuperType(superType: PsiClassType, destination: MutableList<JCExpression>) {
+            if (psiClass.isAnnotationType && superType.qualifiedName == "java.lang.annotation.Annotation") return
+            destination += treeMaker.TypeWithArguments(superType)
         }
+
+        var superClassIsObject = false
+
+        superPsiClasses.forEach {
+            addSuperType(it, superClasses)
+            superClassIsObject = superClassIsObject || it.qualifiedNameOrNull == "java.lang.Object"
+        }
+        superPsiInterfaces.forEach { addSuperType(it, superInterfaces) }
+
         val jcTypeParameters = mapJList(psiClass.typeParameters) { convertTypeParameter(it) }
-        val jcSuperClass = superClasses.firstOrNull() ?: createJavaLangObjectType()
-        val jcInterfaces = JavacList.from(interfaces)
-        return ClassGenericSignature(jcTypeParameters, jcSuperClass, jcInterfaces)
+        val jcSuperClass = superClasses.firstOrNull() ?: createJavaLangObjectType().also {
+            superClassIsObject = true
+        }
+        val jcInterfaces = JavacList.from(superInterfaces)
+        return ClassGenericSignature(jcTypeParameters, jcSuperClass, jcInterfaces, superClassIsObject)
     }
 
     private fun createJavaLangObjectType(): JCExpression {

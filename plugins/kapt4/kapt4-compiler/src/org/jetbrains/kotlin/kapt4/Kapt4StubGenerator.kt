@@ -28,11 +28,8 @@ import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtParameter
-import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.resolve.ArrayFqNames
-import org.jetbrains.kotlin.utils.addToStdlib.applyIf
 import org.jetbrains.kotlin.utils.addToStdlib.runIf
 import org.jetbrains.kotlin.utils.addToStdlib.runUnless
 import org.jetbrains.org.objectweb.asm.Opcodes
@@ -990,56 +987,10 @@ class Kapt4StubGenerator {
     private class ClassSupertypes(val superClass: JCExpression?, val interfaces: JavacList<JCExpression>)
 
     private fun calculateSuperTypes(clazz: PsiClass, genericType: SignatureParser.ClassGenericSignature): ClassSupertypes {
-        val superClass = clazz.superClass
-
-        val hasSuperClass = superClass?.qualifiedName != "java.lang.Object" && !clazz.isEnum
-
-        val defaultSuperTypes = ClassSupertypes(
-            if (hasSuperClass) genericType.superClass else null,
+        return ClassSupertypes(
+            genericType.superClass.takeUnless { genericType.superClassIsObject || clazz.isEnum },
             genericType.interfaces
         )
-
-        if (!correctErrorTypes) {
-            return defaultSuperTypes
-        }
-
-        val superInterfaces = clazz.supers
-            .filter { it.isInterface }
-            .applyIf(clazz.isAnnotationType) { filterNot { it.qualifiedName == "java.lang.annotation.Annotation" }}
-
-//        TODO
-//
-//        if (typeMapper.mapType(declarationDescriptor.defaultType) != Type.getObjectType(clazz.name)) {
-//            return defaultSuperTypes
-//        }
-//
-        val sameSuperClassCount = (superClass == null) == (defaultSuperTypes.superClass == null)
-        val sameSuperInterfaceCount = superInterfaces.size == defaultSuperTypes.interfaces.size
-
-        if (sameSuperClassCount && sameSuperInterfaceCount) {
-            return defaultSuperTypes
-        }
-
-        class SuperTypeCalculationFailure : RuntimeException()
-
-        fun nonErrorType(ref: () -> PsiClass?): JCExpression {
-            assert(correctErrorTypes)
-
-            return getNonErrorType<JCExpression>(
-                null, // TODO: ErrorUtils.createErrorType(ErrorTypeKind.ERROR_SUPER_TYPE),
-                ErrorTypeCorrector.TypeKind.SUPER_TYPE,
-                { null }, // TODO: ref
-            ) { throw SuperTypeCalculationFailure() }
-        }
-
-        return try {
-            ClassSupertypes(
-                superClass?.let { nonErrorType { it } },
-                mapJList(superInterfaces) { nonErrorType { it } }
-            )
-        } catch (e: SuperTypeCalculationFailure) {
-            defaultSuperTypes
-        }
     }
 
 

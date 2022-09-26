@@ -33,9 +33,6 @@ public final class A {
             public DefaultImpls() {
                 super();
             }
-
-            @org.jetbrains.annotations.Nullable()
-            public abstract A.B getY();
         }
     }
 
@@ -110,8 +107,6 @@ import java.lang.System;
 
 @kotlin.Metadata()
 public final class Foo {
-    @org.jetbrains.annotations.NotNull()
-    public static final Foo.Foo Foo = null;
 
     public Foo() {
         super();
