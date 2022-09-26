@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithMembers
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithTypeParameters
 import org.jetbrains.kotlin.analysis.api.symbols.markers.isPrivateOrPrivateToThis
+import org.jetbrains.kotlin.analysis.api.types.KtClassErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeMappingMode
@@ -399,30 +400,41 @@ internal fun SymbolLightClassBase.createInheritanceList(forExtendsList: Boolean,
     )
 
     fun KtType.needToAddTypeIntoList(): Boolean {
-        if (this !is KtNonErrorClassType) return false
-
-        // Do not add redundant "extends java.lang.Object" anywhere
-        if (this.classId == StandardClassIds.Any) return false
-
-        // We don't have Enum among enums supertype in sources neither we do for decompiled class-files and light-classes
-        if (isEnum && this.classId == StandardClassIds.Enum) return false
-
         // Interfaces have only extends lists
         if (isInterface) return forExtendsList
 
-        val classKind = (classSymbol as? KtClassOrObjectSymbol)?.classKind
-        val isJvmInterface = classKind == KtClassKind.INTERFACE || classKind == KtClassKind.ANNOTATION_CLASS
+        return when (this) {
+            is KtNonErrorClassType -> {
+                // Do not add redundant "extends java.lang.Object" anywhere
+                if (this.classId == StandardClassIds.Any) return false
 
-        return forExtendsList == !isJvmInterface
+                // We don't have Enum among enums supertype in sources neither we do for decompiled class-files and light-classes
+                if (isEnum && this.classId == StandardClassIds.Enum) return false
+
+                val classKind = (classSymbol as? KtClassOrObjectSymbol)?.classKind
+                val isJvmInterface = classKind == KtClassKind.INTERFACE || classKind == KtClassKind.ANNOTATION_CLASS
+
+                forExtendsList == !isJvmInterface
+            }
+
+            is KtClassErrorType -> {
+                val superList = this@createInheritanceList.kotlinOrigin?.getSuperTypeList() ?: return false
+                val qualifierName = this.presentableQualifiedName ?: return false
+                val isConstructorCall = superList.entries.any {
+                    it is KtSuperTypeCallEntry && it.typeAsUserType?.text?.startsWith(qualifierName) == true
+                }
+
+                forExtendsList == isConstructorCall
+            }
+
+            else -> false
+        }
     }
 
     //TODO Add support for kotlin.collections.
     superTypes.asSequence()
         .filter { it.needToAddTypeIntoList() }
-        .mapNotNull { type ->
-            if (type !is KtNonErrorClassType) return@mapNotNull null
-            mapType(type, this@createInheritanceList, KtTypeMappingMode.SUPER_TYPE)
-        }
+        .mapNotNull { mapType(it, this@createInheritanceList, KtTypeMappingMode.SUPER_TYPE) }
         .forEach { listBuilder.addReference(it) }
 
     return listBuilder
