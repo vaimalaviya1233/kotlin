@@ -14,9 +14,11 @@ import com.sun.tools.javac.parser.Tokens
 import com.sun.tools.javac.tree.JCTree
 import com.sun.tools.javac.tree.JCTree.*
 import kotlinx.kapt.KaptIgnored
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.base.kapt3.KaptFlag
 import org.jetbrains.kotlin.builtins.StandardNames
+import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.kapt3.base.javac.kaptError
 import org.jetbrains.kotlin.kapt3.base.javac.reportKaptError
 import org.jetbrains.kotlin.kapt3.base.stubs.KaptStubLineInformation
@@ -26,7 +28,9 @@ import org.jetbrains.kotlin.light.classes.symbol.classes.SymbolLightClassForFaca
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.psiUtil.referenceExpression
 import org.jetbrains.kotlin.resolve.ArrayFqNames
+import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
 import org.jetbrains.kotlin.utils.addToStdlib.runIf
 import org.jetbrains.kotlin.utils.addToStdlib.runUnless
 import org.jetbrains.org.objectweb.asm.Opcodes
@@ -40,7 +44,7 @@ import kotlin.contracts.contract
 import kotlin.math.sign
 
 context(Kapt4ContextForStubGeneration)
-class Kapt4StubGenerator {
+class Kapt4StubGenerator(private val analysisSession: KtAnalysisSession) {
     private companion object {
         private const val VISIBILITY_MODIFIERS = (Opcodes.ACC_PUBLIC or Opcodes.ACC_PRIVATE or Opcodes.ACC_PROTECTED).toLong()
         private const val MODALITY_MODIFIERS = (Opcodes.ACC_FINAL or Opcodes.ACC_ABSTRACT).toLong()
@@ -92,16 +96,11 @@ class Kapt4StubGenerator {
         )
     }
 
-    private val correctErrorTypes = options[KaptFlag.CORRECT_ERROR_TYPES]
     private val strictMode = options[KaptFlag.STRICT]
     private val stripMetadata = options[KaptFlag.STRIP_METADATA]
     private val keepKdocComments = options[KaptFlag.KEEP_KDOC_COMMENTS_IN_STUBS]
 
-    private val signatureParser = SignatureParser(treeMaker)
-
-    private val kdocCommentKeeper = if (keepKdocComments) Kapt4KDocCommentKeeper() else null
-
-    private val unresolvedQualifiers = mutableSetOf<String>()
+    private val kdocCommentKeeper = runIf(keepKdocComments) { Kapt4KDocCommentKeeper() }
 
     fun generateStubs(): Map<KtLightClass, KaptStub?> {
         return classes.associateWith { convertTopLevelClass(it) }
@@ -114,18 +113,22 @@ class Kapt4StubGenerator {
         val packageName = (lightClass.parent as? PsiJavaFile)?.packageName ?: TODO()
         val packageClause = runUnless(packageName.isBlank()) { treeMaker.FqName(packageName) }
 
-        val classDeclaration = convertClass(lightClass, lineMappings, packageName, true) ?: return null
+        val unresolvedQualifiersRecorder = UnresolvedQualifiersRecorder()
+        val classDeclaration = with(unresolvedQualifiersRecorder) {
+            convertClass(lightClass, lineMappings, packageName, true) ?: return null
+        }
 
         classDeclaration.mods.annotations = classDeclaration.mods.annotations
 
-        val imports = if (correctErrorTypes) convertImports(ktFile, classDeclaration) else JavacList.nil()
+        val classes = JavacList.of<JCTree>(classDeclaration)
+
+        // imports should be collected after class conversion to
+        val imports = convertImports(ktFile, unresolvedQualifiersRecorder)
 
         val nonEmptyImports: JavacList<JCTree> = when {
             imports.size > 0 -> imports
             else -> JavacList.of(treeMaker.Import(treeMaker.FqName("java.lang.System"), false))
         }
-
-        val classes = JavacList.of<JCTree>(classDeclaration)
 
         val topLevel = treeMaker.TopLevelJava9Aware(packageClause, nonEmptyImports + classes)
         if (kdocCommentKeeper != null) {
@@ -142,37 +145,8 @@ class Kapt4StubGenerator {
         return KaptStub(topLevel, lineMappings.serialize())
     }
 
-    private val allAccOpcodes = listOf(
-        "ACC_PUBLIC" to Opcodes.ACC_PUBLIC,
-        "ACC_PRIVATE" to Opcodes.ACC_PRIVATE,
-        "ACC_PROTECTED" to Opcodes.ACC_PROTECTED,
-        "ACC_STATIC" to Opcodes.ACC_STATIC,
-        "ACC_FINAL" to Opcodes.ACC_FINAL,
-        "ACC_SUPER" to Opcodes.ACC_SUPER,
-        "ACC_SYNCHRONIZED" to Opcodes.ACC_SYNCHRONIZED,
-        "ACC_OPEN" to Opcodes.ACC_OPEN,
-        "ACC_TRANSITIVE" to Opcodes.ACC_TRANSITIVE,
-        "ACC_VOLATILE" to Opcodes.ACC_VOLATILE,
-        "ACC_BRIDGE" to Opcodes.ACC_BRIDGE,
-        "ACC_STATIC_PHASE" to Opcodes.ACC_STATIC_PHASE,
-        "ACC_VARARGS" to Opcodes.ACC_VARARGS,
-        "ACC_TRANSIENT" to Opcodes.ACC_TRANSIENT,
-        "ACC_NATIVE" to Opcodes.ACC_NATIVE,
-        "ACC_INTERFACE" to Opcodes.ACC_INTERFACE,
-        "ACC_ABSTRACT" to Opcodes.ACC_ABSTRACT,
-        "ACC_STRICT" to Opcodes.ACC_STRICT,
-        "ACC_SYNTHETIC" to Opcodes.ACC_SYNTHETIC,
-        "ACC_ANNOTATION" to Opcodes.ACC_ANNOTATION,
-        "ACC_ENUM" to Opcodes.ACC_ENUM,
-        "ACC_MANDATED" to Opcodes.ACC_MANDATED,
-        "ACC_MODULE" to Opcodes.ACC_MODULE,
-        "ACC_RECORD" to Opcodes.ACC_RECORD,
-        "ACC_DEPRECATED" to Opcodes.ACC_DEPRECATED,
-    )
-
-    private fun showOpcodes(flags: Int) = allAccOpcodes.filter { (flags and it.second) != 0 }.map { it.first }
-
-    @Suppress("InconsistentCommentForJavaParameter")
+    context(UnresolvedQualifiersRecorder)
+    @Suppress("InconsistentCommentForJavaParameter", "IncorrectFormatting") // KTIJ-22227
     private fun convertClass(
         lightClass: PsiClass,
         lineMappings: Kapt4LineMappingCollector,
@@ -299,7 +273,9 @@ class Kapt4StubGenerator {
 
     private class MemberData(val name: String, val descriptor: String, val position: KotlinPosition?)
 
-    private fun convertImports(file: KtFile, classDeclaration: JCClassDecl): JavacList<JCTree> {
+    private fun convertImports(file: KtFile, unresolvedQualifiers: UnresolvedQualifiersRecorder): JavacList<JCTree> {
+        if (unresolvedQualifiers.isEmpty()) return JavacList.nil()
+
         val imports = mutableListOf<JCImport>()
         val importedShortNames = mutableSetOf<String>()
 
@@ -307,12 +283,31 @@ class Kapt4StubGenerator {
         val sortedImportDirectives = file.importDirectives.partition { it.aliasName == null }.run { first + second }
 
         loop@ for (importDirective in sortedImportDirectives) {
+            val acceptableByName = when {
+                importDirective.isAllUnder -> true
+                else -> {
+                    val fqName = importDirective.importedFqName ?: continue
+                    fqName.shortName().identifier in unresolvedQualifiers.simpleNames
+                }
+            }
+
+            if (!acceptableByName) continue
+
+            with(analysisSession) {
+                val importedReference = importDirective.importedReference!!
+                val referenceExpression = importedReference.referenceExpression()
+                val callee = importedReference.getCalleeExpressionIfAny()
+                val reference = callee?.references?.firstOrNull() as? KtReference
+                val symbol = reference?.resolveToSymbol()
+                Unit
+            }
+
             // Qualified name should be valid Java fq-name
             val importedFqName = importDirective.importedFqName?.takeIf { it.pathSegments().size > 1 } ?: continue
             if (!isValidQualifiedName(importedFqName)) continue
 
             val shortName = importedFqName.shortName()
-            if (shortName.asString() == classDeclaration.simpleName.toString()) continue
+//            if (shortName.asString() == classDeclaration.simpleName.toString()) continue
 //            TODO
 //            val importedReference = /* resolveImportReference */ run {
 //                val referenceExpression = getReferenceExpression(importDirective.importedReference) ?: return@run null
@@ -396,7 +391,8 @@ class Kapt4StubGenerator {
         return treeMaker.Annotation(treeMaker.FqName(Metadata::class.java.canonicalName), JavacList.from(arguments))
     }
 
-    // TODO
+    context(UnresolvedQualifiersRecorder)
+    @Suppress("IncorrectFormatting") // KTIJ-22227
     private fun convertAnnotation(
         containingClass: PsiClass,
         annotation: PsiAnnotation,
@@ -429,6 +425,8 @@ class Kapt4StubGenerator {
         return treeMaker.Annotation(annotationFqName, values)
     }
 
+    context(UnresolvedQualifiersRecorder)
+    @Suppress("IncorrectFormatting") // KTIJ-22227
     private fun convertPsiAnnotationMemberValue(
         containingClass: PsiClass,
         value: PsiAnnotationMemberValue,
@@ -472,6 +470,8 @@ class Kapt4StubGenerator {
         )
     }
 
+    context(UnresolvedQualifiersRecorder)
+    @Suppress("IncorrectFormatting") // KTIJ-22227
     private fun convertModifiers(
         containingClass: PsiClass,
         access: Int,
@@ -484,6 +484,8 @@ class Kapt4StubGenerator {
         return convertModifiers(containingClass, access.toLong(), kind, packageFqName, allAnnotations, metadata, additionalAnnotations)
     }
 
+    context(UnresolvedQualifiersRecorder)
+    @Suppress("IncorrectFormatting") // KTIJ-22227
     private fun convertModifiers(
         containingClass: PsiClass,
         access: Long,
@@ -540,7 +542,8 @@ class Kapt4StubGenerator {
         }
     }
 
-    // TODO
+    context(UnresolvedQualifiersRecorder)
+    @Suppress("IncorrectFormatting") // KTIJ-22227
     private fun convertField(
         field: PsiField,
         containingClass: PsiClass,
@@ -732,7 +735,8 @@ class Kapt4StubGenerator {
         return convertedValue
     }
 
-
+    context(UnresolvedQualifiersRecorder)
+    @Suppress("IncorrectFormatting") // KTIJ-22227
     private fun convertMethod(
         method: PsiMethod,
         containingClass: PsiClass,
@@ -927,7 +931,9 @@ class Kapt4StubGenerator {
 //        }
     }
 
+    context(UnresolvedQualifiersRecorder)
     @OptIn(ExperimentalContracts::class)
+    @Suppress("IncorrectFormatting") // KTIJ-22227
     private inline fun PsiType?.convertAndRecordErrors(
         ifNonError: () -> JCExpression = { treeMaker.TypeWithArguments(this) }
     ): JCExpression {
@@ -938,9 +944,11 @@ class Kapt4StubGenerator {
         return ifNonError()
     }
 
+    context(UnresolvedQualifiersRecorder)
+    @Suppress("IncorrectFormatting") // KTIJ-22227
     private fun PsiType.recordErrorTypes() {
         if (qualifiedNameOrNull == null) {
-            unresolvedQualifiers += qualifiedName
+            recordUnresolvedQualifier(qualifiedName)
         }
         when (this) {
             is PsiClassType -> typeArguments().forEach { (it as? PsiType)?.recordErrorTypes() }
@@ -1032,6 +1040,8 @@ class Kapt4StubGenerator {
         val superClassIsObject: Boolean
     )
 
+    context(UnresolvedQualifiersRecorder)
+    @Suppress("IncorrectFormatting") // KTIJ-22227
     private fun parseClassSignature(psiClass: PsiClass): ClassGenericSignature {
         val superClasses = mutableListOf<JCExpression>()
         val superInterfaces = mutableListOf<JCExpression>()
@@ -1064,6 +1074,8 @@ class Kapt4StubGenerator {
         return treeMaker.FqName("java.lang.Object")
     }
 
+    context(UnresolvedQualifiersRecorder)
+    @Suppress("IncorrectFormatting") // KTIJ-22227
     private fun convertTypeParameter(typeParameter: PsiTypeParameter): JCTypeParameter {
         val classBounds = mutableListOf<JCExpression>()
         val interfaceBounds = mutableListOf<JCExpression>()
@@ -1082,6 +1094,30 @@ class Kapt4StubGenerator {
             classBounds += createJavaLangObjectType()
         }
         return treeMaker.TypeParameter(treeMaker.name(typeParameter.name!!), JavacList.from(classBounds + interfaceBounds))
+    }
+
+    private class UnresolvedQualifiersRecorder {
+        private val _qualifiedNames = mutableSetOf<String>()
+        private val _simpleNames = mutableSetOf<String>()
+
+        val qualifiedNames: Set<String>
+            get() = _qualifiedNames
+        val simpleNames: Set<String>
+            get() = _simpleNames
+
+        fun isEmpty(): Boolean {
+            return simpleNames.isEmpty()
+        }
+
+        fun recordUnresolvedQualifier(qualifier: String) {
+            val separated = qualifier.split(".")
+            if (separated.size > 1) {
+                _qualifiedNames += qualifier
+                _simpleNames += separated.first()
+            } else {
+                _simpleNames += qualifier
+            }
+        }
     }
 }
 

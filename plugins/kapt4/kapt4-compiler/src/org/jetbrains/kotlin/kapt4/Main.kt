@@ -67,7 +67,7 @@ object Kapt4Main {
             ktAnalysisSession.ktMetadataCalculator
         )
 
-        val generator = with(context) { Kapt4StubGenerator() }
+        val generator = with(context) { Kapt4StubGenerator(ktAnalysisSession) }
         return context to generator.generateStubs()
     }
 }

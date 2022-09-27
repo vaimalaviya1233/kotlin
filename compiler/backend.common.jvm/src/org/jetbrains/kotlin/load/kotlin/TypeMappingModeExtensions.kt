@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.load.kotlin
 
 import org.jetbrains.kotlin.types.TypeSystemCommonBackendContext
 import org.jetbrains.kotlin.types.model.KotlinTypeMarker
+import org.jetbrains.kotlin.load.kotlin.Foo.*
 
 fun TypeSystemCommonBackendContext.getOptimalModeForValueParameter(
     type: KotlinTypeMarker
@@ -57,3 +58,5 @@ private fun TypeSystemCommonBackendContext.getOptimalModeForSignaturePart(
         needInlineClassWrapping = !isInlineClassType
     )
 }
+
+class Foo
