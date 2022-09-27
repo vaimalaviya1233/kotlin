@@ -21,14 +21,11 @@ import org.jetbrains.kotlin.kapt3.base.javac.kaptError
 import org.jetbrains.kotlin.kapt3.base.javac.reportKaptError
 import org.jetbrains.kotlin.kapt3.base.stubs.KaptStubLineInformation
 import org.jetbrains.kotlin.kapt3.base.stubs.KotlinPosition
-import org.jetbrains.kotlin.kapt4.ErrorTypeCorrector.TypeKind.*
 import org.jetbrains.kotlin.light.classes.symbol.classes.SymbolLightClassForClassOrObject
 import org.jetbrains.kotlin.light.classes.symbol.classes.SymbolLightClassForFacade
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.resolve.ArrayFqNames
 import org.jetbrains.kotlin.utils.addToStdlib.runIf
 import org.jetbrains.kotlin.utils.addToStdlib.runUnless
@@ -37,6 +34,9 @@ import org.jetbrains.org.objectweb.asm.Type
 import java.io.File
 import java.lang.annotation.ElementType
 import javax.lang.model.element.ElementKind
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.InvocationKind
+import kotlin.contracts.contract
 import kotlin.math.sign
 
 context(Kapt4ContextForStubGeneration)
@@ -100,6 +100,8 @@ class Kapt4StubGenerator {
     private val signatureParser = SignatureParser(treeMaker)
 
     private val kdocCommentKeeper = if (keepKdocComments) Kapt4KDocCommentKeeper() else null
+
+    private val unresolvedQualifiers = mutableSetOf<String>()
 
     fun generateStubs(): Map<KtLightClass, KaptStub?> {
         return classes.associateWith { convertTopLevelClass(it) }
@@ -229,7 +231,7 @@ class Kapt4StubGenerator {
         val simpleName = getClassName(lightClass, isDefaultImpls, packageFqName)
         if (!isValidIdentifier(simpleName)) return null
 
-        val genericType = signatureParser.parseClassSignature(lightClass)
+        val classSignature = parseClassSignature(lightClass)
 
         val enumValues: JavacList<JCTree> = mapJList(lightClass.fields) { field ->
             if (field !is PsiEnumConstant) return@mapJList null
@@ -272,8 +274,6 @@ class Kapt4StubGenerator {
 
         lineMappings.registerClass(lightClass)
 
-        val superTypes = calculateSuperTypes(lightClass, genericType)
-
         val classPosition = lineMappings.getPosition(lightClass)
         val sortedFields = JavacList.from(fields.sortedWith(MembersPositionComparator(classPosition, fieldsPositions)))
         val sortedMethods = JavacList.from(methods.sortedWith(MembersPositionComparator(classPosition, methodsPositions)))
@@ -281,9 +281,9 @@ class Kapt4StubGenerator {
         return treeMaker.ClassDef(
             modifiers,
             treeMaker.name(simpleName),
-            genericType.typeParameters,
-            superTypes.superClass,
-            superTypes.interfaces,
+            classSignature.typeParameters,
+            classSignature.superClass.takeUnless { classSignature.superClassIsObject || lightClass.isEnum },
+            classSignature.interfaces,
             JavacList.from(enumValues + sortedFields + sortedMethods + nestedClasses)
         ).keepKdocCommentsIfNecessary(lightClass)
     }
@@ -410,21 +410,14 @@ class Kapt4StubGenerator {
             if (stripMetadata && fqName == KOTLIN_METADATA_ANNOTATION) return null
         }
 
-        val annotationFqName = getNonErrorType(
-            annotation.resolveAnnotationType()?.defaultType,
-            ANNOTATION,
-            {
-                TODO()/*ktAnnotation?.typeReference*/
-            },
-            {
-                val useSimpleName = '.' in fqName && fqName.substringBeforeLast('.', "") == packageFqName
+        val annotationFqName = annotation.resolveAnnotationType()?.defaultType.convertAndRecordErrors {
+            val useSimpleName = '.' in fqName && fqName.substringBeforeLast('.', "") == packageFqName
 
-                when {
-                    useSimpleName -> treeMaker.FqName(fqName.substring(packageFqName!!.length + 1))
-                    else -> treeMaker.FqName(fqName)
-                }
+            when {
+                useSimpleName -> treeMaker.FqName(fqName.substring(packageFqName!!.length + 1))
+                else -> treeMaker.FqName(fqName)
             }
-        )
+        }
 
         val values = mapJList<_, JCExpression>(annotation.parameterList.attributes) {
             val name = it.name ?: return@mapJList null
@@ -591,12 +584,7 @@ class Kapt4StubGenerator {
         val typeExpression = if (isEnum(access)) {
             treeMaker.SimpleName(treeMaker.getQualifiedName(type).substringAfterLast('.'))
         } else {
-            getNonErrorType(
-                type,
-                RETURN_TYPE,
-                ktTypeProvider = { field.extractOriginalKtDeclaration<KtCallableDeclaration>()?.typeReference },
-                ifNonError = { treeMaker.TypeWithArguments(type) }
-            )
+            type.convertAndRecordErrors()
         }
 
         lineMappings.registerField(containingClass, field)
@@ -807,23 +795,13 @@ class Kapt4StubGenerator {
 
             val name = info.name.takeIf { isValidIdentifier(it) } ?: "p$index"
 
-            val type = getNonErrorType(
-                info.type,
-                METHOD_PARAMETER_TYPE,
-                ktTypeProvider = { info.parameter.extractOriginalKtDeclaration<KtCallableDeclaration>()?.typeReference },
-                ifNonError = { treeMaker.TypeWithArguments(info.type) }
-            )
+            val type = info.type.convertAndRecordErrors()
             treeMaker.VarDef(modifiers, treeMaker.name(name), type, null)
         }
-        val jTypeParameters = mapJList(method.typeParameters) { signatureParser.convertTypeParameter(it) }
+        val jTypeParameters = mapJList(method.typeParameters) { convertTypeParameter(it) }
         val jExceptionTypes = mapJList(method.throwsTypes) { treeMaker.TypeWithArguments(it as PsiType) }
         val jReturnType = runUnless(isConstructor) {
-            getNonErrorType(
-                returnType,
-                RETURN_TYPE,
-                ktTypeProvider = { method.extractOriginalKtDeclaration<KtCallableDeclaration>()?.typeReference },
-                ifNonError = { treeMaker.TypeWithArguments(returnType) }
-            )
+            returnType.convertAndRecordErrors()
         }
 
         val defaultValue = (method as? PsiAnnotationMethod)?.defaultValue?.let {
@@ -949,50 +927,26 @@ class Kapt4StubGenerator {
 //        }
     }
 
-    private fun <T : JCExpression?> getNonErrorType(
-        type: PsiType?,
-        kind: ErrorTypeCorrector.TypeKind,
-        ktTypeProvider: () -> KtTypeReference?,
-        ifNonError: () -> T
-    ): T {
-        if (!correctErrorTypes) {
-            return ifNonError()
+    @OptIn(ExperimentalContracts::class)
+    private inline fun PsiType?.convertAndRecordErrors(
+        ifNonError: () -> JCExpression = { treeMaker.TypeWithArguments(this) }
+    ): JCExpression {
+        contract {
+            callsInPlace(ifNonError, InvocationKind.EXACTLY_ONCE)
         }
-
-        if (type?.containsErrorTypes() == true) {
-            val ktType = ktTypeProvider()?.typeElement
-            val ktFile = ktType?.containingKtFile
-            if (ktFile != null) {
-                @Suppress("UNCHECKED_CAST")
-                return ErrorTypeCorrector(this, kind, ktFile).convert(type, ktType) as T
-            }
-        }
-
-        val nonErrorType = ifNonError()
-
-        if (nonErrorType is JCFieldAccess) {
-            val qualifier = nonErrorType.selected
-            if (nonErrorType.name.toString() == NON_EXISTENT_CLASS_NAME.shortName().asString()
-                && qualifier is JCIdent
-                && qualifier.name.toString() == NON_EXISTENT_CLASS_NAME.parent().asString()
-            ) {
-                @Suppress("UNCHECKED_CAST")
-                return treeMaker.FqName("java.lang.Object") as T
-            }
-        }
-
-        return nonErrorType
+        this?.recordErrorTypes()
+        return ifNonError()
     }
 
-    private class ClassSupertypes(val superClass: JCExpression?, val interfaces: JavacList<JCExpression>)
-
-    private fun calculateSuperTypes(clazz: PsiClass, genericType: SignatureParser.ClassGenericSignature): ClassSupertypes {
-        return ClassSupertypes(
-            genericType.superClass.takeUnless { genericType.superClassIsObject || clazz.isEnum },
-            genericType.interfaces
-        )
+    private fun PsiType.recordErrorTypes() {
+        if (qualifiedNameOrNull == null) {
+            unresolvedQualifiers += qualifiedName
+        }
+        when (this) {
+            is PsiClassType -> typeArguments().forEach { (it as? PsiType)?.recordErrorTypes() }
+            is PsiArrayType -> componentType.recordErrorTypes()
+        }
     }
-
 
     // TODO
     private fun getClassName(lightClass: PsiClass, isDefaultImpls: Boolean, packageFqName: String): String {
@@ -1070,13 +1024,64 @@ class Kapt4StubGenerator {
             return m1.descriptor.compareTo(m2.descriptor)
         }
     }
-}
 
-fun PsiType.containsErrorTypes(): Boolean {
-    if (this.isErrorType) return true
-    return when (this) {
-        is PsiClassType -> typeArguments().any { (it as? PsiType)?.containsErrorTypes() == true }
-        is PsiArrayType -> componentType.containsErrorTypes()
-        else -> false
+    private class ClassGenericSignature(
+        val typeParameters: JavacList<JCTypeParameter>,
+        val superClass: JCExpression,
+        val interfaces: JavacList<JCExpression>,
+        val superClassIsObject: Boolean
+    )
+
+    private fun parseClassSignature(psiClass: PsiClass): ClassGenericSignature {
+        val superClasses = mutableListOf<JCExpression>()
+        val superInterfaces = mutableListOf<JCExpression>()
+
+        val superPsiClasses = psiClass.extendsListTypes.toList()
+        val superPsiInterfaces = psiClass.implementsListTypes.toList()
+
+        fun addSuperType(superType: PsiClassType, destination: MutableList<JCExpression>) {
+            if (psiClass.isAnnotationType && superType.qualifiedName == "java.lang.annotation.Annotation") return
+            destination += superType.convertAndRecordErrors()
+        }
+
+        var superClassIsObject = false
+
+        superPsiClasses.forEach {
+            addSuperType(it, superClasses)
+            superClassIsObject = superClassIsObject || it.qualifiedNameOrNull == "java.lang.Object"
+        }
+        superPsiInterfaces.forEach { addSuperType(it, superInterfaces) }
+
+        val jcTypeParameters = mapJList(psiClass.typeParameters) { convertTypeParameter(it) }
+        val jcSuperClass = superClasses.firstOrNull() ?: createJavaLangObjectType().also {
+            superClassIsObject = true
+        }
+        val jcInterfaces = JavacList.from(superInterfaces)
+        return ClassGenericSignature(jcTypeParameters, jcSuperClass, jcInterfaces, superClassIsObject)
+    }
+
+    private fun createJavaLangObjectType(): JCExpression {
+        return treeMaker.FqName("java.lang.Object")
+    }
+
+    private fun convertTypeParameter(typeParameter: PsiTypeParameter): JCTypeParameter {
+        val classBounds = mutableListOf<JCExpression>()
+        val interfaceBounds = mutableListOf<JCExpression>()
+
+        val bounds = typeParameter.bounds
+        for (bound in bounds) {
+            val boundType = bound as? PsiType ?: continue
+            val jBound = boundType.convertAndRecordErrors()
+            if (boundType.resolvedClass?.isInterface == false) {
+                classBounds += jBound
+            } else {
+                interfaceBounds += jBound
+            }
+        }
+        if (classBounds.isEmpty() && interfaceBounds.isEmpty()) {
+            classBounds += createJavaLangObjectType()
+        }
+        return treeMaker.TypeParameter(treeMaker.name(typeParameter.name!!), JavacList.from(classBounds + interfaceBounds))
     }
 }
+
