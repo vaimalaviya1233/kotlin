@@ -110,7 +110,7 @@ class IncrementalFirJvmCompilerRunner(
 
         val exitCode = ExitCode.OK
         val allCompiledSources = LinkedHashSet<File>()
-        val rootDisposable = Disposer.newDisposable()
+        val rootDisposable = Disposer.newDisposable("IncrementalFirJvmCompilerRunner.runCompiler")
 
         try {
             // - configuration

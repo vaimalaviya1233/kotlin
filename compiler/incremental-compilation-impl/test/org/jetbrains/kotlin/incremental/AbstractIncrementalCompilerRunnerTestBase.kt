@@ -16,6 +16,7 @@
 
 package org.jetbrains.kotlin.incremental
 
+import com.intellij.openapi.application.ApplicationManager
 import org.jetbrains.kotlin.TestWithWorkingDir
 import org.jetbrains.kotlin.cli.common.ExitCode
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
@@ -23,7 +24,10 @@ import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
 import org.jetbrains.kotlin.incremental.testingUtils.*
 import org.jetbrains.kotlin.incremental.utils.TestCompilationResult
 import org.jetbrains.kotlin.test.testFramework.KtUsefulTestCase
+import org.jetbrains.kotlin.test.testFramework.resetApplicationToNull
+import org.jetbrains.kotlin.testFramework.MockComponentManagerCreationTracer.diagnoseDisposedButNotClearedApplication
 import org.junit.Assert
+import org.junit.Before
 import java.io.File
 
 abstract class AbstractIncrementalCompilerRunnerTestBase<Args : CommonCompilerArguments> : TestWithWorkingDir() {
@@ -36,6 +40,12 @@ abstract class AbstractIncrementalCompilerRunnerTestBase<Args : CommonCompilerAr
 
     protected open fun resetTest(testDir: File, newOutDir: File, newCacheDir: File) {}
 
+    @Before
+    override fun setUp() {
+        super.setUp()
+        diagnoseDisposedButNotClearedApplication()
+    }
+
     private fun createCompilerArgumentsImpl(destinationDir: File, testDir: File): Args = createCompilerArguments(destinationDir, testDir).apply {
         parseCommandLineArguments(parseAdditionalArgs(testDir), this)
     }
@@ -44,6 +54,7 @@ abstract class AbstractIncrementalCompilerRunnerTestBase<Args : CommonCompilerAr
         val testDir = File(path)
         val failFile = testDir.resolve(FAIL_FILE_NAME)
         var testPassed = false
+        val application = ApplicationManager.getApplication()
         try {
             doTestImpl(testDir)
             testPassed = true
@@ -51,6 +62,8 @@ abstract class AbstractIncrementalCompilerRunnerTestBase<Args : CommonCompilerAr
             if (!failFile.exists()) {
                 throw e
             }
+        } finally {
+            resetApplicationToNull(application)
         }
         if (testPassed && failFile.exists()) {
             fail("Test is successful and $FAIL_FILE_NAME can be removed")
