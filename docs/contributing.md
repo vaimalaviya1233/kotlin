@@ -58,6 +58,35 @@ git config --global pull.rebase true
 This will avoid your local repo having too many merge commits
 which will help keep your pull request simple and easy to apply.
 
+## Rules for commit messages
+
+Most of these rules are originated from the [How to Write a Git Commit Message](https://chris.beams.io/posts/git-commit/) 
+article, and it's highly recommended to read it.
+
+### Rules on commit messages' content
+
+1. Use the body to explain what and why vs. how
+   1. When the changes are not very obvious try to explain why they are applied
+2. Significant commits must mention relevant fixed [YouTrack](https://youtrack.jetbrains.com/issues/KT) issues in their messages
+3. Commit changes together with the corresponding tests, unless the resulting commit becomes too unwieldy to grasp
+4. Try to avoid commits like “Fixes after review” whenever it's possible, squash them with the meaningful ones
+5. Keep the subject (first line of the commit message) clean and readable. All additional information and directives for external tools 
+should be moved to the message body.
+6. If you mention “*^[KTIJ-235](https://youtrack.jetbrains.com/issue/KTIJ-235) Fixed*” in the message body - then the VCS integration will 
+add *Fix in Builds* field to the issue in the YouTrack and automatically mark issue as fixed. For details see 
+[YouTrack Integrations](https://www.jetbrains.com/youtrack/features/integrations.html) and 
+[Apply Commands in VCS Commits](https://www.jetbrains.com/help/youtrack/server/Apply-Commands-in-VCS-Commits.html)
+
+### Rules on commit messages' style/formatting
+
+1. Separate subject from body with a blank line
+2. Capitalize the subject line
+3. Do not end the subject line with a period
+4. Use the imperative mood in the subject line
+5. Limit the commit messages lines to 72 characters
+   * Use “Commit Message Inspections” in IntelliJ IDE *Settings -> Version Control -> Commit*
+   * vim: ```autocmd FileType gitcommit setlocal textwidth=72```
+
 ## Checklist
 
 Before submitting the pull request, make sure that you can say "YES" to each point in this short checklist:
