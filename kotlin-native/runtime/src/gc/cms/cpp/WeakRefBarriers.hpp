@@ -12,9 +12,6 @@ namespace kotlin::gc {
 void enableWeakRefBarriers() noexcept;
 void disableWeakRefBarriers() noexcept;
 
-OBJ_GETTER(weakRefRead, ObjHeader* const * weakRefAddress) noexcept;
-ObjHeader* weakRefReadUnsafe(ObjHeader* const * weakRefAddress) noexcept;
-void weakRefMark(ObjHeader** weakRefAddress) noexcept;
-void weakRefResetMark(ObjHeader** weakRefAddress) noexcept;
+OBJ_GETTER(weakRefRead, ObjHeader* object) noexcept;
 
 }

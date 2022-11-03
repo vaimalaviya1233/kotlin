@@ -82,7 +82,7 @@ OBJ_GETTER(Konan_getWeakReferenceImpl, ObjHeader* referred) {
 OBJ_GETTER(Konan_WeakReferenceCounter_get, ObjHeader* counter) {
   ObjHeader** referredAddress = &asWeakReferenceCounter(counter)->referred;
   if (CurrentMemoryModel == MemoryModel::kExperimental) {
-    RETURN_RESULT_OF(kotlin::mm::WeakRefRead, referredAddress);
+    RETURN_RESULT_OF(TryRef, *referredAddress);
   } else {
 #if KONAN_NO_THREADS
     RETURN_OBJ(*referredAddress);
@@ -94,8 +94,7 @@ OBJ_GETTER(Konan_WeakReferenceCounter_get, ObjHeader* counter) {
 }
 
 ALWAYS_INLINE ObjHeader* UnsafeWeakReferenceCounterGet(ObjHeader* counter) {
-    ObjHeader** referredAddress = &asWeakReferenceCounter(counter)->referred;
-    return kotlin::mm::WeakRefReadUnsafe(referredAddress);
+    return asWeakReferenceCounter(counter)->referred;
 }
 
 void WeakReferenceCounterClear(ObjHeader* counter) {
@@ -110,16 +109,6 @@ void WeakReferenceCounterClear(ObjHeader* counter) {
   *referredAddress = nullptr;
   unlock(lockAddress);
 #endif
-}
-
-void WeakReferenceCounterMark(ObjHeader* counter) {
-  ObjHeader** referredAddress = &asWeakReferenceCounter(counter)->referred;
-  kotlin::mm::WeakRefMark(referredAddress);
-}
-
-void WeakReferenceCounterResetMark(ObjHeader* counter) {
-  ObjHeader** referredAddress = &asWeakReferenceCounter(counter)->referred;
-  kotlin::mm::WeakRefResetMark(referredAddress);
 }
 
 }  // extern "C"

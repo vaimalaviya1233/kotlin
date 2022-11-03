@@ -61,8 +61,6 @@ class BackRefFromAssociatedObject {
   void detach();
   void assertDetached();
 
-  void mark(bool mark) noexcept;
-
   // Error if called from the wrong worker with non-frozen obj_.
   template <ErrorPolicy errorPolicy>
   ObjHeader* ref() const;

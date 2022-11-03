@@ -22,9 +22,6 @@ enum class ReleaseMode {
     kRelease,
     kDetachAndRelease,
     kDetach,
-    // The following two is a hack.
-    kMark,
-    kResetMark,
 };
 
 inline bool ReleaseModeHasDetach(ReleaseMode mode) {
@@ -34,9 +31,6 @@ inline bool ReleaseModeHasDetach(ReleaseMode mode) {
         case ReleaseMode::kDetachAndRelease:
         case ReleaseMode::kDetach:
             return true;
-        case ReleaseMode::kMark:
-        case ReleaseMode::kResetMark:
-            return false;
     }
 }
 
@@ -47,21 +41,6 @@ inline bool ReleaseModeHasRelease(ReleaseMode mode) {
             return true;
         case ReleaseMode::kDetach:
             return false;
-        case ReleaseMode::kMark:
-        case ReleaseMode::kResetMark:
-            return false;
-    }
-}
-
-inline bool ReleaseModeIsForMarking(ReleaseMode mode) {
-    switch (mode) {
-        case ReleaseMode::kRelease:
-        case ReleaseMode::kDetachAndRelease:
-        case ReleaseMode::kDetach:
-            return false;
-        case ReleaseMode::kMark:
-        case ReleaseMode::kResetMark:
-            return true;
     }
 }
 

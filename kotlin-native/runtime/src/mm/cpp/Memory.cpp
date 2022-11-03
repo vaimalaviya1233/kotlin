@@ -467,13 +467,7 @@ extern "C" RUNTIME_NOTHROW void ReleaseHeapRefNoCollect(const ObjHeader* object)
 }
 
 extern "C" RUNTIME_NOTHROW OBJ_GETTER(TryRef, ObjHeader* object) {
-    // TODO: With CMS this needs:
-    //       * during marking phase if `object` is unmarked: barrier (might be automatic because of the stack write)
-    //         and return `object`;
-    //       * during marking phase if `object` is marked: return `object`;
-    //       * during sweeping phase if `object` is unmarked: return nullptr;
-    //       * during sweeping phase if `object` is marked: return `object`;
-    RETURN_OBJ(object);
+    RETURN_RESULT_OF(gc::GC::tryRef, object);
 }
 
 extern "C" RUNTIME_NOTHROW bool ClearSubgraphReferences(ObjHeader* root, bool checked) {
@@ -654,20 +648,4 @@ RUNTIME_NOTHROW ALWAYS_INLINE extern "C" void Kotlin_processFieldInMark(void* st
 RUNTIME_NOTHROW ALWAYS_INLINE extern "C" void Kotlin_processEmptyObjectInMark(void* state, ObjHeader* object) {
     // Empty object. Nothing to do.
     // TODO: Try to generate it in the code generator.
-}
-
-ALWAYS_INLINE OBJ_GETTER(mm::WeakRefRead, ObjHeader* const * weakRefAddress) noexcept {
-    RETURN_RESULT_OF(gc::GC::weakRefRead, weakRefAddress);
-}
-
-ALWAYS_INLINE ObjHeader* mm::WeakRefReadUnsafe(ObjHeader* const * weakRefAddress) noexcept {
-    return gc::GC::weakRefReadUnsafe(weakRefAddress);
-}
-
-ALWAYS_INLINE void mm::WeakRefMark(ObjHeader** weakRefAddress) noexcept {
-    gc::GC::weakRefMark(weakRefAddress);
-}
-
-ALWAYS_INLINE void mm::WeakRefResetMark(ObjHeader** weakRefAddress) noexcept {
-    gc::GC::weakRefResetMark(weakRefAddress);
 }

@@ -132,21 +132,6 @@ ALWAYS_INLINE void gc::GC::processFieldInMark(void* state, ObjHeader* field) noe
 }
 
 // static
-ALWAYS_INLINE OBJ_GETTER(gc::GC::weakRefRead, ObjHeader* const * weakRefAddress) noexcept {
-    RETURN_RESULT_OF(gc::weakRefRead, weakRefAddress);
-}
-
-// static
-ALWAYS_INLINE ObjHeader* gc::GC::weakRefReadUnsafe(ObjHeader* const * weakRefAddress) noexcept {
-    return gc::weakRefReadUnsafe(weakRefAddress);
-}
-
-// static
-ALWAYS_INLINE void gc::GC::weakRefMark(ObjHeader** weakRefAddress) noexcept {
-    gc::weakRefMark(weakRefAddress);
-}
-
-// static
-ALWAYS_INLINE void gc::GC::weakRefResetMark(ObjHeader** weakRefAddress) noexcept {
-    gc::weakRefResetMark(weakRefAddress);
+ALWAYS_INLINE OBJ_GETTER(gc::GC::tryRef, ObjHeader* object) noexcept {
+    RETURN_RESULT_OF(gc::weakRefRead, object);
 }
