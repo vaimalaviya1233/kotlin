@@ -32,6 +32,19 @@ OBJ_GETTER(AllocateArray, ThreadData* threadData, const TypeInfo* typeInfo, uint
 // This does not take into account how much storage did the underlying allocator (malloc/mimalloc) reserved.
 size_t GetAllocatedHeapSize(ObjHeader* object) noexcept;
 
+// Weak reference reading.
+// When barriers are on unmarked `object`s will return `nullptr` here.
+// When barriers are off, returns `object` unchanged.
+OBJ_GETTER(weakRefRead, ObjHeader* object) noexcept;
+// The default implementation of weak reference reading.
+// Can be used by GCs that do not employ barriers.
+OBJ_GETTER(weakRefReadDefault, ObjHeader* object) noexcept;
+
+// Enable weak reference barriers. Only marked references can be read with `weakRefRead` after this.
+void enableWeakRefBarriers() noexcept;
+// Disable weak reference barriers. Any references can be read with `weakRefRead` after this.
+void disableWeakRefBarriers() noexcept;
+
 } // namespace mm
 } // namespace kotlin
 

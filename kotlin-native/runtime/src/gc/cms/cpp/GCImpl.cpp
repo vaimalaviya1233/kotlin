@@ -8,8 +8,8 @@
 #include "GC.hpp"
 #include "GCStatistics.hpp"
 #include "MarkAndSweepUtils.hpp"
+#include "ObjectOps.hpp"
 #include "ThreadSuspension.hpp"
-#include "WeakRefBarriers.hpp"
 #include "std_support/Memory.hpp"
 
 using namespace kotlin;
@@ -132,6 +132,6 @@ ALWAYS_INLINE void gc::GC::processFieldInMark(void* state, ObjHeader* field) noe
 }
 
 // static
-ALWAYS_INLINE OBJ_GETTER(gc::GC::tryRef, ObjHeader* object) noexcept {
-    RETURN_RESULT_OF(gc::weakRefRead, object);
+ALWAYS_INLINE OBJ_GETTER(gc::tryRef, ObjHeader* object) noexcept {
+    RETURN_RESULT_OF(mm::weakRefRead, object);
 }

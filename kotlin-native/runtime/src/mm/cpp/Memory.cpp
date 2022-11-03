@@ -467,7 +467,7 @@ extern "C" RUNTIME_NOTHROW void ReleaseHeapRefNoCollect(const ObjHeader* object)
 }
 
 extern "C" RUNTIME_NOTHROW OBJ_GETTER(TryRef, ObjHeader* object) {
-    RETURN_RESULT_OF(gc::GC::tryRef, object);
+    RETURN_RESULT_OF(gc::tryRef, object);
 }
 
 extern "C" RUNTIME_NOTHROW bool ClearSubgraphReferences(ObjHeader* root, bool checked) {

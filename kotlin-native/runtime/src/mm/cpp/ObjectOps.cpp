@@ -5,11 +5,36 @@
 
 #include "ObjectOps.hpp"
 
+#include <atomic>
+
 #include "Common.h"
+#include "ExtraObjectData.hpp"
 #include "ThreadData.hpp"
 #include "ThreadState.hpp"
 
 using namespace kotlin;
+
+namespace {
+
+using WeakRefReadType = ObjHeader*(*)(ObjHeader*, ObjHeader**) noexcept;
+
+OBJ_GETTER(weakRefReadWithBarriers, ObjHeader* object) noexcept {
+    if (!object) {
+        RETURN_OBJ(nullptr);
+    }
+    // When weak ref barriers are on, `marked()` cannot change,
+    // and ExtraObjectData cannot be gone.
+    auto* extraObjectData = mm::ExtraObjectData::Get(object);
+    RuntimeAssert(extraObjectData != nullptr, "For someone to have weak access, ExtraObjectData must've been created");
+    if (!extraObjectData->marked()) {
+        return nullptr;
+    }
+    RETURN_OBJ(object);
+}
+
+std::atomic<WeakRefReadType> weakRefReadImpl = mm::weakRefReadDefault;
+
+}
 
 // TODO: Memory barriers.
 
@@ -72,4 +97,24 @@ OBJ_GETTER(mm::AllocateArray, ThreadData* threadData, const TypeInfo* typeInfo, 
 
 size_t mm::GetAllocatedHeapSize(ObjHeader* object) noexcept {
     return gc::GC::GetAllocatedHeapSize(object);
+}
+
+OBJ_GETTER(mm::weakRefRead, ObjHeader* object) noexcept {
+    // weakRefReadImpl only changes inside STW. Access is always synchronized.
+    auto* impl = weakRefReadImpl.load(std::memory_order_relaxed);
+    RETURN_RESULT_OF(impl, object);
+}
+
+OBJ_GETTER(mm::weakRefReadDefault, ObjHeader* object) noexcept {
+    RETURN_OBJ(object);
+}
+
+void mm::enableWeakRefBarriers() noexcept {
+    // Happens inside STW.
+    weakRefReadImpl.store(weakRefReadWithBarriers, std::memory_order_relaxed);
+}
+
+void mm::disableWeakRefBarriers() noexcept {
+    // Happens inside STW.
+    weakRefReadImpl.store(mm::weakRefReadDefault, std::memory_order_relaxed);
 }

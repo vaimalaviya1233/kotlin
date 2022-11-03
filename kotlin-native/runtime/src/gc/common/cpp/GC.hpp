@@ -76,11 +76,11 @@ public:
     static void processArrayInMark(void* state, ArrayHeader* array) noexcept;
     static void processFieldInMark(void* state, ObjHeader* field) noexcept;
 
-    static OBJ_GETTER(tryRef, ObjHeader* object) noexcept;
-
 private:
     std_support::unique_ptr<Impl> impl_;
 };
+
+OBJ_GETTER(tryRef, ObjHeader* object) noexcept;
 
 inline constexpr bool kSupportsMultipleMutators = true;
 

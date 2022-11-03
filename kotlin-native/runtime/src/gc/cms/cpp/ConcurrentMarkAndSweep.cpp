@@ -21,7 +21,7 @@
 #include "GCState.hpp"
 #include "FinalizerProcessor.hpp"
 #include "GCStatistics.hpp"
-#include "WeakRefBarriers.hpp"
+#include "ObjectOps.hpp"
 
 using namespace kotlin;
 
@@ -171,7 +171,8 @@ bool gc::ConcurrentMarkAndSweep::PerformFullGC(int64_t epoch) noexcept {
 
     auto objectFactoryIterable = objectFactory_.LockForIter();
 
-    enableWeakRefBarriers();
+    // Expected to happen inside STW.
+    mm::enableWeakRefBarriers();
 
     mm::ResumeThreads();
     gcHandle.threadsAreResumed();
@@ -180,11 +181,15 @@ bool gc::ConcurrentMarkAndSweep::PerformFullGC(int64_t epoch) noexcept {
 
     gc::SweepExtraObjects<SweepTraits>(gcHandle, extraObjectDataFactory);
 
+    // And another STW to remove the barrier.
+    // In reality the GC thread just must make sure that every thread
+    // has disabled the barriers.
+
     bool didSuspendAgain = mm::RequestThreadsSuspension();
     RuntimeAssert(didSuspendAgain, "Only GC thread can request suspension");
     mm::WaitForThreadsSuspension();
 
-    disableWeakRefBarriers();
+    mm::disableWeakRefBarriers();
 
     mm::ResumeThreads();
 
