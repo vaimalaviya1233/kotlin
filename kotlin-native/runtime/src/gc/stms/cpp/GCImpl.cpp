@@ -126,7 +126,11 @@ ALWAYS_INLINE void gc::GC::processFieldInMark(void* state, ObjHeader* field) noe
     gc::internal::processFieldInMark<gc::internal::MarkTraits>(state, field);
 }
 
-// static
+bool gc::isMarked(ObjHeader* object) noexcept {
+    auto& objectData = mm::ObjectFactory<gc::SameThreadMarkAndSweep>::NodeRef::From(object).ObjectData();
+    return objectData.marked();
+}
+
 ALWAYS_INLINE OBJ_GETTER(gc::tryRef, ObjHeader* object) noexcept {
     RETURN_RESULT_OF(mm::weakRefReadDefault, object);
 }

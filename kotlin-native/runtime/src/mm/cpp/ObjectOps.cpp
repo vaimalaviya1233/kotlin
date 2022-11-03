@@ -7,6 +7,7 @@
 
 #include <atomic>
 
+#include "GC.hpp"
 #include "Common.h"
 #include "ExtraObjectData.hpp"
 #include "ThreadData.hpp"
@@ -19,15 +20,10 @@ namespace {
 using WeakRefReadType = ObjHeader*(*)(ObjHeader*, ObjHeader**) noexcept;
 
 OBJ_GETTER(weakRefReadWithBarriers, ObjHeader* object) noexcept {
-    if (!object) {
+    // When weak ref barriers are on, marked state cannot change and the
+    // object cannot be deleted.
+    if (!object || !gc::isMarked(object)) {
         RETURN_OBJ(nullptr);
-    }
-    // When weak ref barriers are on, `marked()` cannot change,
-    // and ExtraObjectData cannot be gone.
-    auto* extraObjectData = mm::ExtraObjectData::Get(object);
-    RuntimeAssert(extraObjectData != nullptr, "For someone to have weak access, ExtraObjectData must've been created");
-    if (!extraObjectData->marked()) {
-        return nullptr;
     }
     RETURN_OBJ(object);
 }

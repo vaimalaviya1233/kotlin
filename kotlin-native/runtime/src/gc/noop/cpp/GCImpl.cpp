@@ -107,7 +107,8 @@ ALWAYS_INLINE void gc::GC::processArrayInMark(void* state, ArrayHeader* array) n
 // static
 ALWAYS_INLINE void gc::GC::processFieldInMark(void* state, ObjHeader* field) noexcept {}
 
-// static
+bool isMarked(ObjHeader* object) noexcept { return true; }
+
 ALWAYS_INLINE OBJ_GETTER(gc::tryRef, ObjHeader* object) noexcept {
     RETURN_RESULT_OF(mm::weakRefReadDefault, object);
 }
