@@ -37,6 +37,7 @@ import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.analysis.utils.errors.buildErrorWithAttachment
 import org.jetbrains.kotlin.analysis.utils.errors.*
+import org.jetbrains.kotlin.fir.contracts.FirResolvedContractDescription
 
 internal abstract class LLFirResolvableResolveSession(
     private val sessionProvider: LLFirSessionProvider,
@@ -96,9 +97,9 @@ internal abstract class LLFirResolvableResolveSession(
     }
 
     /**
-     * [ktDeclaration] should be either [KtDeclaration] or [KtLambdaExpression]
+     * [ktDeclaration] should be either [KtDeclaration] or [KtFunctionLiteral]
      */
-    private fun findSourceFirDeclarationByExpression(ktDeclaration: KtExpression, module: KtModule): FirBasedSymbol<*> {
+    private fun findSourceFirDeclarationByExpression(ktDeclaration: KtDeclaration, module: KtModule): FirBasedSymbol<*> {
         require(getModuleKind(module) == ModuleKind.RESOLVABLE_MODULE) {
             "Declaration should be resolvable module, instead it had ${module::class}"
         }
