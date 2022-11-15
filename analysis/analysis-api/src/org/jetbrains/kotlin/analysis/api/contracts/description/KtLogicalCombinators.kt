@@ -6,8 +6,7 @@
 package org.jetbrains.kotlin.analysis.api.contracts.description
 
 /**
- * K1: [org.jetbrains.kotlin.contracts.description.expressions.LogicalOr]
- * K1: [org.jetbrains.kotlin.contracts.description.expressions.LogicalAnd]
+ * K1: [org.jetbrains.kotlin.contracts.description.expressions.LogicalOr] & [org.jetbrains.kotlin.contracts.description.expressions.LogicalAnd]
  * K2: [org.jetbrains.kotlin.fir.contracts.description.ConeBinaryLogicExpression]
  */
 public class KtBinaryLogicExpression(
