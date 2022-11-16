@@ -20,6 +20,19 @@ abstract class IrInlineReferenceLocator(private val context: JvmBackendContext) 
     override fun visitElement(element: IrElement, data: IrDeclaration?) =
         element.acceptChildren(this, if (element is IrDeclaration && element !is IrVariable) element else data)
 
+//    override fun visitBlock(expression: IrBlock, data: IrDeclaration?) {
+//        if (expression !is IrInlinedFunctionBlock) return super.visitBlock(expression, data)
+//
+//        if (expression.isFunctionInlining()) {
+//            for (parameter in expression.inlineFunctionSymbol.owner.valueParameters) {
+//                val lambda = expression.inlineCall.getValueArgument(parameter.index)?.unwrapInlineLambda() ?: continue
+//                visitInlineLambda(lambda, expression.inlineFunctionSymbol.owner, parameter, data!!)
+//            }
+//        }
+//
+//        super.visitBlock(expression, data)
+//    }
+
     override fun visitFunctionAccess(expression: IrFunctionAccessExpression, data: IrDeclaration?) {
         val function = expression.symbol.owner
         if (function.isInlineFunctionCall(context)) {
