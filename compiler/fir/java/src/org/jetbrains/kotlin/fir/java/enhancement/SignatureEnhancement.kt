@@ -315,10 +315,18 @@ class FirSignatureEnhancement(
 
                     this.name = name!!
                     status = firMethod.status
-                    symbol = FirNamedFunctionSymbol(methodId)
+                    val functionSymbol = FirNamedFunctionSymbol(methodId)
+                    symbol = functionSymbol
                     resolvePhase = FirResolvePhase.ANALYZED_DEPENDENCIES
                     valueParameters += newValueParameters
-                    typeParameters += firMethod.typeParameters
+                    typeParameters += firMethod.typeParameters.map { typeParameter ->
+                        buildTypeParameterCopy(typeParameter) {
+                            origin = FirDeclarationOrigin.Enhancement
+                            resolvePhase = FirResolvePhase.ANALYZED_DEPENDENCIES
+                            containingDeclarationSymbol = functionSymbol
+                        }
+                    }
+
                     dispatchReceiverType = firMethod.dispatchReceiverType
                     attributes = firMethod.attributes.copy()
                 }
