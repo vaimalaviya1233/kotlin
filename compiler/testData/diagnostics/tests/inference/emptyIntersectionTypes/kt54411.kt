@@ -13,7 +13,7 @@ interface Queue<Q> {
 
     fun enqueue(element: Q) {
         val curTail = tail.value
-        tail.<!INFERRED_TYPE_VARIABLE_INTO_POSSIBLE_EMPTY_INTERSECTION!>findSegmentAndMoveForward<!>(curTail, ::createSegment)
+        tail.findSegmentAndMoveForward(curTail, ::createSegment)
     }
 }
 

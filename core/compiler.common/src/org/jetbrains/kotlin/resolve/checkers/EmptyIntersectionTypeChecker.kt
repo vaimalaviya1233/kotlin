@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.resolve.checkers
 
+import org.jetbrains.kotlin.resolve.checkers.EmptyIntersectionTypeChecker.computeByHavingCommonSubtype
 import org.jetbrains.kotlin.types.AbstractTypeChecker
 import org.jetbrains.kotlin.types.EmptyIntersectionTypeKind
 import org.jetbrains.kotlin.types.isDefinitelyEmpty
@@ -33,6 +34,11 @@ internal object EmptyIntersectionTypeChecker {
                 val secondType = types[j]
 
                 if (!mayCauseEmptyIntersection(secondType)) continue
+
+                if (AbstractTypeChecker.areRelatedBySubtyping(
+                        context = this, firstType.withNullability(nullable = false), secondType.withNullability(nullable = false)
+                    )
+                ) continue
 
                 val secondSubstitutedType = secondType.eraseContainingTypeParameters()
 
