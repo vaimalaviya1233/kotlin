@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.analysis.CheckersComponent
 import org.jetbrains.kotlin.fir.analysis.FirOverridesBackwardCompatibilityHelper
-import org.jetbrains.kotlin.fir.analysis.checkers.declaration.FirNameConflictsTracker
+import org.jetbrains.kotlin.fir.analysis.checkers.FirNameConflictsTracker
 import org.jetbrains.kotlin.fir.analysis.jvm.FirJvmOverridesBackwardCompatibilityHelper
 import org.jetbrains.kotlin.fir.caches.FirCachesFactory
 import org.jetbrains.kotlin.fir.caches.FirThreadUnsafeCachesFactory

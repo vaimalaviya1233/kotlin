@@ -6,229 +6,29 @@
 package org.jetbrains.kotlin.fir.analysis.checkers
 
 import org.jetbrains.kotlin.KtFakeSourceElementKind
+import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.diagnostics.reportOn
-import org.jetbrains.kotlin.fir.FirElement
+import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.impl.FirOuterClassTypeParameterRef
-import org.jetbrains.kotlin.fir.declarations.utils.isOperator
+import org.jetbrains.kotlin.fir.resolve.providers.firProvider
+import org.jetbrains.kotlin.fir.scopes.impl.FirPackageMemberScope
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
+import org.jetbrains.kotlin.fir.symbols.SymbolInternals
+import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirClassLikeSymbol
+import org.jetbrains.kotlin.fir.symbols.lazyResolveToPhase
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.fir.util.ListMultimap
-import org.jetbrains.kotlin.name.CallableId
+import org.jetbrains.kotlin.fir.visitors.FirVisitorVoid
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.utils.SmartSet
 
-/**
- * Provides representations for FirElement's.
- */
-interface FirDeclarationPresenter {
-    fun StringBuilder.appendRepresentation(it: FirElement) {
-        append("NO_REPRESENTATION")
-    }
-
-    fun StringBuilder.appendRepresentation(it: ClassId) {
-        append(it.packageFqName.asString())
-        append('/')
-        append(it.relativeClassName.asString())
-    }
-
-    fun StringBuilder.appendRepresentation(it: CallableId) {
-        if (it.className != null) {
-            append(it.packageName.asString())
-            append('/')
-            append(it.className)
-            append('.')
-            append(it.callableName)
-        } else {
-            append(it.packageName.asString())
-            append('/')
-            append(it.callableName)
-        }
-    }
-
-    fun StringBuilder.appendRepresentation(it: ConeTypeProjection) {
-        when (it) {
-            ConeStarProjection -> {
-                append('*')
-            }
-            is ConeKotlinTypeProjectionIn -> {
-                append("in ")
-                appendRepresentation(it.type)
-            }
-            is ConeKotlinTypeProjectionOut -> {
-                append("out ")
-                appendRepresentation(it.type)
-            }
-            is ConeKotlinType -> {
-                appendRepresentation(it)
-            }
-            is ConeKotlinTypeConflictingProjection -> {}
-        }
-    }
-
-    fun StringBuilder.appendRepresentation(it: ConeKotlinType) {
-        when (it) {
-            is ConeDefinitelyNotNullType -> {
-                appendRepresentation(it.original)
-                append(it.nullability.suffix)
-            }
-            is ConeErrorType -> {
-                append("ERROR(")
-                append(it.diagnostic.reason)
-                append(')')
-            }
-            is ConeCapturedType -> {
-                append(it.constructor.projection)
-                append(it.nullability.suffix)
-            }
-            is ConeClassLikeType -> {
-                appendRepresentation(it.lookupTag.classId)
-                if (it.typeArguments.isNotEmpty()) {
-                    append('<')
-                    it.typeArguments.forEach { that ->
-                        appendRepresentation(that)
-                        append(',')
-                    }
-                    append('>')
-                }
-                append(it.nullability.suffix)
-            }
-            is ConeLookupTagBasedType -> {
-                append(it.lookupTag.name)
-                append(it.nullability.suffix)
-            }
-            is ConeIntegerLiteralConstantType -> {
-                append(it.value)
-                append(it.nullability.suffix)
-            }
-            is ConeIntegerConstantOperatorType -> {
-                append("IOT")
-                append(it.nullability.suffix)
-            }
-            is ConeFlexibleType,
-            is ConeIntersectionType,
-            is ConeStubType -> {
-                append("ERROR")
-            }
-        }
-    }
-
-    fun StringBuilder.appendRepresentation(it: FirTypeRef) {
-        when (it) {
-            is FirResolvedTypeRef -> appendRepresentation(it.type)
-            else -> append("?")
-        }
-    }
-
-    fun StringBuilder.appendRepresentation(it: FirTypeParameter) {
-        append(it.name.asString())
-        append(':')
-        when (it.bounds.size) {
-            0 -> {
-            }
-            1 -> {
-                appendRepresentation(it.bounds[0])
-            }
-            else -> {
-                val set = sortedSetOf<String>()
-                it.bounds.forEach { that ->
-                    set.add(buildString { appendRepresentation(that) })
-                }
-                set.forEach { that ->
-                    append(that)
-                    append(',')
-                }
-            }
-        }
-    }
-
-    fun StringBuilder.appendRepresentation(it: FirValueParameter) {
-        if (it.isVararg) {
-            append("vararg ")
-        }
-        appendRepresentation(it.returnTypeRef)
-    }
-
-    fun represent(it: FirVariable) = buildString {
-        append('[')
-        it.receiverParameter?.typeRef?.let {
-            appendRepresentation(it)
-        }
-        append(']')
-        appendRepresentation(it.symbol.callableId)
-    }
-
-    fun StringBuilder.appendOperatorTag(it: FirSimpleFunction) {
-        if (it.isOperator) {
-            append("operator ")
-        }
-    }
-
-    fun represent(it: FirSimpleFunction) = buildString {
-        it.contextReceivers.forEach {
-            appendRepresentation(it)
-            append(',')
-        }
-        append('<')
-        it.typeParameters.forEach {
-            appendRepresentation(it)
-            append(',')
-        }
-        append('>')
-        append('[')
-        it.receiverParameter?.typeRef?.let {
-            appendRepresentation(it)
-        }
-        append(']')
-        appendOperatorTag(it)
-        appendRepresentation(it.symbol.callableId)
-        append('(')
-        it.valueParameters.forEach {
-            appendRepresentation(it)
-            append(',')
-        }
-        append(')')
-    }
-
-    fun represent(it: FirTypeAlias) = buildString {
-        append('[')
-        append(']')
-        appendRepresentation(it.symbol.classId)
-    }
-
-    fun represent(it: FirRegularClass) = buildString {
-        append('[')
-        append(']')
-        appendRepresentation(it.symbol.classId)
-    }
-
-    fun represent(it: FirConstructor, owner: FirRegularClass) = buildString {
-        it.contextReceivers.forEach {
-            appendRepresentation(it)
-            append(',')
-        }
-        append('<')
-        it.typeParameters.forEach {
-            appendRepresentation(it)
-            append(',')
-        }
-        append('>')
-        append('[')
-        append(']')
-        appendRepresentation(owner.symbol.classId)
-        append('(')
-        it.valueParameters.forEach {
-            appendRepresentation(it)
-            append(',')
-        }
-        append(')')
-    }
-}
-
-internal class FirDefaultDeclarationPresenter : FirDeclarationPresenter
+internal object FirDefaultDeclarationPresenter : FirDeclarationPresenter
 
 private val NO_NAME_PROVIDED = Name.special("<no name provided>")
 
@@ -248,42 +48,257 @@ private fun FirDeclaration.isCollectable() = when (this) {
 /**
  * Collects FirDeclarations for further analysis.
  */
-open class FirDeclarationInspector(
-    protected val presenter: FirDeclarationPresenter = FirDefaultDeclarationPresenter()
-) {
-    val otherDeclarations = mutableMapOf<String, MutableList<FirDeclaration>>()
-    val functionDeclarations = mutableMapOf<String, MutableList<FirSimpleFunction>>()
+class FirDeclarationInspector {
+    val declarationConflictingSymbols: HashMap<FirDeclaration, SmartSet<FirBasedSymbol<*>>> = hashMapOf()
+    private val otherDeclarations = mutableMapOf<String, MutableList<FirDeclaration>>()
+    private val functionDeclarations = mutableMapOf<String, MutableList<FirSimpleFunction>>()
 
     fun collect(declaration: FirDeclaration) {
         when {
             !declaration.isCollectable() -> {}
-            declaration is FirSimpleFunction -> collectFunction(presenter.represent(declaration), declaration)
-            declaration is FirRegularClass -> collectNonFunctionDeclaration(presenter.represent(declaration), declaration)
-            declaration is FirTypeAlias -> collectNonFunctionDeclaration(presenter.represent(declaration), declaration)
-            declaration is FirVariable -> collectNonFunctionDeclaration(presenter.represent(declaration), declaration)
+            declaration is FirSimpleFunction -> collectFunction(FirDefaultDeclarationPresenter.represent(declaration), declaration)
+            declaration is FirRegularClass -> collectNonFunctionDeclaration(FirDefaultDeclarationPresenter.represent(declaration), declaration)
+            declaration is FirTypeAlias -> collectNonFunctionDeclaration(FirDefaultDeclarationPresenter.represent(declaration), declaration)
+            declaration is FirVariable -> collectNonFunctionDeclaration(FirDefaultDeclarationPresenter.represent(declaration), declaration)
         }
     }
 
-    protected open fun collectNonFunctionDeclaration(key: String, declaration: FirDeclaration): MutableList<FirDeclaration> =
-        otherDeclarations.getOrPut(key) {
+    private fun collectNonFunctionDeclaration(key: String, declaration: FirDeclaration): MutableList<FirDeclaration> {
+        return otherDeclarations.getOrPut(key) {
             mutableListOf()
         }.also {
             it.add(declaration)
+        }.also {
+            collectLocalConflicts(declaration, it)
         }
+    }
 
-    protected open fun collectFunction(key: String, declaration: FirSimpleFunction): MutableList<FirSimpleFunction> =
-        functionDeclarations.getOrPut(key) {
+    private fun collectFunction(key: String, declaration: FirSimpleFunction): MutableList<FirSimpleFunction> {
+        return functionDeclarations.getOrPut(key) {
             mutableListOf()
         }.also {
             it.add(declaration)
+        }.also {
+            collectLocalConflicts(declaration, it)
+        }
+    }
+
+    private fun collectLocalConflicts(declaration: FirDeclaration, conflicting: List<FirDeclaration>) {
+        val localConflicts = SmartSet.create<FirBasedSymbol<*>>()
+        for (otherDeclaration in conflicting) {
+            if (otherDeclaration != declaration && !isExpectAndActual(declaration, otherDeclaration)) {
+                localConflicts.add(otherDeclaration.symbol)
+                declarationConflictingSymbols.getOrPut(otherDeclaration) { SmartSet.create() }.add(declaration.symbol)
+            }
+        }
+        declarationConflictingSymbols[declaration] = localConflicts
+    }
+
+    private fun isExpectAndActual(declaration1: FirDeclaration, declaration2: FirDeclaration): Boolean {
+        if (declaration1 !is FirMemberDeclaration) return false
+        if (declaration2 !is FirMemberDeclaration) return false
+        return (declaration1.status.isExpect && declaration2.status.isActual) ||
+                (declaration1.status.isActual && declaration2.status.isExpect)
+    }
+
+    private fun areCompatibleMainFunctions(
+        declaration1: FirDeclaration, file1: FirFile, declaration2: FirDeclaration, file2: FirFile?
+    ): Boolean {
+        // TODO: proper main function detector
+        if (declaration1 !is FirSimpleFunction || declaration2 !is FirSimpleFunction) return false
+        if (declaration1.name.asString() != "main" || declaration2.name.asString() != "main") return false
+        return file1 != file2
+    }
+
+    private fun collectExternalConflict(
+        declaration: FirDeclaration,
+        declarationPresentation: String,
+        containingFile: FirFile,
+        conflictingSymbol: FirBasedSymbol<*>,
+        conflictingPresentation: String?,
+        conflictingFile: FirFile?,
+        session: FirSession
+    ) {
+        conflictingSymbol.lazyResolveToPhase(FirResolvePhase.STATUS)
+        @OptIn(SymbolInternals::class)
+        val conflicting = conflictingSymbol.fir
+        if (conflicting == declaration || declaration.moduleData != conflicting.moduleData) return
+        val actualConflictingPresentation = conflictingPresentation ?: FirDefaultDeclarationPresenter.represent(conflicting)
+        if (actualConflictingPresentation != declarationPresentation) return
+        val actualConflictingFile =
+            conflictingFile ?: when (conflictingSymbol) {
+                is FirClassLikeSymbol<*> -> session.firProvider.getFirClassifierContainerFileIfAny(conflictingSymbol)
+                is FirCallableSymbol<*> -> session.firProvider.getFirCallableContainerFile(conflictingSymbol)
+                else -> null
+            }
+        if (containingFile == actualConflictingFile && conflicting.origin == FirDeclarationOrigin.Precompiled) {
+            return // TODO: rewrite local decls checker to the same logic and then remove the check
+        }
+        if (areCompatibleMainFunctions(declaration, containingFile, conflicting, actualConflictingFile)) return
+        if (isExpectAndActual(declaration, conflicting)) return
+        if (
+            conflicting is FirMemberDeclaration &&
+            !session.visibilityChecker.isVisible(conflicting, session, containingFile, emptyList(), dispatchReceiver = null)
+        ) return
+        val declarationIsLowPriority = hasLowPriorityAnnotation(declaration.annotations)
+        val conflictingIsLowPriority = hasLowPriorityAnnotation(conflicting.annotations)
+        if (declarationIsLowPriority != conflictingIsLowPriority) return
+        declarationConflictingSymbols.getOrPut(declaration) { SmartSet.create() }.add(conflictingSymbol)
+    }
+
+    fun collectWithExternalConflicts(
+        declaration: FirDeclaration,
+        containingFile: FirFile,
+        session: FirSession,
+        packageMemberScope: FirPackageMemberScope
+    ) {
+        collect(declaration)
+        var declarationName: Name? = null
+        val declarationPresentation = FirDefaultDeclarationPresenter.represent(declaration) ?: return
+
+        when (declaration) {
+            is FirSimpleFunction -> {
+                declarationName = declaration.name
+                if (!declarationName.isSpecial) {
+                    packageMemberScope.processFunctionsByName(declarationName) {
+                        collectExternalConflict(
+                            declaration, declarationPresentation, containingFile, it, null, null, session
+                        )
+                    }
+                    packageMemberScope.processClassifiersByNameWithSubstitution(declarationName) { symbol, _ ->
+                        symbol.lazyResolveToPhase(FirResolvePhase.STATUS)
+                        @OptIn(SymbolInternals::class)
+                        val classWithSameName = symbol.fir as? FirRegularClass
+                        classWithSameName?.onConstructors { constructor ->
+                            collectExternalConflict(
+                                declaration, declarationPresentation, containingFile,
+                                constructor.symbol, FirDefaultDeclarationPresenter.represent(constructor, classWithSameName), null,
+                                session
+                            )
+                        }
+                    }
+                }
+            }
+            is FirVariable -> {
+                declarationName = declaration.name
+                if (!declarationName.isSpecial) {
+                    packageMemberScope.processPropertiesByName(declarationName) {
+                        collectExternalConflict(
+                            declaration, declarationPresentation, containingFile, it, null, null, session
+                        )
+                    }
+                }
+            }
+            is FirRegularClass -> {
+                declarationName = declaration.name
+
+                if (!declarationName.isSpecial) {
+                    packageMemberScope.processClassifiersByNameWithSubstitution(declarationName) { symbol, _ ->
+                        collectExternalConflict(
+                            declaration, declarationPresentation, containingFile, symbol, null, null, session
+                        )
+                    }
+                    declaration.onConstructors { constructor ->
+                        packageMemberScope.processFunctionsByName(declarationName!!) {
+                            collectExternalConflict(
+                                constructor, FirDefaultDeclarationPresenter.represent(constructor, declaration), containingFile,
+                                it, null, null, session
+                            )
+                        }
+                    }
+
+                    session.nameConflictsTracker?.let { it as? FirNameConflictsTracker }
+                        ?.redeclaredClassifiers?.get(declaration.symbol.classId)?.forEach {
+                            collectExternalConflict(
+                                declaration,
+                                declarationPresentation,
+                                containingFile,
+                                it.classifier,
+                                null,
+                                it.file,
+                                session
+                            )
+                        }
+                }
+            }
+            is FirTypeAlias -> {
+                declarationName = declaration.name
+                if (!declarationName.isSpecial) {
+                    packageMemberScope.processClassifiersByNameWithSubstitution(declarationName) { symbol, _ ->
+                        collectExternalConflict(
+                            declaration, declarationPresentation, containingFile, symbol, null, null, session
+                        )
+                    }
+                    session.nameConflictsTracker?.let { it as? FirNameConflictsTracker }
+                        ?.redeclaredClassifiers?.get(declaration.symbol.classId)?.forEach {
+                            collectExternalConflict(
+                                declaration,
+                                declarationPresentation,
+                                containingFile,
+                                it.classifier,
+                                null,
+                                it.file,
+                                session
+                            )
+                        }
+                }
+            }
+            else -> {
+            }
+        }
+        if (declarationName != null) {
+            session.lookupTracker?.recordLookup(
+                declarationName, containingFile.packageFqName.asString(), declaration.source, containingFile.source
+            )
+        }
+    }
+
+    private fun FirDeclarationPresenter.represent(declaration: FirDeclaration): String? {
+        return when (declaration) {
+            is FirSimpleFunction -> represent(declaration)
+            is FirRegularClass -> represent(declaration)
+            is FirTypeAlias -> represent(declaration)
+            is FirProperty -> represent(declaration)
+            else -> null
+        }
+    }
+
+    private fun FirRegularClass.onConstructors(action: (ctor: FirConstructor) -> Unit) {
+        class ClassConstructorVisitor : FirVisitorVoid() {
+            override fun visitElement(element: FirElement) {}
+
+            override fun visitConstructor(constructor: FirConstructor) {
+                action(constructor)
+            }
+
+            override fun visitDeclarationStatus(declarationStatus: FirDeclarationStatus) {}
+            override fun visitRegularClass(regularClass: FirRegularClass) {}
+            override fun visitProperty(property: FirProperty) {}
+            override fun visitSimpleFunction(simpleFunction: FirSimpleFunction) {}
         }
 
-    fun contains(declaration: FirDeclaration) = when (declaration) {
-        is FirSimpleFunction -> presenter.represent(declaration) in functionDeclarations
-        is FirRegularClass -> presenter.represent(declaration) in otherDeclarations
-        is FirTypeAlias -> presenter.represent(declaration) in otherDeclarations
-        is FirProperty -> presenter.represent(declaration) in otherDeclarations
-        else -> false
+        if (classKind != ClassKind.OBJECT && classKind != ClassKind.ENUM_ENTRY) {
+            acceptChildren(ClassConstructorVisitor())
+        }
+    }
+}
+
+class FirNameConflictsTracker : FirNameConflictsTrackerComponent() {
+    data class ClassifierWithFile(
+        val classifier: FirClassLikeSymbol<*>,
+        val file: FirFile?
+    )
+
+    val redeclaredClassifiers = HashMap<ClassId, Set<ClassifierWithFile>>()
+
+    override fun registerClassifierRedeclaration(
+        classId: ClassId,
+        newSymbol: FirClassLikeSymbol<*>, newSymbolFile: FirFile,
+        prevSymbol: FirClassLikeSymbol<*>, prevSymbolFile: FirFile?
+    ) {
+        redeclaredClassifiers.merge(
+            classId, linkedSetOf(ClassifierWithFile(newSymbol, newSymbolFile), ClassifierWithFile(prevSymbol, prevSymbolFile))
+        ) { a, b -> a + b }
     }
 }
 
