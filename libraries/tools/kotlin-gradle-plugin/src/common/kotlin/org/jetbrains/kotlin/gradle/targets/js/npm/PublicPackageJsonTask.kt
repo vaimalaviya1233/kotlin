@@ -11,16 +11,12 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
-import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinJsCompilation
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin.Companion.kotlinNodeJsExtension
 import org.jetbrains.kotlin.gradle.targets.js.npm.NpmProject.Companion.PACKAGE_JSON
-import org.jetbrains.kotlin.gradle.targets.js.npm.resolver.KotlinCompilationNpmResolver
-import org.jetbrains.kotlin.gradle.targets.js.npm.resolver.KotlinRootNpmResolver
 import org.jetbrains.kotlin.gradle.utils.property
 import java.io.File
-import javax.inject.Inject
 
-abstract class PublicPackageJsonTask() : DefaultTask() {
+abstract class PublicPackageJsonTask : DefaultTask() {
 
     // Only in configuration phase
     // Not part of configuration caching
@@ -45,7 +41,7 @@ abstract class PublicPackageJsonTask() : DefaultTask() {
 
     private val projectVersion = project.version.toString()
 
-    abstract val isJrIrCompilation: Property<Boolean>
+    abstract val jsIrCompilation: Property<Boolean>
 
     abstract val npmProjectName: Property<String>
 
@@ -101,7 +97,7 @@ abstract class PublicPackageJsonTask() : DefaultTask() {
         packageJson(npmProjectName.get(), projectVersion, npmProjectMain.get(), externalDependencies, packageJsonHandlers).let { packageJson ->
             packageJson.main = "${npmProjectName}.js"
 
-            if (isJrIrCompilation.get()) {
+            if (jsIrCompilation.get()) {
                 packageJson.types = "${npmProjectName}.d.ts"
             }
 
