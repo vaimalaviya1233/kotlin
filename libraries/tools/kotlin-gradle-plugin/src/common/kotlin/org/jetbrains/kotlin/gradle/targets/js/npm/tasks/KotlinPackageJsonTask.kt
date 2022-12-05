@@ -9,7 +9,6 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.plugins.BasePlugin
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.*
-import org.gradle.work.NormalizeLineEndings
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinJsCompilation
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin
@@ -17,14 +16,11 @@ import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin.Companion.
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin.Companion.kotlinNodeJsTaskProvidersExtension
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin.Companion.kotlinNpmResolutionManager
 import org.jetbrains.kotlin.gradle.targets.js.npm.*
-import org.jetbrains.kotlin.gradle.targets.js.npm.CompositeNodeModulesCache
-import org.jetbrains.kotlin.gradle.targets.js.npm.GradleNodeModulesCache
-import org.jetbrains.kotlin.gradle.targets.js.npm.fakePackageJsonValue
-import org.jetbrains.kotlin.gradle.targets.js.npm.resolver.*
-import org.jetbrains.kotlin.gradle.targets.js.npm.resolver.MayBeUpToDatePackageJsonTasksRegistry
-import org.jetbrains.kotlin.gradle.targets.js.npm.resolver.PackageJsonProducer
+import org.jetbrains.kotlin.gradle.targets.js.npm.resolver.KotlinCompilationNpmResolver
+import org.jetbrains.kotlin.gradle.targets.js.npm.resolver.KotlinRootNpmResolver
+import org.jetbrains.kotlin.gradle.targets.js.npm.resolver.PACKAGE_JSON_UMBRELLA_TASK_NAME
+import org.jetbrains.kotlin.gradle.targets.js.npm.resolver.PackageJsonProducerInputs
 import org.jetbrains.kotlin.gradle.tasks.registerTask
-import org.jetbrains.kotlin.gradle.utils.getValue
 import java.io.File
 
 abstract class KotlinPackageJsonTask : DefaultTask() {
@@ -33,26 +29,32 @@ abstract class KotlinPackageJsonTask : DefaultTask() {
         onlyIf {
             npmResolutionManager.get().isConfiguringState()
         }
-        outputs.upToDateWhen {
-            // this way we will ensure that we need to resolve dependencies for the compilation in case of UP-TO-DATE task
-            // used in KotlinCompilationNpmResolver#getResolutionOrResolveIfForced
-            mayBeUpToDateTasksRegistry.get().markForNpmDependenciesResolve(it as KotlinPackageJsonTask)
-            true
-        }
     }
 
-    @Transient
-    private lateinit var nodeJs: NodeJsRootExtension
-
-    private val npmResolutionManager by lazy { project.rootProject.kotlinNpmResolutionManager }
-
-    private val tasksRequirements by lazy { nodeJs.taskRequirements }
+    // Only in configuration phase
+    // Not part of configuration caching
 
     @Transient
-    private lateinit var compilation: KotlinJsCompilation
+    private val nodeJs: Property<NodeJsRootExtension> = project.objects.property(NodeJsRootExtension::class.java)
+
+    private val rootResolver: KotlinRootNpmResolver
+        get() = nodeJs.get().resolver
+
+    private val compilationResolver: KotlinCompilationNpmResolver
+        get() = rootResolver[projectPath][compilationDisambiguatedName.get()]
+
+    private fun findDependentTasks(): Collection<Any> =
+        compilationResolver.packageJsonProducer.internalDependencies.map { dependency ->
+            nodeJs.get().resolver[dependency.projectPath][dependency.compilationName].npmProject.packageJsonTaskPath
+        } + compilationResolver.packageJsonProducer.internalCompositeDependencies.map { dependency ->
+            dependency.includedBuild?.task(":$PACKAGE_JSON_UMBRELLA_TASK_NAME") ?: error("includedBuild instance is not available")
+            dependency.includedBuild.task(":${RootPackageJsonTask.NAME}")
+        }
+
+    // -----
 
     @get:Internal
-    internal abstract val mayBeUpToDateTasksRegistry: Property<MayBeUpToDatePackageJsonTasksRegistry>
+    internal abstract val npmResolutionManager: Property<KotlinNpmResolutionManager>
 
     @get:Internal
     internal abstract val gradleNodeModules: Property<GradleNodeModulesCache>
@@ -60,50 +62,26 @@ abstract class KotlinPackageJsonTask : DefaultTask() {
     @get:Internal
     internal abstract val compositeNodeModules: Property<CompositeNodeModulesCache>
 
-    private val compilationDisambiguatedName by lazy {
-        compilation.disambiguatedName
-    }
+    private val projectPath = project.path
 
-    @Input
-    val projectPath = project.path
+    abstract val compilationDisambiguatedName: Property<String>
 
-    private val confCompResolver
-        get() = nodeJs.let {
-            it.resolver[projectPath][compilationDisambiguatedName]
-        }
-
-    @get:Internal
-    internal val packageJsonProducer: PackageJsonProducer by lazy {
-        confCompResolver.packageJsonProducer
-    /*.also { it.compilationResolver = this }*/
-    }
-
-    private val compilationResolver
-        get() = npmResolutionManager.get().resolver.get()[projectPath][compilationDisambiguatedName]
-
-//    private val producer: KotlinCompilationNpmResolver.PackageJsonProducer
-//        get() = compilationResolver.packageJsonProducer
+    private val packageJsonHandlers: List<PackageJson.() -> Unit>
+        get() = npmResolutionManager.get().parameters.packageJsonHandlers.get().getValue("$projectPath:$compilationDisambiguatedName")
 
     @get:Input
     val packageJsonCustomFields: Map<String, Any?> by lazy {
         PackageJson(fakePackageJsonValue, fakePackageJsonValue)
             .apply {
-                compilation.packageJsonHandlers.forEach { it() }
+                packageJsonHandlers.forEach { it() }
             }.customFields
     }
 
-    private fun findDependentTasks(): Collection<Any> =
-        packageJsonProducer.internalDependencies.map { dependency ->
-            nodeJs.resolver[dependency.projectPath][dependency.compilationName].npmProject.packageJsonTaskPath
-        } + packageJsonProducer.internalCompositeDependencies.map { dependency ->
-            dependency.includedBuild?.task(":$PACKAGE_JSON_UMBRELLA_TASK_NAME") ?: error("includedBuild instance is not available")
-            dependency.includedBuild.task(":${RootPackageJsonTask.NAME}")
-        }
 
     @get:Input
     internal val toolsNpmDependencies: List<String> by lazy {
-        nodeJs.taskRequirements
-            .getCompilationNpmRequirements(projectPath, compilationDisambiguatedName)
+        nodeJs.get().taskRequirements
+            .getCompilationNpmRequirements(projectPath, compilationDisambiguatedName.get())
             .map { it.toString() }
             .sorted()
     }
@@ -112,20 +90,18 @@ abstract class KotlinPackageJsonTask : DefaultTask() {
     // so npmResolutionManager must not be used
     @get:Nested
     internal val producerInputs: PackageJsonProducerInputs by lazy {
-        packageJsonProducer.inputs
+        compilationResolver.packageJsonProducer.inputs
     }
 
     @get:OutputFile
-    val packageJson: File by lazy {
-        compilationResolver.npmProject.packageJsonFile
-    }
+    abstract val packageJson: Property<File>
 
     @TaskAction
     fun resolve() {
-        compilationResolver.resolve(
-            npmResolutionManager = npmResolutionManager.get(),
-            packageJsonProducer = packageJsonProducer
-        )
+        npmResolutionManager.get().resolver.get()[projectPath][compilationDisambiguatedName.get()]
+            .resolve(
+                npmResolutionManager = npmResolutionManager.get(),
+            )
     }
 
     companion object {
@@ -141,32 +117,40 @@ abstract class KotlinPackageJsonTask : DefaultTask() {
             val packageJsonTaskName = npmProject.packageJsonTaskName
             val packageJsonUmbrella = nodeJsTaskProviders.packageJsonUmbrellaTaskProvider
             val packageJsonTask = project.registerTask<KotlinPackageJsonTask>(packageJsonTaskName) { task ->
-                task.nodeJs = nodeJs
-                task.compilation = compilation
+                task.nodeJs.set(nodeJs)
+                task.compilationDisambiguatedName.set(compilation.disambiguatedName)
                 task.description = "Create package.json file for $compilation"
                 task.group = NodeJsRootPlugin.TASKS_GROUP_NAME
-                task.mayBeUpToDateTasksRegistry.apply {
-                    set(MayBeUpToDatePackageJsonTasksRegistry.registerIfAbsent(project))
+
+                task.npmResolutionManager.apply {
+                    set(project.rootProject.kotlinNpmResolutionManager)
                     disallowChanges()
+                    task.usesService(this)
                 }
+
                 task.gradleNodeModules.apply {
                     set(project.gradle.sharedServices.registerIfAbsent("gradle-node-modules", GradleNodeModulesCache::class.java) {
                         error("must be already registered")
                     })
                     disallowChanges()
+                    task.usesService(this)
                 }
+
                 task.compositeNodeModules.apply {
                     set(project.gradle.sharedServices.registerIfAbsent("composite-node-modules", CompositeNodeModulesCache::class.java) {
                         error("must be already registered")
                     })
                     disallowChanges()
+                    task.usesService(this)
                 }
-                task.usesService(project.kotlinNpmResolutionManager)
+
+                task.packageJson.set(compilation.npmProject.packageJsonFile)
 
                 task.dependsOn(target.project.provider { task.findDependentTasks() })
                 task.dependsOn(npmCachesSetupTask)
                 task.mustRunAfter(rootClean)
             }
+
             packageJsonUmbrella.configure { task ->
                 task.inputs.file(packageJsonTask.map { it.packageJson })
             }
