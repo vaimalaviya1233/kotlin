@@ -7,42 +7,53 @@ package org.jetbrains.kotlin.gradle.targets.js.npm
 
 import org.gradle.api.DefaultTask
 import org.gradle.api.provider.Property
-import org.gradle.api.tasks.*
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.OutputFile
+import org.gradle.api.tasks.TaskAction
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinJsCompilation
-import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrCompilation
-import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin.Companion.kotlinNpmResolutionManager
+import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin.Companion.kotlinNodeJsExtension
 import org.jetbrains.kotlin.gradle.targets.js.npm.NpmProject.Companion.PACKAGE_JSON
 import org.jetbrains.kotlin.gradle.targets.js.npm.resolver.KotlinCompilationNpmResolver
-import org.jetbrains.kotlin.gradle.targets.js.npm.resolver.MayBeUpToDatePackageJsonTasksRegistry
+import org.jetbrains.kotlin.gradle.targets.js.npm.resolver.KotlinRootNpmResolver
 import org.jetbrains.kotlin.gradle.utils.property
 import java.io.File
 import javax.inject.Inject
 
-abstract class PublicPackageJsonTask
-@Inject
-constructor(
-    @Transient
-    private val compilation: KotlinJsCompilation
-) : DefaultTask() {
-    private val npmProject = compilation.npmProject
+abstract class PublicPackageJsonTask() : DefaultTask() {
+
+    // Only in configuration phase
+    // Not part of configuration caching
 
     @Transient
-    private val nodeJs = npmProject.nodeJs
-    private val resolutionManager = project.rootProject.kotlinNpmResolutionManager
+    private val nodeJs = project.rootProject.kotlinNodeJsExtension
 
-    private val compilationName = compilation.disambiguatedName
+//    private val rootResolver: KotlinRootNpmResolver
+//        get() = nodeJs.resolver
+
+//    private val compilationResolver: KotlinCompilationNpmResolver
+//        get() = rootResolver[projectPath][compilationDisambiguatedName.get()]
+
+    // -----
+
+    @get:Internal
+    internal abstract val npmResolutionManager: Property<KotlinNpmResolutionManager>
+
+    abstract val compilationDisambiguatedName: Property<String>
+
     private val projectPath = project.path
 
-    private val packageJsonHandlers = compilation.packageJsonHandlers
+    private val projectVersion = project.version.toString()
 
-    @get:Internal
-    internal abstract val mayBeUpToDateTasksRegistry: Property<MayBeUpToDatePackageJsonTasksRegistry>
+    abstract val isJrIrCompilation: Property<Boolean>
 
-    @get:Internal
-    internal abstract val gradleNodeModules: Property<GradleNodeModulesCache>
+    abstract val npmProjectName: Property<String>
 
-    @get:Internal
-    internal abstract val compositeNodeModules: Property<CompositeNodeModulesCache>
+    abstract val npmProjectMain: Property<String>
+
+    private val packageJsonHandlers: List<PackageJson.() -> Unit>
+        get() = npmResolutionManager.get().parameters.packageJsonHandlers.get().getValue("$projectPath:$compilationDisambiguatedName")
+
 
     @get:Input
     val packageJsonCustomFields: Map<String, Any?>
@@ -51,54 +62,47 @@ constructor(
                 packageJsonHandlers.forEach { it() }
             }.customFields
 
-    private val compilationResolver
-        get() = resolutionManager.get().resolution.get()[projectPath][compilationName]
+//    private val compilationResolver
+//        get() = npmResolutionManager.get().resolution.get()[projectPath][compilationName]
 
-    private val confCompResolver
-        get() = nodeJs.let {
-            it.resolver[projectPath][compilationName]
-        }
+//    private val confCompResolver
+//        get() = nodeJs.let {
+//            it.resolver[projectPath][compilationName]
+//        }
 
-    @get:Internal
-    internal val packageJsonProducer: KotlinCompilationNpmResolver.PackageJsonProducer by lazy {
-        confCompResolver.packageJsonProducer
-        /*.also { it.compilationResolver = this }*/
-    }
+//    @get:Internal
+//    internal val packageJsonProducer: KotlinCompilationNpmResolver.PackageJsonProducer by lazy {
+//        confCompResolver.packageJsonProducer
+//        /*.also { it.compilationResolver = this }*/
+//    }
 
     private val compilationResolution
-        get() = compilationResolver.getResolutionOrResolve(
-            resolutionManager.get(),
-            packageJsonProducer
-        ) ?: error("Compilation resolution isn't available")
+        get() = npmResolutionManager.get().resolution.get()[projectPath][compilationDisambiguatedName.get()]
+            .getResolutionOrResolve(
+                npmResolutionManager.get()
+            )
 
     @get:Input
     val externalDependencies: Collection<NpmDependencyDeclaration>
         get() = compilationResolution.externalNpmDependencies
 
-    private val publicPackageJsonTaskName by lazy {
-        npmProject.publicPackageJsonTaskName
-    }
-
     private val defaultPackageJsonFile by lazy {
         project.buildDir
             .resolve("tmp")
-            .resolve(publicPackageJsonTaskName)
+            .resolve(name)
             .resolve(PACKAGE_JSON)
     }
 
     @get:OutputFile
     var packageJsonFile: File by property { defaultPackageJsonFile }
 
-    private val isJrIrCompilation = compilation is KotlinJsIrCompilation
-    private val projectVersion = project.version.toString()
-
     @TaskAction
     fun resolve() {
-        packageJson(npmProject.name, projectVersion, npmProject.main, externalDependencies, packageJsonHandlers).let { packageJson ->
-            packageJson.main = "${npmProject.name}.js"
+        packageJson(npmProjectName.get(), projectVersion, npmProjectMain.get(), externalDependencies, packageJsonHandlers).let { packageJson ->
+            packageJson.main = "${npmProjectName}.js"
 
-            if (isJrIrCompilation) {
-                packageJson.types = "${npmProject.name}.d.ts"
+            if (isJrIrCompilation.get()) {
+                packageJson.types = "${npmProjectName}.d.ts"
             }
 
             packageJson.apply {

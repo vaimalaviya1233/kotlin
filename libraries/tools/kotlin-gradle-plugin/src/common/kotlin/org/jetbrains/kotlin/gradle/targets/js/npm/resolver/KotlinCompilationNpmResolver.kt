@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.gradle.plugin.sources.compilationDependencyConfigura
 import org.jetbrains.kotlin.gradle.plugin.sources.sourceSetDependencyConfigurationByScope
 import org.jetbrains.kotlin.gradle.plugin.usesPlatformOf
 import org.jetbrains.kotlin.gradle.targets.js.KotlinJsCompilerAttribute
+import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrCompilation
 import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrTarget
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin.Companion.kotlinNpmResolutionManager
 import org.jetbrains.kotlin.gradle.targets.js.npm.*
@@ -81,27 +82,21 @@ internal class KotlinCompilationNpmResolver(
     @Transient
     val publicPackageJsonTaskHolder: TaskProvider<PublicPackageJsonTask> =
         project.registerTask<PublicPackageJsonTask>(
-            npmProject.publicPackageJsonTaskName,
-            listOf(compilation)
+            npmProject.publicPackageJsonTaskName
         ) {
             it.dependsOn(packageJsonTaskHolder)
-            it.usesService(project.kotlinNpmResolutionManager)
 
-            it.mayBeUpToDateTasksRegistry.set(
-                MayBeUpToDatePackageJsonTasksRegistry.registerIfAbsent(project)
-            )
+            it.compilationDisambiguatedName.set(compilation.disambiguatedName)
 
-            it.gradleNodeModules.set(
-                project.gradle.sharedServices.registerIfAbsent("gradle-node-modules", GradleNodeModulesCache::class.java) {
-                    error("must be already registered")
-                }
-            )
+            it.npmResolutionManager.apply {
+                set(project.rootProject.kotlinNpmResolutionManager)
+                disallowChanges()
+                it.usesService(this)
+            }
 
-            it.compositeNodeModules.set(
-                project.gradle.sharedServices.registerIfAbsent("composite-node-modules", CompositeNodeModulesCache::class.java) {
-                    error("must be already registered")
-                }
-            )
+            it.isJrIrCompilation.set(compilation is KotlinJsIrCompilation)
+            it.npmProjectName.set(npmProject.name)
+            it.npmProjectMain.set(npmProject.main)
         }.also { packageJsonTask ->
             if (compilation.isMain()) {
                 project.tasks
@@ -316,7 +311,16 @@ internal class KotlinCompilationNpmResolver(
             externalNpmDependencies,
             fileCollectionDependencies,
             projectPath,
-            this@KotlinCompilationNpmResolver
+            rootResolver.projectPackagesDir,
+            rootResolver.rootProjectDir,
+            compilationDisambiguatedName,
+            npmProject.name,
+            npmVersion,
+            npmProject.main,
+            npmProject.packageJsonFile,
+            npmProject.dir,
+            project.logger,
+            rootResolver.tasksRequirements
         )
     }
 }

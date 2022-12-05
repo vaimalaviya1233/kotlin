@@ -96,23 +96,6 @@ open class NodeJsRootPlugin : Plugin<Project> {
 
         val yarnExtension = YarnPlugin.apply(project)
 
-        val yarnEnv = project.provider {
-            yarnExtension.requireConfigured()
-        }
-
-        val npmEnvironment = project.provider {
-            nodeJs.asNpmEnvironment
-        }
-
-        val yarnResolutions: Provider<List<YarnResolution>> = project.provider {
-            yarnExtension.resolutions
-        }
-
-//        val taskRequirements = project.provider {
-//            println("INSIDE TASK REQUIREMENTS")
-//            nodeJs.taskRequirements
-//        }
-
         nodeJs.resolver = KotlinRootNpmResolver(
             project.name,
             project.version.toString(),
@@ -120,15 +103,6 @@ open class NodeJsRootPlugin : Plugin<Project> {
             nodeJs.versions,
             nodeJs.projectPackagesDir,
             nodeJs.rootProjectDir,
-//        parameters.nodeJs,
-//        parameters.yarn,
-//        buildServiceRegistry,
-//            gradleNodeModulesProvider,
-//            compositeNodeModulesProvider,
-//            MayBeUpToDatePackageJsonTasksRegistry.registerIfAbsent(project),
-//        yarnEnvironment_,
-//        npmEnvironment_,
-//        yarnResolutions_
         )
 
         val objectFactory = project.objects
@@ -198,7 +172,7 @@ open class NodeJsRootPlugin : Plugin<Project> {
         val Project.kotlinNodeJsTaskProvidersExtension: NodeJsTaskProviders
             get() = extensions.getByName(NodeJsTaskProviders.EXTENSION_NAME).castIsolatedKotlinPluginClassLoaderAware()
 
-        val Project.kotlinNpmResolutionManager: Provider<KotlinNpmResolutionManager>
+        internal val Project.kotlinNpmResolutionManager: Provider<KotlinNpmResolutionManager>
             get() = gradle.sharedServices.registerIfAbsent("kotlin-npm-resolution-manager", KotlinNpmResolutionManager::class.java) {
                 error("Gradle service should be already registered")
             }

@@ -5,6 +5,8 @@
 
 package org.jetbrains.kotlin.gradle.targets.js.npm.resolver
 
+import org.gradle.api.logging.Logger
+import org.jetbrains.kotlin.gradle.targets.js.nodejs.TasksRequirements
 import org.jetbrains.kotlin.gradle.targets.js.npm.*
 import org.jetbrains.kotlin.gradle.targets.js.npm.NpmProject.Companion.PACKAGE_JSON
 import org.jetbrains.kotlin.gradle.targets.js.npm.resolved.KotlinCompilationNpmResolution
@@ -25,7 +27,9 @@ internal class PackageJsonProducer(
     val npmProjectVersion: String,
     val npmProjectMain: String,
     val npmProjectPackageJsonFile: File,
-    val npmProjectDir: File
+    val npmProjectDir: File,
+    val logger: Logger,
+    val tasksRequirements: TasksRequirements
 ) : Serializable {
 
     val inputs: PackageJsonProducerInputs
@@ -116,7 +120,7 @@ internal class PackageJsonProducer(
                 }
         }.filterNotNull()
 
-        val toolsNpmDependencies = rootResolver.tasksRequirements
+        val toolsNpmDependencies = tasksRequirements
             .getCompilationNpmRequirements(projectPath, compilationDisambiguatedName)
 
         val otherNpmDependencies = toolsNpmDependencies + transitiveNpmDependencies
@@ -169,9 +173,9 @@ internal class PackageJsonProducer(
                     SemVer.from(dep.version, true)
                 }?.also { selected ->
                     if (dependencies.size > 1) {
-                        compilationResolver.project.logger.warn(
+                        logger.warn(
                             """
-                                Transitive npm dependency version clash for compilation "${compilationResolver.compilation.name}"
+                                Transitive npm dependency version clash for compilation "${compilationDisambiguatedName}"
                                     Candidates:
                                 ${dependencies.joinToString("\n") { "\t\t" + it.name + "@" + it.version }}
                                     Selected:
