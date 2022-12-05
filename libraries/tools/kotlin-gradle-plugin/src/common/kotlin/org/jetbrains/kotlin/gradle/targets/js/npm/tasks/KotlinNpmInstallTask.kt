@@ -9,11 +9,11 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.*
 import org.gradle.work.NormalizeLineEndings
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension
-import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin.Companion.kotlinNodeJsExtension
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin.Companion.kotlinNpmResolutionManager
 import org.jetbrains.kotlin.gradle.targets.js.npm.KotlinNpmResolutionManager
 import org.jetbrains.kotlin.gradle.targets.js.npm.asNpmEnvironment
+import org.jetbrains.kotlin.gradle.targets.js.npm.asYarnEnvironment
 import org.jetbrains.kotlin.gradle.targets.js.yarn.yarn
 import org.jetbrains.kotlin.gradle.utils.unavailableValueError
 import java.io.File
@@ -29,20 +29,26 @@ open class KotlinNpmInstallTask : DefaultTask() {
         }
     }
 
+    // Only in configuration phase
+    // Not part of configuration caching
+
     @Transient
     private val nodeJs: NodeJsRootExtension? = project.rootProject.kotlinNodeJsExtension
-    private val resolutionManager = project.rootProject.kotlinNpmResolutionManager
+
     @Transient
     private val yarn = project.rootProject.yarn
 
-    @get:Internal
-    val npmEnvironment by lazy {
-        nodeJs!!.asNpmEnvironment
+    // -----
+
+
+    private val resolutionManager = project.rootProject.kotlinNpmResolutionManager
+
+    private val npmEnvironment by lazy {
+        nodeJs!!.requireConfigured().asNpmEnvironment
     }
 
-    @get:Internal
-    val yarnEnv by lazy {
-        yarn.requireConfigured()
+    private val yarnEnv by lazy {
+        yarn.requireConfigured().asYarnEnvironment
     }
 
     @Input
@@ -74,7 +80,7 @@ open class KotlinNpmInstallTask : DefaultTask() {
     @get:NormalizeLineEndings
     @get:InputFiles
     val preparedFiles: Collection<File> by lazy {
-        (nodeJs ?: unavailableValueError("nodeJs")).packageManager.preparedFiles(nodeJs.asNpmEnvironment)
+        (nodeJs ?: unavailableValueError("nodeJs")).packageManager.preparedFiles(npmEnvironment)
     }
 
     @get:OutputFile
@@ -84,13 +90,14 @@ open class KotlinNpmInstallTask : DefaultTask() {
 
     @TaskAction
     fun resolve() {
-        resolutionManager.get().installIfNeeded(
-            args = args,
-            services = services,
-            logger = logger,
-            npmEnvironment,
-            yarnEnv
-        ) ?: throw (resolutionManager.get().state as KotlinNpmResolutionManager.ResolutionState.Error).wrappedException
+        resolutionManager.get()
+            .installIfNeeded(
+                args = args,
+                services = services,
+                logger = logger,
+                npmEnvironment,
+                yarnEnv
+            ) ?: throw (resolutionManager.get().state as KotlinNpmResolutionManager.ResolutionState.Error).wrappedException
     }
 
     companion object {

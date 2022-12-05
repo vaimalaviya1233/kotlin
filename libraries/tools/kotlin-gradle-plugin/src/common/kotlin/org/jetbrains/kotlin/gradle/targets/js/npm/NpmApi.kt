@@ -8,9 +8,9 @@ package org.jetbrains.kotlin.gradle.targets.js.npm
 import org.gradle.api.logging.Logger
 import org.gradle.internal.service.ServiceRegistry
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsEnv
-import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension
 import org.jetbrains.kotlin.gradle.targets.js.npm.resolved.KotlinCompilationNpmResolution
 import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnEnv
+import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnResolution
 import java.io.File
 import java.io.Serializable
 
@@ -18,10 +18,10 @@ import java.io.Serializable
  * NodeJS package manager API
  */
 interface NpmApi : Serializable {
-    fun preparedFiles(nodeJs: NodeJsEnv): Collection<File>
+    fun preparedFiles(nodeJs: NpmEnvironment): Collection<File>
 
     fun prepareRootProject(
-        nodeJs: NodeJsEnv,
+        nodeJs: NpmEnvironment,
         rootProjectName: String,
         rootProjectVersion: String,
         logger: Logger,
@@ -32,8 +32,8 @@ interface NpmApi : Serializable {
     fun resolveRootProject(
         services: ServiceRegistry,
         logger: Logger,
-        nodeJs: NodeJsEnv,
-        yarn: YarnEnv,
+        nodeJs: NpmEnvironment,
+        yarn: YarnEnvironment,
         npmProjects: Collection<KotlinCompilationNpmResolution>,
         cliArgs: List<String>
     )
@@ -51,10 +51,25 @@ data class NpmEnvironment(
     val packageManager: NpmApi
 ) : Serializable
 
-internal val NodeJsRootExtension.asNpmEnvironment
+internal val NodeJsEnv.asNpmEnvironment
     get() = NpmEnvironment(
         rootPackageDir,
-        requireConfigured().nodeExecutable,
-        requireConfigured().isWindows,
-        requireConfigured().packageManager
+        nodeExecutable,
+        isWindows,
+        packageManager
+    )
+
+data class YarnEnvironment(
+    val executable: String,
+    val standalone: Boolean,
+    val ignoreScripts: Boolean,
+    val yarnResolutions: List<YarnResolution>
+)
+
+internal val YarnEnv.asYarnEnvironment
+    get() = YarnEnvironment(
+        executable,
+        standalone,
+        ignoreScripts,
+        yarnResolutions
     )

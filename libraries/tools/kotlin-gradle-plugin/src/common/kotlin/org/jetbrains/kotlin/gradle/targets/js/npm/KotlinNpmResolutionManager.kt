@@ -174,16 +174,16 @@ internal abstract class KotlinNpmResolutionManager internal constructor(
 
     internal fun prepare(
         logger: Logger,
-        npmEnvironment: NodeJsEnv,
-        yarnEnvironment: YarnEnv,
+        npmEnvironment: NpmEnvironment,
+        yarnEnvironment: YarnEnvironment,
     ) = prepareIfNeeded(logger = logger, npmEnvironment, yarnEnvironment)
 
     internal fun installIfNeeded(
         args: List<String> = emptyList(),
         services: ServiceRegistry,
         logger: Logger,
-        npmEnvironment: NodeJsEnv,
-        yarnEnvironment: YarnEnv,
+        npmEnvironment: NpmEnvironment,
+        yarnEnvironment: YarnEnvironment,
     ): Unit? {
         synchronized(this) {
             if (state is ResolutionState.Installed) {
@@ -210,8 +210,8 @@ internal abstract class KotlinNpmResolutionManager internal constructor(
 
     private fun prepareIfNeeded(
         logger: Logger,
-        npmEnvironment: NodeJsEnv,
-        yarnEnvironment: YarnEnv,
+        npmEnvironment: NpmEnvironment,
+        yarnEnvironment: YarnEnvironment,
     ): Installation {
         val state0 = this.state
         return when (state0) {

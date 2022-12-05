@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.gradle.targets.js.npm.NpmApi
 import org.jetbrains.kotlin.gradle.targets.js.npm.NpmDependency
 import org.jetbrains.kotlin.gradle.targets.js.npm.NpmDependency.Scope.PEER
 import org.jetbrains.kotlin.gradle.targets.js.npm.NpmEnvironment
+import org.jetbrains.kotlin.gradle.targets.js.npm.YarnEnvironment
 import org.jetbrains.kotlin.gradle.targets.js.npm.resolved.KotlinCompilationNpmResolution
 import java.io.File
 
@@ -22,8 +23,8 @@ abstract class YarnBasics : NpmApi {
     fun yarnExec(
         services: ServiceRegistry,
         logger: Logger,
-        nodeJs: NodeJsEnv,
-        yarn: YarnEnv,
+        nodeJs: NpmEnvironment,
+        yarn: YarnEnvironment,
         dir: File,
         description: String,
         args: List<String>

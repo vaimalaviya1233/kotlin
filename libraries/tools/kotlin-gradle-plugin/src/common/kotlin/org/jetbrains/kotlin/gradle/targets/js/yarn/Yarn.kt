@@ -7,9 +7,9 @@ package org.jetbrains.kotlin.gradle.targets.js.yarn
 
 import org.gradle.api.logging.Logger
 import org.gradle.internal.service.ServiceRegistry
-import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsEnv
 import org.jetbrains.kotlin.gradle.targets.js.npm.NpmApi
 import org.jetbrains.kotlin.gradle.targets.js.npm.NpmEnvironment
+import org.jetbrains.kotlin.gradle.targets.js.npm.YarnEnvironment
 import org.jetbrains.kotlin.gradle.targets.js.npm.resolved.KotlinCompilationNpmResolution
 import java.io.File
 
@@ -19,11 +19,11 @@ class Yarn : NpmApi {
     private fun getDelegate(): NpmApi =
         yarnWorkspaces
 
-    override fun preparedFiles(nodeJs: NodeJsEnv): Collection<File> =
+    override fun preparedFiles(nodeJs: NpmEnvironment): Collection<File> =
         yarnWorkspaces.preparedFiles(nodeJs)
 
     override fun prepareRootProject(
-        nodeJs: NodeJsEnv,
+        nodeJs: NpmEnvironment,
         rootProjectName: String,
         rootProjectVersion: String,
         logger: Logger,
@@ -42,8 +42,8 @@ class Yarn : NpmApi {
     override fun resolveRootProject(
         services: ServiceRegistry,
         logger: Logger,
-        nodeJs: NodeJsEnv,
-        yarn: YarnEnv,
+        nodeJs: NpmEnvironment,
+        yarn: YarnEnvironment,
         npmProjects: Collection<KotlinCompilationNpmResolution>,
         cliArgs: List<String>
     ) {

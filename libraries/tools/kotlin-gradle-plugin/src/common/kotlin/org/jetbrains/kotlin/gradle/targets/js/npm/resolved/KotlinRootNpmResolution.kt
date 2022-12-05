@@ -7,10 +7,9 @@ package org.jetbrains.kotlin.gradle.targets.js.npm.resolved
 
 import org.gradle.api.logging.Logger
 import org.gradle.internal.service.ServiceRegistry
-import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsEnv
 import org.jetbrains.kotlin.gradle.targets.js.npm.KotlinNpmResolutionManager
 import org.jetbrains.kotlin.gradle.targets.js.npm.NpmEnvironment
-import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnEnv
+import org.jetbrains.kotlin.gradle.targets.js.npm.YarnEnvironment
 import org.jetbrains.kotlin.gradle.targets.js.yarn.toVersionString
 
 internal class KotlinRootNpmResolution(
@@ -25,8 +24,8 @@ internal class KotlinRootNpmResolution(
      */
     internal fun prepareInstallation(
         logger: Logger,
-        npmEnvironment: NodeJsEnv,
-        yarnEnvironment: YarnEnv,
+        npmEnvironment: NpmEnvironment,
+        yarnEnvironment: YarnEnvironment,
         npmResolutionManager: KotlinNpmResolutionManager
     ): Installation {
         synchronized(projects) {
@@ -63,8 +62,8 @@ internal class Installation(val compilationResolutions: Collection<KotlinCompila
         args: List<String>,
         services: ServiceRegistry,
         logger: Logger,
-        npmEnvironment: NodeJsEnv,
-        yarnEnvironment: YarnEnv,
+        npmEnvironment: NpmEnvironment,
+        yarnEnvironment: YarnEnvironment,
     ) {
         synchronized(compilationResolutions) {
 //            if (state == RootResolverState.INSTALLED) {

@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin.Companion.
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin.Companion.kotlinNpmResolutionManager
 import org.jetbrains.kotlin.gradle.targets.js.npm.NpmProject
 import org.jetbrains.kotlin.gradle.targets.js.npm.asNpmEnvironment
+import org.jetbrains.kotlin.gradle.targets.js.npm.asYarnEnvironment
 import org.jetbrains.kotlin.gradle.targets.js.yarn.yarn
 import java.io.File
 
@@ -38,11 +39,11 @@ open class RootPackageJsonTask : DefaultTask() {
     private val resolutionManager = project.rootProject.kotlinNpmResolutionManager
 
     private val npmEnvironment by lazy {
-        nodeJs.requireConfigured()
+        nodeJs.requireConfigured().asNpmEnvironment
     }
 
     private val yarnEnv by lazy {
-        yarn.requireConfigured()
+        yarn.requireConfigured().asYarnEnvironment
     }
 
     @get:OutputFile
