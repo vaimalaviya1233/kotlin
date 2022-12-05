@@ -79,7 +79,7 @@ internal class PackageJsonProducer(
         skipWriting: Boolean,
         npmResolutionManager: KotlinNpmResolutionManager
     ): KotlinCompilationNpmResolution {
-        val rootResolver = npmResolutionManager.parameters.resolver.get()
+        val rootResolver = npmResolutionManager.parameters.resolution.get()
 
         internalDependencies.map {
             val packageJsonProducer: PackageJsonProducer = rootResolver[it.projectPath][it.compilationName]

@@ -11,6 +11,8 @@ import org.gradle.api.provider.Property
 import org.gradle.api.services.BuildService
 import org.gradle.api.services.BuildServiceParameters
 import org.gradle.internal.service.ServiceRegistry
+import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsEnv
+import org.jetbrains.kotlin.gradle.targets.js.npm.resolved.Installation
 import org.jetbrains.kotlin.gradle.targets.js.npm.resolved.KotlinProjectNpmResolution
 import org.jetbrains.kotlin.gradle.targets.js.npm.resolved.KotlinRootNpmResolution
 import org.jetbrains.kotlin.gradle.targets.js.npm.resolver.*
@@ -57,7 +59,7 @@ import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnEnv
  *
  * User can call [requireInstalled] to get resolution info.
  */
-abstract class KotlinNpmResolutionManager internal constructor(
+internal abstract class KotlinNpmResolutionManager internal constructor(
 //    @Transient private val nodeJsSettings: NodeJsRootExtension?,
 //    val stateHolderProvider: Provider<KotlinNpmResolutionManagerStateHolder>,
 //    val rootProjectName: String,
@@ -76,7 +78,7 @@ abstract class KotlinNpmResolutionManager internal constructor(
 ) : BuildService<KotlinNpmResolutionManager.Parameters> {
 
     internal interface Parameters : BuildServiceParameters {
-        val resolver: Property<KotlinRootNpmResolution>
+        val resolution: Property<KotlinRootNpmResolution>
 //        val rootProjectName: Property<String>
 //        val rootProjectVersion: Property<String>
 //        val tasksRequirements: Property<TasksRequirements>
@@ -118,43 +120,43 @@ abstract class KotlinNpmResolutionManager internal constructor(
 //
 //    private val stateHolder get() = stateHolderProvider.get()
 
-    val resolver
-        get() = parameters.resolver
+    val resolution
+        get() = parameters.resolution
 
     @Volatile
-    var state: ResolutionState = ResolutionState.Configuring(resolver.get())
+    var state: ResolutionState = ResolutionState.Configuring(resolution.get())
 
     sealed class ResolutionState {
-        abstract val npmProjects: List<NpmProject>
+//        abstract val npmProjects: List<NpmProject>
 
-        class Configuring(val resolver: KotlinRootNpmResolver) : ResolutionState() {
-            override val npmProjects: List<NpmProject>
-                get() = resolver.compilations.map { it.npmProject }
+        class Configuring(val resolution: KotlinRootNpmResolution) : ResolutionState() {
+//            override val npmProjects: List<NpmProject>
+//                get() = resolution.compilations.map { it.npmProject }
         }
 
-        open class Prepared(val preparedInstallation: KotlinRootNpmResolver.Installation) : ResolutionState() {
-            override val npmProjects: List<NpmProject>
-                get() = npmProjectsByProjectResolutions(preparedInstallation.projectResolutions)
+        open class Prepared(val preparedInstallation: Installation) : ResolutionState() {
+//            override val npmProjects: List<NpmProject>
+//                get() = npmProjectsByProjectResolutions(preparedInstallation.projectResolutions)
         }
 
-        class Installed internal constructor(internal val resolved: KotlinRootNpmResolution) : ResolutionState() {
-            override val npmProjects: List<NpmProject>
-                get() = npmProjectsByProjectResolutions(resolved.projects)
+        class Installed() : ResolutionState() {
+//            override val npmProjects: List<NpmProject>
+//                get() = npmProjectsByProjectResolutions(resolved.projects)
         }
 
         class Error(val wrappedException: Throwable) : ResolutionState() {
-            override val npmProjects: List<NpmProject>
-                get() = emptyList()
+//            override val npmProjects: List<NpmProject>
+//                get() = emptyList()
         }
 
         companion object {
-            fun npmProjectsByProjectResolutions(
-                resolutions: Map<String, KotlinProjectNpmResolution>
-            ): List<NpmProject> {
-                return resolutions
-                    .values
-                    .flatMap { it.npmProjects.map { it.npmProject } }
-            }
+//            fun npmProjectsByProjectResolutions(
+//                resolutions: Map<String, KotlinProjectNpmResolution>
+//            ): List<NpmProject> {
+//                return resolutions
+//                    .values
+//                    .flatMap { it.npmProjects.map { it.npmProject } }
+//            }
         }
     }
 
@@ -164,15 +166,15 @@ abstract class KotlinNpmResolutionManager internal constructor(
 //        logger: Logger,
 //    ) = installIfNeeded(services = services, logger = logger)
 
-    internal fun requireConfiguringState(): KotlinRootNpmResolver =
-        (this.state as? ResolutionState.Configuring ?: error("NPM Dependencies already resolved and installed")).resolver
+    internal fun requireConfiguringState(): KotlinRootNpmResolution =
+        (this.state as? ResolutionState.Configuring ?: error("NPM Dependencies already resolved and installed")).resolution
 
     internal fun isConfiguringState(): Boolean =
         this.state is ResolutionState.Configuring
 
     internal fun prepare(
         logger: Logger,
-        npmEnvironment: NpmEnvironment,
+        npmEnvironment: NodeJsEnv,
         yarnEnvironment: YarnEnv,
     ) = prepareIfNeeded(logger = logger, npmEnvironment, yarnEnvironment)
 
@@ -180,12 +182,12 @@ abstract class KotlinNpmResolutionManager internal constructor(
         args: List<String> = emptyList(),
         services: ServiceRegistry,
         logger: Logger,
-        npmEnvironment: NpmEnvironment,
+        npmEnvironment: NodeJsEnv,
         yarnEnvironment: YarnEnv,
-    ): KotlinRootNpmResolution? {
+    ): Unit? {
         synchronized(this) {
             if (state is ResolutionState.Installed) {
-                return (state as ResolutionState.Installed).resolved
+                return Unit
             }
 
             if (state is ResolutionState.Error) {
@@ -193,11 +195,9 @@ abstract class KotlinNpmResolutionManager internal constructor(
             }
 
             return try {
-                val installation = prepareIfNeeded(logger = logger, npmEnvironment, yarnEnvironment)
-                val resolution = installation
-                    .install(args, services, logger, npmEnvironment, yarnEnvironment)
-                state = ResolutionState.Installed(resolution)
-                resolution
+                val installation: Installation = prepareIfNeeded(logger = logger, npmEnvironment, yarnEnvironment)
+                installation.install(args, services, logger, npmEnvironment, yarnEnvironment)
+                state = ResolutionState.Installed()
             } catch (e: Exception) {
                 state = ResolutionState.Error(e)
                 throw e
@@ -210,9 +210,9 @@ abstract class KotlinNpmResolutionManager internal constructor(
 
     private fun prepareIfNeeded(
         logger: Logger,
-        npmEnvironment: NpmEnvironment,
+        npmEnvironment: NodeJsEnv,
         yarnEnvironment: YarnEnv,
-    ): KotlinRootNpmResolver.Installation {
+    ): Installation {
         val state0 = this.state
         return when (state0) {
             is ResolutionState.Prepared -> {
@@ -225,7 +225,7 @@ abstract class KotlinNpmResolutionManager internal constructor(
                     when (state1) {
                         is ResolutionState.Prepared -> state1.preparedInstallation
                         is ResolutionState.Configuring -> {
-                            state1.resolver.prepareInstallation(
+                            state1.resolution.prepareInstallation(
                                 logger,
                                 npmEnvironment,
                                 yarnEnvironment,

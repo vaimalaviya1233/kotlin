@@ -9,6 +9,7 @@ import org.gradle.api.Project
 import org.gradle.api.logging.Logger
 import org.gradle.internal.service.ServiceRegistry
 import org.jetbrains.kotlin.gradle.internal.execWithProgress
+import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsEnv
 import org.jetbrains.kotlin.gradle.targets.js.npm.NpmApi
 import org.jetbrains.kotlin.gradle.targets.js.npm.NpmDependency
 import org.jetbrains.kotlin.gradle.targets.js.npm.NpmDependency.Scope.PEER
@@ -21,7 +22,7 @@ abstract class YarnBasics : NpmApi {
     fun yarnExec(
         services: ServiceRegistry,
         logger: Logger,
-        nodeJs: NpmEnvironment,
+        nodeJs: NodeJsEnv,
         yarn: YarnEnv,
         dir: File,
         description: String,

@@ -24,19 +24,24 @@ open class RootPackageJsonTask : DefaultTask() {
         }
     }
 
+    // Only in configuration phase
+    // Not part of configuration caching
+
     @Transient
     private val nodeJs = project.rootProject.kotlinNodeJsExtension
+
     @Transient
     private val yarn = project.rootProject.yarn
+
+    // -----
+
     private val resolutionManager = project.rootProject.kotlinNpmResolutionManager
 
-    @get:Internal
-    val npmEnvironment by lazy {
-        nodeJs.asNpmEnvironment
+    private val npmEnvironment by lazy {
+        nodeJs.requireConfigured()
     }
 
-    @get:Internal
-    val yarnEnv by lazy {
+    private val yarnEnv by lazy {
         yarn.requireConfigured()
     }
 

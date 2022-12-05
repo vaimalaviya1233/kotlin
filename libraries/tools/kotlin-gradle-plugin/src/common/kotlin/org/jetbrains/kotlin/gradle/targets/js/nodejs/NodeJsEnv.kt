@@ -6,6 +6,7 @@ import java.io.File
 
 data class NodeJsEnv(
     val cleanableStore: CleanableStore,
+    val rootPackageDir: File,
     val nodeDir: File,
     val nodeBinDir: File,
     val nodeExecutable: String,
@@ -15,7 +16,7 @@ data class NodeJsEnv(
     val ivyDependency: String,
     val downloadBaseUrl: String,
 
-    val packageManager: NpmApi
+    val packageManager: NpmApi,
 ) {
     val isWindows: Boolean
         get() = platformName == "win"

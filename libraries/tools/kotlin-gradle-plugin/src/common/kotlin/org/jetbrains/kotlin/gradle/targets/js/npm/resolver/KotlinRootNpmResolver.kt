@@ -253,47 +253,49 @@ class KotlinRootNpmResolver internal constructor(
         return KotlinRootNpmResolution(
             projectResolvers
                 .map { (key, value) -> key to value.close() }
-                .toMap()
+                .toMap(),
+            rootProjectName,
+            rootProjectVersion
         )
     }
 
-    open inner class Installation(val projectResolutions: Map<String, KotlinProjectNpmResolution>) {
-        operator fun get(project: String) =
-            projectResolutions[project] ?: KotlinProjectNpmResolution.empty(project)
-
-        internal fun install(
-            args: List<String>,
-            services: ServiceRegistry,
-            logger: Logger,
-            npmEnvironment: NpmEnvironment,
-            yarnEnvironment: YarnEnv,
-        ): KotlinRootNpmResolution {
-            synchronized(projectResolvers) {
-                if (state == RootResolverState.INSTALLED) {
-                    return KotlinRootNpmResolution(projectResolutions)
-                }
-                check(state == RootResolverState.PROJECTS_CLOSED) {
-                    "Projects must be closed"
-                }
-                state = RootResolverState.INSTALLED
-
-                val allNpmPackages = projectResolutions
-                    .values
-                    .flatMap { it.npmProjects }
-
-                npmEnvironment.packageManager.resolveRootProject(
-                    services,
-                    logger,
-                    npmEnvironment,
-                    yarnEnvironment,
-                    allNpmPackages,
-                    args
-                )
-
-                return KotlinRootNpmResolution(projectResolutions)
-            }
-        }
-    }
+//    open inner class Installation(val projectResolutions: Map<String, KotlinProjectNpmResolution>) {
+//        operator fun get(project: String) =
+//            projectResolutions[project] ?: KotlinProjectNpmResolution.empty(project)
+//
+//        internal fun install(
+//            args: List<String>,
+//            services: ServiceRegistry,
+//            logger: Logger,
+//            npmEnvironment: NpmEnvironment,
+//            yarnEnvironment: YarnEnv,
+//        ): KotlinRootNpmResolution {
+//            synchronized(projectResolvers) {
+//                if (state == RootResolverState.INSTALLED) {
+//                    return KotlinRootNpmResolution(projectResolutions)
+//                }
+//                check(state == RootResolverState.PROJECTS_CLOSED) {
+//                    "Projects must be closed"
+//                }
+//                state = RootResolverState.INSTALLED
+//
+//                val allNpmPackages = projectResolutions
+//                    .values
+//                    .flatMap { it.npmProjects }
+//
+//                npmEnvironment.packageManager.resolveRootProject(
+//                    services,
+//                    logger,
+//                    npmEnvironment,
+//                    yarnEnvironment,
+//                    allNpmPackages,
+//                    args
+//                )
+//
+//                return KotlinRootNpmResolution(projectResolutions)
+//            }
+//        }
+//    }
 }
 
 enum class RootResolverState {

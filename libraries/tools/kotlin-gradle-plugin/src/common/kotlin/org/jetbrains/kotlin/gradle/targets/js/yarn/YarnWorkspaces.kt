@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.gradle.targets.js.yarn
 
 import org.gradle.api.logging.Logger
 import org.gradle.internal.service.ServiceRegistry
+import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsEnv
 import org.jetbrains.kotlin.gradle.targets.js.npm.NpmApi
 import org.jetbrains.kotlin.gradle.targets.js.npm.NpmEnvironment
 import org.jetbrains.kotlin.gradle.targets.js.npm.NpmProject
@@ -15,7 +16,7 @@ import org.jetbrains.kotlin.gradle.targets.js.npm.resolved.KotlinCompilationNpmR
 import java.io.File
 
 class YarnWorkspaces : YarnBasics() {
-    override fun preparedFiles(nodeJs: NpmEnvironment): Collection<File> {
+    override fun preparedFiles(nodeJs: NodeJsEnv): Collection<File> {
         return listOf(
             nodeJs
                 .rootPackageDir
@@ -24,7 +25,7 @@ class YarnWorkspaces : YarnBasics() {
     }
 
     override fun prepareRootProject(
-        nodeJs: NpmEnvironment,
+        nodeJs: NodeJsEnv,
         rootProjectName: String,
         rootProjectVersion: String,
         logger: Logger,
@@ -42,7 +43,7 @@ class YarnWorkspaces : YarnBasics() {
     }
 
     private fun prepareRootPackageJson(
-        nodeJs: NpmEnvironment,
+        nodeJs: NodeJsEnv,
         rootProjectName: String,
         rootProjectVersion: String,
         logger: Logger,
@@ -64,7 +65,7 @@ class YarnWorkspaces : YarnBasics() {
     override fun resolveRootProject(
         services: ServiceRegistry,
         logger: Logger,
-        nodeJs: NpmEnvironment,
+        nodeJs: NodeJsEnv,
         yarn: YarnEnv,
         npmProjects: Collection<KotlinCompilationNpmResolution>,
         cliArgs: List<String>
@@ -96,7 +97,7 @@ class YarnWorkspaces : YarnBasics() {
         val rootPackageJson = PackageJson(rootProjectName, rootProjectVersion)
         rootPackageJson.private = true
 
-        val npmProjectWorkspaces = npmProjects.map { it.npmProject.dir.relativeTo(nodeJsWorldDir).path }
+        val npmProjectWorkspaces = npmProjects.map { it.npmProjectDir.relativeTo(nodeJsWorldDir).path }
         val importedProjectWorkspaces =
             YarnImportedPackagesVersionResolver(logger, npmProjects, nodeJsWorldDir).resolveAndUpdatePackages()
 

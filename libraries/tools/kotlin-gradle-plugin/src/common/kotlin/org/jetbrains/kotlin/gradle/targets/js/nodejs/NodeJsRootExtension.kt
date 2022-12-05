@@ -6,12 +6,10 @@
 package org.jetbrains.kotlin.gradle.targets.js.nodejs
 
 import org.gradle.api.logging.Logger
-import org.gradle.api.provider.Provider
 import org.gradle.api.services.BuildServiceRegistry
 import org.jetbrains.kotlin.gradle.internal.ConfigurationPhaseAware
 import org.jetbrains.kotlin.gradle.logging.kotlinInfo
 import org.jetbrains.kotlin.gradle.targets.js.NpmVersions
-import org.jetbrains.kotlin.gradle.targets.js.npm.KotlinNpmResolutionManager
 import org.jetbrains.kotlin.gradle.targets.js.npm.NpmApi
 import org.jetbrains.kotlin.gradle.targets.js.npm.resolver.KotlinRootNpmResolver
 import org.jetbrains.kotlin.gradle.targets.js.yarn.Yarn
@@ -81,6 +79,7 @@ open class NodeJsRootExtension(
 
         return NodeJsEnv(
             cleanableStore = cleanableStore,
+            rootPackageDir = rootPackageDir,
             nodeDir = nodeDir,
             nodeBinDir = nodeBinDir,
             nodeExecutable = getExecutable("node", nodeCommand, "exe"),

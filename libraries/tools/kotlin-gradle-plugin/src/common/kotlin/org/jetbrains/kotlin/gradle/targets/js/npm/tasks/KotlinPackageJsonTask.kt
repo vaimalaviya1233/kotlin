@@ -35,17 +35,17 @@ abstract class KotlinPackageJsonTask : DefaultTask() {
     // Not part of configuration caching
 
     @Transient
-    private val nodeJs: Property<NodeJsRootExtension> = project.objects.property(NodeJsRootExtension::class.java)
+    private val nodeJs: NodeJsRootExtension = project.rootProject.kotlinNodeJsExtension
 
     private val rootResolver: KotlinRootNpmResolver
-        get() = nodeJs.get().resolver
+        get() = nodeJs.resolver
 
     private val compilationResolver: KotlinCompilationNpmResolver
         get() = rootResolver[projectPath][compilationDisambiguatedName.get()]
 
     private fun findDependentTasks(): Collection<Any> =
         compilationResolver.packageJsonProducer.internalDependencies.map { dependency ->
-            nodeJs.get().resolver[dependency.projectPath][dependency.compilationName].npmProject.packageJsonTaskPath
+            nodeJs.resolver[dependency.projectPath][dependency.compilationName].npmProject.packageJsonTaskPath
         } + compilationResolver.packageJsonProducer.internalCompositeDependencies.map { dependency ->
             dependency.includedBuild?.task(":$PACKAGE_JSON_UMBRELLA_TASK_NAME") ?: error("includedBuild instance is not available")
             dependency.includedBuild.task(":${RootPackageJsonTask.NAME}")
@@ -80,7 +80,7 @@ abstract class KotlinPackageJsonTask : DefaultTask() {
 
     @get:Input
     internal val toolsNpmDependencies: List<String> by lazy {
-        nodeJs.get().taskRequirements
+        nodeJs.taskRequirements
             .getCompilationNpmRequirements(projectPath, compilationDisambiguatedName.get())
             .map { it.toString() }
             .sorted()
@@ -98,7 +98,7 @@ abstract class KotlinPackageJsonTask : DefaultTask() {
 
     @TaskAction
     fun resolve() {
-        npmResolutionManager.get().resolver.get()[projectPath][compilationDisambiguatedName.get()]
+        npmResolutionManager.get().resolution.get()[projectPath][compilationDisambiguatedName.get()]
             .resolve(
                 npmResolutionManager = npmResolutionManager.get(),
             )
@@ -117,7 +117,6 @@ abstract class KotlinPackageJsonTask : DefaultTask() {
             val packageJsonTaskName = npmProject.packageJsonTaskName
             val packageJsonUmbrella = nodeJsTaskProviders.packageJsonUmbrellaTaskProvider
             val packageJsonTask = project.registerTask<KotlinPackageJsonTask>(packageJsonTaskName) { task ->
-                task.nodeJs.set(nodeJs)
                 task.compilationDisambiguatedName.set(compilation.disambiguatedName)
                 task.description = "Create package.json file for $compilation"
                 task.group = NodeJsRootPlugin.TASKS_GROUP_NAME

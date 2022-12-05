@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.gradle.targets.js.npm.resolved
 
 import org.gradle.api.logging.Logger
 import org.gradle.internal.service.ServiceRegistry
+import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsEnv
 import org.jetbrains.kotlin.gradle.targets.js.npm.KotlinNpmResolutionManager
 import org.jetbrains.kotlin.gradle.targets.js.npm.NpmEnvironment
 import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnEnv
@@ -24,7 +25,7 @@ internal class KotlinRootNpmResolution(
      */
     internal fun prepareInstallation(
         logger: Logger,
-        npmEnvironment: NpmEnvironment,
+        npmEnvironment: NodeJsEnv,
         yarnEnvironment: YarnEnv,
         npmResolutionManager: KotlinNpmResolutionManager
     ): Installation {
@@ -62,7 +63,7 @@ internal class Installation(val compilationResolutions: Collection<KotlinCompila
         args: List<String>,
         services: ServiceRegistry,
         logger: Logger,
-        npmEnvironment: NpmEnvironment,
+        npmEnvironment: NodeJsEnv,
         yarnEnvironment: YarnEnv,
     ) {
         synchronized(compilationResolutions) {

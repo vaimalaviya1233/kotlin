@@ -52,7 +52,7 @@ constructor(
             }.customFields
 
     private val compilationResolver
-        get() = resolutionManager.get().resolver.get()[projectPath][compilationName]
+        get() = resolutionManager.get().resolution.get()[projectPath][compilationName]
 
     private val confCompResolver
         get() = nodeJs.let {
