@@ -37,12 +37,6 @@ interface NpmApi : Serializable {
         cliArgs: List<String>
     )
 
-    fun resolveDependency(
-        npmResolution: KotlinCompilationNpmResolution,
-        dependency: NpmDependency,
-        transitive: Boolean
-    ): Set<File>
-
     companion object {
         fun resolveOperationDescription(packageManagerTitle: String): String =
             "Resolving NPM dependencies using $packageManagerTitle"

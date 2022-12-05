@@ -18,9 +18,6 @@ import java.io.File
 
 abstract class YarnBasics : NpmApi {
 
-    private val nonTransitiveResolvedDependencies = mutableMapOf<NpmDependency, Set<File>>()
-    private val transitiveResolvedDependencies = mutableMapOf<NpmDependency, Set<File>>()
-
     fun yarnExec(
         services: ServiceRegistry,
         logger: Logger,
@@ -64,58 +61,6 @@ abstract class YarnBasics : NpmApi {
             exec.workingDir = dir
         }
 
-    }
-
-    override fun resolveDependency(
-        npmResolution: KotlinCompilationNpmResolution,
-        dependency: NpmDependency,
-        transitive: Boolean
-    ): Set<File> {
-        val files = (if (transitive) {
-            transitiveResolvedDependencies
-        } else {
-            nonTransitiveResolvedDependencies
-        })[dependency]
-
-        if (files != null) {
-            return files
-        }
-
-        val npmProject = npmResolution.npmProject
-
-        val all = mutableSetOf<File>()
-
-        npmProject.resolve(dependency.name)?.let {
-            if (it.isFile) all.add(it)
-            if (it.path.endsWith(".js")) {
-                val baseName = it.path.removeSuffix(".js")
-                val metaJs = File(baseName + ".meta.js")
-                if (metaJs.isFile) all.add(metaJs)
-                val kjsmDir = File(baseName)
-                if (kjsmDir.isDirectory) {
-                    kjsmDir.walkTopDown()
-                        .filter { it.extension == "kjsm" }
-                        .forEach { all.add(it) }
-                }
-            }
-        }
-
-        nonTransitiveResolvedDependencies[dependency] = all
-
-        if (transitive) {
-            dependency.dependencies.forEach {
-                resolveDependency(
-                    npmResolution,
-                    it,
-                    transitive
-                ).also { files ->
-                    all.addAll(files)
-                }
-            }
-            transitiveResolvedDependencies[dependency] = all
-        }
-
-        return all
     }
 
     protected fun yarnLockReadTransitiveDependencies(

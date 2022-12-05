@@ -7,18 +7,19 @@ package org.jetbrains.kotlin.gradle.targets.js.npm.resolved
 
 import org.jetbrains.kotlin.gradle.targets.js.RequiredKotlinJsDependency
 import org.jetbrains.kotlin.gradle.targets.js.npm.NpmDependency
+import org.jetbrains.kotlin.gradle.targets.js.npm.resolver.PackageJsonProducer
 
 /**
  * Info about NPM projects inside particular gradle [project].
  */
-class KotlinProjectNpmResolution(
+internal class KotlinProjectNpmResolution(
     val project: String,
-    val npmProjects: List<KotlinCompilationNpmResolution>,
+    val npmProjects: List<PackageJsonProducer>,
     val taskRequirements: Map<String, Collection<RequiredKotlinJsDependency>>
 ) {
-    val byCompilation by lazy { npmProjects.associateBy { it.npmProject.compilationName } }
+    val byCompilation: Map<String, PackageJsonProducer> by lazy { npmProjects.associateBy { it.compilationDisambiguatedName } }
 
-    operator fun get(compilationName: String): KotlinCompilationNpmResolution {
+    operator fun get(compilationName: String): PackageJsonProducer {
 //        check(compilation.target.project.path == project)
         return byCompilation.getValue(compilationName)
     }

@@ -136,7 +136,7 @@ open class NodeJsRootPlugin : Plugin<Project> {
 
         val kotlinNpmResolutionManager: Provider<KotlinNpmResolutionManager> =
             project.gradle.sharedServices.registerIfAbsent("kotlin-npm-resolution-manager", KotlinNpmResolutionManager::class.java) {
-                it.parameters.resolver.set(nodeJs.resolver)
+                it.parameters.resolver.set(objectFactory.providerWithLazyConvention { nodeJs.resolver.close() })
 //                it.parameters.rootProjectName.set(project.name)
 //                it.parameters.rootProjectVersion.set(project.version.toString())
 //                it.parameters.tasksRequirements.set(nodeJs.taskRequirements)

@@ -244,40 +244,17 @@ class KotlinRootNpmResolver internal constructor(
         return mainCompilations
     }
 
-    /**
-     * Don't use directly, use [KotlinNpmResolutionManager.installIfNeeded] instead.
-     */
-    internal fun prepareInstallation(
-        logger: Logger,
-        npmEnvironment: NpmEnvironment,
-        yarnEnvironment: YarnEnv,
-        npmResolutionManager: KotlinNpmResolutionManager
-    ): Installation {
-        synchronized(projectResolvers) {
-            state = RootResolverState.PROJECTS_CLOSED
+    var closed: Boolean = false
 
-            val projectResolutions = projectResolvers.values
-                .map { it.close(npmResolutionManager) }
-                .associateBy { it.project }
-            val allNpmPackages = projectResolutions.values.flatMap { it.npmProjects }
+    internal fun close(): KotlinRootNpmResolution {
+        check(!closed)
+        closed = true
 
-            npmResolutionManager.parameters.gradleNodeModulesProvider.get().close()
-            npmResolutionManager.parameters.compositeNodeModulesProvider.get().close()
-
-            npmEnvironment.packageManager.prepareRootProject(
-                npmEnvironment,
-                rootProjectName,
-                rootProjectVersion,
-                logger,
-                allNpmPackages,
-                yarnEnvironment.yarnResolutions
-                    .associate { it.path to it.toVersionString() },
-            )
-
-            return Installation(
-                projectResolutions
-            )
-        }
+        return KotlinRootNpmResolution(
+            projectResolvers
+                .map { (key, value) -> key to value.close() }
+                .toMap()
+        )
     }
 
     open inner class Installation(val projectResolutions: Map<String, KotlinProjectNpmResolution>) {

@@ -100,16 +100,14 @@ internal class KotlinProjectNpmResolver(
             )
     }
 
-    fun close(
-        npmResolutionManager: KotlinNpmResolutionManager
-    ): KotlinProjectNpmResolution {
+    fun close(): KotlinProjectNpmResolution {
         check(!closed)
         closed = true
 
         return KotlinProjectNpmResolution(
             projectPath,
             byCompilation.values.map {
-                it.close(npmResolutionManager)
+                it.close()
             },
             resolver.tasksRequirements.byTask
         )

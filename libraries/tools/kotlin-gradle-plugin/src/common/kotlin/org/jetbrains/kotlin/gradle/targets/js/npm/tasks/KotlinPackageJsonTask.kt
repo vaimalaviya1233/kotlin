@@ -20,9 +20,9 @@ import org.jetbrains.kotlin.gradle.targets.js.npm.*
 import org.jetbrains.kotlin.gradle.targets.js.npm.CompositeNodeModulesCache
 import org.jetbrains.kotlin.gradle.targets.js.npm.GradleNodeModulesCache
 import org.jetbrains.kotlin.gradle.targets.js.npm.fakePackageJsonValue
-import org.jetbrains.kotlin.gradle.targets.js.npm.resolver.KotlinCompilationNpmResolver
+import org.jetbrains.kotlin.gradle.targets.js.npm.resolver.*
 import org.jetbrains.kotlin.gradle.targets.js.npm.resolver.MayBeUpToDatePackageJsonTasksRegistry
-import org.jetbrains.kotlin.gradle.targets.js.npm.resolver.PACKAGE_JSON_UMBRELLA_TASK_NAME
+import org.jetbrains.kotlin.gradle.targets.js.npm.resolver.PackageJsonProducer
 import org.jetbrains.kotlin.gradle.tasks.registerTask
 import org.jetbrains.kotlin.gradle.utils.getValue
 import java.io.File
@@ -73,13 +73,8 @@ abstract class KotlinPackageJsonTask : DefaultTask() {
         }
 
     @get:Internal
-    internal val packageJsonProducer: KotlinCompilationNpmResolver.PackageJsonProducer by lazy {
-        confCompResolver.packageJsonProducer ?: run {
-            val visitor = confCompResolver.ConfigurationVisitor()
-            visitor.visit(confCompResolver.createAggregatedConfiguration())
-            visitor.toPackageJsonProducer()
-                .also { confCompResolver.packageJsonProducer = it }
-        }
+    internal val packageJsonProducer: PackageJsonProducer by lazy {
+        confCompResolver.packageJsonProducer
     /*.also { it.compilationResolver = this }*/
     }
 
@@ -116,7 +111,7 @@ abstract class KotlinPackageJsonTask : DefaultTask() {
     // nested inputs are processed in configuration phase
     // so npmResolutionManager must not be used
     @get:Nested
-    internal val producerInputs: KotlinCompilationNpmResolver.PackageJsonProducerInputs by lazy {
+    internal val producerInputs: PackageJsonProducerInputs by lazy {
         packageJsonProducer.inputs
     }
 

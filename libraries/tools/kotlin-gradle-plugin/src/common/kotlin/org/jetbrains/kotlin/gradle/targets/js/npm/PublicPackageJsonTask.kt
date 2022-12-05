@@ -61,12 +61,7 @@ constructor(
 
     @get:Internal
     internal val packageJsonProducer: KotlinCompilationNpmResolver.PackageJsonProducer by lazy {
-        confCompResolver.packageJsonProducer ?: run {
-            val visitor = confCompResolver.ConfigurationVisitor()
-            visitor.visit(confCompResolver.createAggregatedConfiguration())
-            visitor.toPackageJsonProducer()
-                .also { confCompResolver.packageJsonProducer = it }
-        }
+        confCompResolver.packageJsonProducer
         /*.also { it.compilationResolver = this }*/
     }
 

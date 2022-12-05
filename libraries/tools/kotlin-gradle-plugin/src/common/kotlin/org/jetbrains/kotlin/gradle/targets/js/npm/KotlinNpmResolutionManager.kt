@@ -76,7 +76,7 @@ abstract class KotlinNpmResolutionManager internal constructor(
 ) : BuildService<KotlinNpmResolutionManager.Parameters> {
 
     internal interface Parameters : BuildServiceParameters {
-        val resolver: Property<KotlinRootNpmResolver>
+        val resolver: Property<KotlinRootNpmResolution>
 //        val rootProjectName: Property<String>
 //        val rootProjectVersion: Property<String>
 //        val tasksRequirements: Property<TasksRequirements>

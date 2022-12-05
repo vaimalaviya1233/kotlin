@@ -57,15 +57,4 @@ class Yarn : NpmApi {
                 cliArgs
             )
     }
-
-    override fun resolveDependency(
-        npmResolution: KotlinCompilationNpmResolution,
-        dependency: NpmDependency,
-        transitive: Boolean
-    ) = getDelegate()
-        .resolveDependency(
-            npmResolution,
-            dependency,
-            transitive
-        )
 }
