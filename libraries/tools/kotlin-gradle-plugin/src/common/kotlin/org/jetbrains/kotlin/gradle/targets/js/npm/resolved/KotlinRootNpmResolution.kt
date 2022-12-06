@@ -11,12 +11,13 @@ import org.jetbrains.kotlin.gradle.targets.js.npm.KotlinNpmResolutionManager
 import org.jetbrains.kotlin.gradle.targets.js.npm.NpmEnvironment
 import org.jetbrains.kotlin.gradle.targets.js.npm.YarnEnvironment
 import org.jetbrains.kotlin.gradle.targets.js.yarn.toVersionString
+import java.io.Serializable
 
 internal class KotlinRootNpmResolution(
     internal val projects: Map<String, KotlinProjectNpmResolution>,
     val rootProjectName: String,
     val rootProjectVersion: String
-) {
+) : Serializable {
     operator fun get(project: String) = projects[project] ?: KotlinProjectNpmResolution.empty(project)
 
     /**

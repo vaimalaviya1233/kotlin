@@ -64,10 +64,11 @@ abstract class KotlinPackageJsonTask : DefaultTask() {
 
     private val projectPath = project.path
 
+    @get:Internal
     abstract val compilationDisambiguatedName: Property<String>
 
     private val packageJsonHandlers: List<PackageJson.() -> Unit>
-        get() = npmResolutionManager.get().parameters.packageJsonHandlers.get().getValue("$projectPath:$compilationDisambiguatedName")
+        get() = npmResolutionManager.get().parameters.packageJsonHandlers.get().getValue("$projectPath:${compilationDisambiguatedName.get()}")
 
     @get:Input
     val packageJsonCustomFields: Map<String, Any?> by lazy {
@@ -101,6 +102,7 @@ abstract class KotlinPackageJsonTask : DefaultTask() {
         npmResolutionManager.get().resolution.get()[projectPath][compilationDisambiguatedName.get()]
             .resolve(
                 npmResolutionManager = npmResolutionManager.get(),
+                logger = logger
             )
     }
 
@@ -122,25 +124,30 @@ abstract class KotlinPackageJsonTask : DefaultTask() {
                 task.group = NodeJsRootPlugin.TASKS_GROUP_NAME
 
                 task.npmResolutionManager.apply {
-                    set(project.rootProject.kotlinNpmResolutionManager)
+                    val service = project.rootProject.kotlinNpmResolutionManager
+                    set(service)
                     disallowChanges()
-                    task.usesService(this)
+                    task.usesService(service)
                 }
 
                 task.gradleNodeModules.apply {
-                    set(project.gradle.sharedServices.registerIfAbsent("gradle-node-modules", GradleNodeModulesCache::class.java) {
-                        error("must be already registered")
-                    })
+                    val service =
+                        project.gradle.sharedServices.registerIfAbsent("gradle-node-modules", GradleNodeModulesCache::class.java) {
+                            error("must be already registered")
+                        }
+                    set(service)
                     disallowChanges()
-                    task.usesService(this)
+                    task.usesService(service)
                 }
 
                 task.compositeNodeModules.apply {
-                    set(project.gradle.sharedServices.registerIfAbsent("composite-node-modules", CompositeNodeModulesCache::class.java) {
-                        error("must be already registered")
-                    })
+                    val service =
+                        project.gradle.sharedServices.registerIfAbsent("composite-node-modules", CompositeNodeModulesCache::class.java) {
+                            error("must be already registered")
+                        }
+                    set(service)
                     disallowChanges()
-                    task.usesService(this)
+                    task.usesService(service)
                 }
 
                 task.packageJson.set(compilation.npmProject.packageJsonFile)

@@ -28,7 +28,6 @@ internal class PackageJsonProducer(
     val npmProjectMain: String,
     val npmProjectPackageJsonFile: File,
     val npmProjectDir: File,
-    val logger: Logger,
     val tasksRequirements: TasksRequirements
 ) : Serializable {
 
@@ -47,14 +46,16 @@ internal class PackageJsonProducer(
     @Synchronized
     fun resolve(
         skipWriting: Boolean = false,
-        npmResolutionManager: KotlinNpmResolutionManager
+        npmResolutionManager: KotlinNpmResolutionManager,
+        logger: Logger
     ): KotlinCompilationNpmResolution {
         check(!closed) { "$this already closed" }
         check(resolution == null) { "$this already resolved" }
 
         return createPackageJson(
             skipWriting,
-            npmResolutionManager
+            npmResolutionManager,
+            logger
         ).also {
             resolution = it
         }
@@ -63,11 +64,13 @@ internal class PackageJsonProducer(
     @Synchronized
     fun getResolutionOrResolve(
         npmResolutionManager: KotlinNpmResolutionManager,
+        logger: Logger,
     ): KotlinCompilationNpmResolution {
 
         return resolution ?: resolve(
             skipWriting = true,
-            npmResolutionManager
+            npmResolutionManager,
+            logger
         )
     }
 
@@ -81,7 +84,8 @@ internal class PackageJsonProducer(
 
     fun createPackageJson(
         skipWriting: Boolean,
-        npmResolutionManager: KotlinNpmResolutionManager
+        npmResolutionManager: KotlinNpmResolutionManager,
+        logger: Logger
     ): KotlinCompilationNpmResolution {
         val rootResolver = npmResolutionManager.parameters.resolution.get()
 
@@ -89,6 +93,7 @@ internal class PackageJsonProducer(
             val packageJsonProducer: PackageJsonProducer = rootResolver[it.projectPath][it.compilationName]
             packageJsonProducer.getResolutionOrResolve(
                 npmResolutionManager,
+                logger
             )
         }
         val importedExternalGradleDependencies = externalGradleDependencies.mapNotNull {
@@ -124,7 +129,7 @@ internal class PackageJsonProducer(
             .getCompilationNpmRequirements(projectPath, compilationDisambiguatedName)
 
         val otherNpmDependencies = toolsNpmDependencies + transitiveNpmDependencies
-        val allNpmDependencies = disambiguateDependencies(externalNpmDependencies, otherNpmDependencies)
+        val allNpmDependencies = disambiguateDependencies(externalNpmDependencies, otherNpmDependencies, logger)
         val packageJsonHandlers =
             npmResolutionManager.parameters.packageJsonHandlers.get()["$projectPath:${compilationDisambiguatedName}"]
                 ?: emptyList() /*if (compilationResolver.compilation != null) {
@@ -165,6 +170,7 @@ internal class PackageJsonProducer(
     private fun disambiguateDependencies(
         direct: Collection<NpmDependencyDeclaration>,
         others: Collection<NpmDependencyDeclaration>,
+        logger: Logger,
     ): Collection<NpmDependencyDeclaration> {
         val unique = others.groupBy(NpmDependencyDeclaration::name)
             .filterKeys { k -> direct.none { it.name == k } }

@@ -52,7 +52,13 @@ open class YarnPlugin : Plugin<Project> {
             task.dependsOn(nodeJsTaskProviders.npmCachesSetupTaskProvider)
             task.group = NodeJsRootPlugin.TASKS_GROUP_NAME
             task.description = "Create root package.json"
-            task.usesService(project.kotlinNpmResolutionManager)
+
+            task.npmResolutionManager.apply {
+                val service = project.kotlinNpmResolutionManager
+                set(service)
+                disallowChanges()
+                task.usesService(service)
+            }
 
             task.mustRunAfter(rootClean)
         }

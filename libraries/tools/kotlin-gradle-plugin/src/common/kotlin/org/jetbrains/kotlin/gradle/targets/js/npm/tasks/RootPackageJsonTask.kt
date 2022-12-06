@@ -6,22 +6,22 @@
 package org.jetbrains.kotlin.gradle.targets.js.npm.tasks
 
 import org.gradle.api.DefaultTask
+import org.gradle.api.provider.Property
 import org.gradle.api.tasks.*
-import org.gradle.work.NormalizeLineEndings
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin.Companion.kotlinNodeJsExtension
-import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin.Companion.kotlinNpmResolutionManager
+import org.jetbrains.kotlin.gradle.targets.js.npm.KotlinNpmResolutionManager
 import org.jetbrains.kotlin.gradle.targets.js.npm.NpmProject
 import org.jetbrains.kotlin.gradle.targets.js.npm.asNpmEnvironment
 import org.jetbrains.kotlin.gradle.targets.js.npm.asYarnEnvironment
 import org.jetbrains.kotlin.gradle.targets.js.yarn.yarn
 import java.io.File
 
-open class RootPackageJsonTask : DefaultTask() {
+abstract class RootPackageJsonTask : DefaultTask() {
     init {
         check(project == project.rootProject)
 
         onlyIf {
-            resolutionManager.get().isConfiguringState()
+            npmResolutionManager.get().isConfiguringState()
         }
     }
 
@@ -36,7 +36,8 @@ open class RootPackageJsonTask : DefaultTask() {
 
     // -----
 
-    private val resolutionManager = project.rootProject.kotlinNpmResolutionManager
+    @get:Internal
+    internal abstract val npmResolutionManager: Property<KotlinNpmResolutionManager>
 
     private val npmEnvironment by lazy {
         nodeJs.requireConfigured().asNpmEnvironment
@@ -61,7 +62,7 @@ open class RootPackageJsonTask : DefaultTask() {
 
     @TaskAction
     fun resolve() {
-        resolutionManager.get().prepare(logger, npmEnvironment, yarnEnv)
+        npmResolutionManager.get().prepare(logger, npmEnvironment, yarnEnv)
     }
 
     companion object {

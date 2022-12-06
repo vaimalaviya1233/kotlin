@@ -8,16 +8,18 @@ package org.jetbrains.kotlin.gradle.targets.js.npm.resolved
 import org.jetbrains.kotlin.gradle.targets.js.RequiredKotlinJsDependency
 import org.jetbrains.kotlin.gradle.targets.js.npm.NpmDependency
 import org.jetbrains.kotlin.gradle.targets.js.npm.resolver.PackageJsonProducer
+import java.io.Serializable
 
 /**
  * Info about NPM projects inside particular gradle [project].
  */
 internal class KotlinProjectNpmResolution(
     val project: String,
-    val npmProjects: List<PackageJsonProducer>,
+    val byCompilation: Map<String, PackageJsonProducer>,
     val taskRequirements: Map<String, Collection<RequiredKotlinJsDependency>>
-) {
-    val byCompilation: Map<String, PackageJsonProducer> by lazy { npmProjects.associateBy { it.compilationDisambiguatedName } }
+) : Serializable {
+    val npmProjects: Collection<PackageJsonProducer>
+        get() = byCompilation.values
 
     operator fun get(compilationName: String): PackageJsonProducer {
 //        check(compilation.target.project.path == project)
@@ -25,6 +27,6 @@ internal class KotlinProjectNpmResolution(
     }
 
     companion object {
-        fun empty(project: String) = KotlinProjectNpmResolution(project, listOf(), mapOf())
+        fun empty(project: String) = KotlinProjectNpmResolution(project, emptyMap(), emptyMap())
     }
 }

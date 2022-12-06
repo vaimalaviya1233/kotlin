@@ -84,9 +84,10 @@ internal class KotlinCompilationNpmResolver(
             it.compilationDisambiguatedName.set(compilation.disambiguatedName)
 
             it.npmResolutionManager.apply {
-                set(project.rootProject.kotlinNpmResolutionManager)
+                val service = project.rootProject.kotlinNpmResolutionManager
+                set(service)
                 disallowChanges()
-                it.usesService(this)
+                it.usesService(service)
             }
 
             it.jsIrCompilation.set(compilation is KotlinJsIrCompilation)
@@ -109,7 +110,6 @@ internal class KotlinCompilationNpmResolver(
 
     val packageJsonProducer: PackageJsonProducer
         get() {
-            println(toString())
             return _packageJsonProducer ?: run {
                 val visitor = ConfigurationVisitor()
                 visitor.visit(createAggregatedConfiguration())
@@ -142,7 +142,6 @@ internal class KotlinCompilationNpmResolver(
         all.usesPlatformOf(target)
         all.attributes.attribute(Usage.USAGE_ATTRIBUTE, KotlinUsages.consumerRuntimeUsage(target))
         all.attributes.attribute(Category.CATEGORY_ATTRIBUTE, project.categoryByName(Category.LIBRARY))
-        all.attributes.attribute(KotlinJsCompilerAttribute.jsCompilerAttribute, KotlinJsCompilerAttribute.legacy)
         all.isVisible = false
         all.isCanBeConsumed = false
         all.isCanBeResolved = true
@@ -314,7 +313,6 @@ internal class KotlinCompilationNpmResolver(
             npmProject.main,
             npmProject.packageJsonFile,
             npmProject.dir,
-            project.logger,
             rootResolver.tasksRequirements
         )
     }

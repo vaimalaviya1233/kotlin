@@ -92,7 +92,6 @@ internal abstract class KotlinNpmResolutionManager internal constructor(
 
         val gradleNodeModulesProvider: Property<GradleNodeModulesCache>
         val compositeNodeModulesProvider: Property<CompositeNodeModulesCache>
-        val mayBeUpToDateTasksRegistry: Property<MayBeUpToDatePackageJsonTasksRegistry>
     }
 
     //    val resolver = KotlinRootNpmResolver(

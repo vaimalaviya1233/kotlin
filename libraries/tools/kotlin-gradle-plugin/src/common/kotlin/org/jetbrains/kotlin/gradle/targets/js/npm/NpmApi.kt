@@ -64,7 +64,7 @@ data class YarnEnvironment(
     val standalone: Boolean,
     val ignoreScripts: Boolean,
     val yarnResolutions: List<YarnResolution>
-)
+) : Serializable
 
 internal val YarnEnv.asYarnEnvironment
     get() = YarnEnvironment(

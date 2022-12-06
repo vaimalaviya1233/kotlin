@@ -35,20 +35,25 @@ abstract class PublicPackageJsonTask : DefaultTask() {
     @get:Internal
     internal abstract val npmResolutionManager: Property<KotlinNpmResolutionManager>
 
+    @get:Internal
     abstract val compilationDisambiguatedName: Property<String>
 
     private val projectPath = project.path
 
-    private val projectVersion = project.version.toString()
+    @get:Input
+    val projectVersion = project.version.toString()
 
+    @get:Input
     abstract val jsIrCompilation: Property<Boolean>
 
+    @get:Input
     abstract val npmProjectName: Property<String>
 
+    @get:Internal
     abstract val npmProjectMain: Property<String>
 
     private val packageJsonHandlers: List<PackageJson.() -> Unit>
-        get() = npmResolutionManager.get().parameters.packageJsonHandlers.get().getValue("$projectPath:$compilationDisambiguatedName")
+        get() = npmResolutionManager.get().parameters.packageJsonHandlers.get().getValue("$projectPath:${compilationDisambiguatedName.get()}")
 
 
     @get:Input
@@ -75,7 +80,8 @@ abstract class PublicPackageJsonTask : DefaultTask() {
     private val compilationResolution
         get() = npmResolutionManager.get().resolution.get()[projectPath][compilationDisambiguatedName.get()]
             .getResolutionOrResolve(
-                npmResolutionManager.get()
+                npmResolutionManager.get(),
+                logger
             )
 
     @get:Input

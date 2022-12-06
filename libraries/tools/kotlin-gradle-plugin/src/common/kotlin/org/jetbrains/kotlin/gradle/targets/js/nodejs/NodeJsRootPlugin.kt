@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.gradle.targets.js.npm.GradleNodeModulesCache
 import org.jetbrains.kotlin.gradle.targets.js.npm.KotlinNpmResolutionManager
 import org.jetbrains.kotlin.gradle.targets.js.npm.asNpmEnvironment
 import org.jetbrains.kotlin.gradle.targets.js.npm.resolver.KotlinRootNpmResolver
-import org.jetbrains.kotlin.gradle.targets.js.npm.resolver.MayBeUpToDatePackageJsonTasksRegistry
 import org.jetbrains.kotlin.gradle.targets.js.npm.resolver.PACKAGE_JSON_UMBRELLA_TASK_NAME
 import org.jetbrains.kotlin.gradle.targets.js.npm.tasks.KotlinNpmCachesSetup
 import org.jetbrains.kotlin.gradle.targets.js.npm.tasks.KotlinNpmInstallTask
@@ -127,7 +126,6 @@ open class NodeJsRootPlugin : Plugin<Project> {
                 )
                 it.parameters.gradleNodeModulesProvider.set(gradleNodeModulesProvider)
                 it.parameters.compositeNodeModulesProvider.set(compositeNodeModulesProvider)
-                it.parameters.mayBeUpToDateTasksRegistry.set(MayBeUpToDatePackageJsonTasksRegistry.registerIfAbsent(project))
             }
 
         kotlinNpmInstallTask.configure {
@@ -172,7 +170,7 @@ open class NodeJsRootPlugin : Plugin<Project> {
         val Project.kotlinNodeJsTaskProvidersExtension: NodeJsTaskProviders
             get() = extensions.getByName(NodeJsTaskProviders.EXTENSION_NAME).castIsolatedKotlinPluginClassLoaderAware()
 
-        internal val Project.kotlinNpmResolutionManager: Provider<KotlinNpmResolutionManager>
+        internal val Project.kotlinNpmResolutionManager
             get() = gradle.sharedServices.registerIfAbsent("kotlin-npm-resolution-manager", KotlinNpmResolutionManager::class.java) {
                 error("Gradle service should be already registered")
             }
