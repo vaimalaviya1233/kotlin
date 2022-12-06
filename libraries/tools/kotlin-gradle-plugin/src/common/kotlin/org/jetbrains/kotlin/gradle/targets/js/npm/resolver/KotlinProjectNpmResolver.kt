@@ -7,7 +7,6 @@ package org.jetbrains.kotlin.gradle.targets.js.npm.resolver
 
 import org.gradle.api.Project
 import org.gradle.api.Task
-import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.TaskCollection
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.dsl.KotlinSingleTargetExtension
@@ -16,8 +15,6 @@ import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 import org.jetbrains.kotlin.gradle.plugin.KotlinTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinJsCompilation
 import org.jetbrains.kotlin.gradle.targets.js.KotlinJsTarget
-import org.jetbrains.kotlin.gradle.targets.js.npm.CompositeNodeModulesCache
-import org.jetbrains.kotlin.gradle.targets.js.npm.GradleNodeModulesCache
 import org.jetbrains.kotlin.gradle.targets.js.npm.KotlinNpmResolutionManager
 import org.jetbrains.kotlin.gradle.targets.js.npm.resolved.KotlinProjectNpmResolution
 import java.io.Serializable
@@ -43,7 +40,7 @@ internal class KotlinProjectNpmResolver(
         return byCompilation[compilationName] ?: error("$compilationName was not registered in $this")
     }
 
-    private var closed = false
+    private var resolution: KotlinProjectNpmResolution? = null
 
     val compilationResolvers: Collection<KotlinCompilationNpmResolver>
         get() = byCompilation.values
@@ -66,7 +63,7 @@ internal class KotlinProjectNpmResolver(
     }
 
     private fun addTargetListeners(target: KotlinTarget) {
-        check(!closed) { resolver.alreadyResolvedMessage("add target $target") }
+        check(resolution == null) { resolver.alreadyResolvedMessage("add target $target") }
 
         if (target.platformType == KotlinPlatformType.js ||
             target.platformType == KotlinPlatformType.wasm
@@ -91,7 +88,7 @@ internal class KotlinProjectNpmResolver(
 
     @Synchronized
     private fun addCompilation(compilation: KotlinJsCompilation) {
-        check(!closed) { resolver.alreadyResolvedMessage("add compilation $compilation") }
+        check(resolution == null) { resolver.alreadyResolvedMessage("add compilation $compilation") }
 
         byCompilation[compilation.disambiguatedName] =
             KotlinCompilationNpmResolver(
@@ -101,10 +98,7 @@ internal class KotlinProjectNpmResolver(
     }
 
     fun close(): KotlinProjectNpmResolution {
-        check(!closed)
-        closed = true
-
-        return KotlinProjectNpmResolution(
+        return resolution ?: KotlinProjectNpmResolution(
             projectPath,
             byCompilation.map { (key, value) ->
                 key to value.close()

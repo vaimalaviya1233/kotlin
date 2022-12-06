@@ -126,14 +126,9 @@ internal class KotlinCompilationNpmResolver(
 //            return packageJsonProducer
 //        }
 
-    private var closed = false
-
     @Synchronized
     fun close(): PackageJsonProducer {
-        check(!closed) { "$this already closed" }
-        closed = true
-        val resolution = _packageJsonProducer!! /* getResolutionOrResolve(npmResolutionManager) */
-        return resolution
+        return _packageJsonProducer!!
     }
 
     fun createAggregatedConfiguration(): Configuration {

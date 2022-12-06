@@ -6,20 +6,14 @@
 package org.jetbrains.kotlin.gradle.targets.js.npm.resolver
 
 import org.gradle.api.Project
-import org.gradle.api.logging.Logger
-import org.gradle.api.provider.Provider
-import org.gradle.internal.service.ServiceRegistry
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinJsCompilation
 import org.jetbrains.kotlin.gradle.plugin.mpp.isMain
 import org.jetbrains.kotlin.gradle.targets.js.NpmVersions
 import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrCompilation
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.TasksRequirements
-import org.jetbrains.kotlin.gradle.targets.js.npm.*
-import org.jetbrains.kotlin.gradle.targets.js.npm.resolved.KotlinProjectNpmResolution
+import org.jetbrains.kotlin.gradle.targets.js.npm.KotlinNpmResolutionManager
 import org.jetbrains.kotlin.gradle.targets.js.npm.resolved.KotlinRootNpmResolution
-import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnEnv
-import org.jetbrains.kotlin.gradle.targets.js.yarn.toVersionString
 import java.io.File
 import java.io.Serializable
 
@@ -76,6 +70,8 @@ class KotlinRootNpmResolver internal constructor(
     @Volatile
     private var state: RootResolverState? = RootResolverState.CONFIGURING
 
+    internal var resolution: KotlinRootNpmResolution? = null
+
 //    var state
 //        get() = state_ ?: resolverStateHolder.get().state
 //        set(value) {
@@ -112,7 +108,7 @@ class KotlinRootNpmResolver internal constructor(
 //    internal val compositeNodeModules: CompositeNodeModulesCache
 //        get() = compositeNodeModulesProvider.get()
 
-//    @Transient
+    //    @Transient
     private val projectResolvers_: MutableMap<String, KotlinProjectNpmResolver> = mutableMapOf()
 
 //    @Transient
@@ -244,13 +240,8 @@ class KotlinRootNpmResolver internal constructor(
         return mainCompilations
     }
 
-    var closed: Boolean = false
-
     internal fun close(): KotlinRootNpmResolution {
-        check(!closed)
-        closed = true
-
-        return KotlinRootNpmResolution(
+        return resolution ?: KotlinRootNpmResolution(
             projectResolvers
                 .map { (key, value) -> key to value.close() }
                 .toMap(),

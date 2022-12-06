@@ -9,12 +9,14 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.plugins.BasePlugin
+import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
 import org.jetbrains.kotlin.gradle.targets.js.MultiplePluginDeclarationDetector
 import org.jetbrains.kotlin.gradle.targets.js.npm.CompositeNodeModulesCache
 import org.jetbrains.kotlin.gradle.targets.js.npm.GradleNodeModulesCache
 import org.jetbrains.kotlin.gradle.targets.js.npm.KotlinNpmResolutionManager
 import org.jetbrains.kotlin.gradle.targets.js.npm.asNpmEnvironment
+import org.jetbrains.kotlin.gradle.targets.js.npm.resolved.KotlinRootNpmResolution
 import org.jetbrains.kotlin.gradle.targets.js.npm.resolver.KotlinRootNpmResolver
 import org.jetbrains.kotlin.gradle.targets.js.npm.resolver.PACKAGE_JSON_UMBRELLA_TASK_NAME
 import org.jetbrains.kotlin.gradle.targets.js.npm.tasks.KotlinNpmCachesSetup
@@ -108,7 +110,9 @@ open class NodeJsRootPlugin : Plugin<Project> {
 
         val kotlinNpmResolutionManager: Provider<KotlinNpmResolutionManager> =
             project.gradle.sharedServices.registerIfAbsent("kotlin-npm-resolution-manager", KotlinNpmResolutionManager::class.java) {
-                it.parameters.resolution.set(objectFactory.providerWithLazyConvention { nodeJs.resolver.close() })
+                it.parameters.resolution.set(objectFactory.providerWithLazyConvention {
+                    nodeJs.resolver.close()
+                })
 //                it.parameters.rootProjectName.set(project.name)
 //                it.parameters.rootProjectVersion.set(project.version.toString())
 //                it.parameters.tasksRequirements.set(nodeJs.taskRequirements)
