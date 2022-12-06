@@ -100,9 +100,12 @@ internal class KotlinProjectNpmResolver(
     fun close(): KotlinProjectNpmResolution {
         return resolution ?: KotlinProjectNpmResolution(
             projectPath,
-            byCompilation.map { (key, value) ->
-                key to value.close()
-            }.toMap(),
+            byCompilation
+                .map { (key, value) ->
+                    value.close()?.let { key to it }
+                }
+                .filterNotNull()
+                .toMap(),
             resolver.tasksRequirements.byTask
         )
     }

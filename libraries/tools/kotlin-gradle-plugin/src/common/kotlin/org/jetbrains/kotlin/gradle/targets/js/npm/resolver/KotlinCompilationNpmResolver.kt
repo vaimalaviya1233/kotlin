@@ -105,10 +105,17 @@ internal class KotlinCompilationNpmResolver(
 
     override fun toString(): String = "KotlinCompilationNpmResolver(${npmProject.name})"
 
-    val packageJsonProducer: PackageJsonProducer by lazy {
-        val visitor = ConfigurationVisitor()
-        visitor.visit(createAggregatedConfiguration())
-        visitor.toPackageJsonProducer()
+    private var _packageJsonProducer: PackageJsonProducer? = null
+
+    val packageJsonProducer: PackageJsonProducer
+        get() {
+        return _packageJsonProducer ?: run {
+            val visitor = ConfigurationVisitor()
+            visitor.visit(createAggregatedConfiguration())
+            visitor.toPackageJsonProducer()
+        }.also {
+            _packageJsonProducer = it
+        }
     }
 
 //    val packageJsonProducer: PackageJsonProducer
@@ -119,8 +126,8 @@ internal class KotlinCompilationNpmResolver(
 //        }
 
     @Synchronized
-    fun close(): PackageJsonProducer {
-        return packageJsonProducer
+    fun close(): PackageJsonProducer? {
+        return _packageJsonProducer
     }
 
     fun createAggregatedConfiguration(): Configuration {
