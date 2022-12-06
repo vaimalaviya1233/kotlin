@@ -13,7 +13,7 @@ import org.gradle.api.artifacts.component.ProjectComponentIdentifier
 import org.gradle.api.attributes.Category
 import org.gradle.api.attributes.Usage
 import org.gradle.api.internal.artifacts.DefaultProjectComponentIdentifier
-import org.gradle.api.tasks.*
+import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.bundling.Zip
 import org.jetbrains.kotlin.gradle.plugin.KotlinCompilation
 import org.jetbrains.kotlin.gradle.plugin.categoryByName
@@ -25,7 +25,6 @@ import org.jetbrains.kotlin.gradle.plugin.sources.KotlinDependencyScope
 import org.jetbrains.kotlin.gradle.plugin.sources.compilationDependencyConfigurationByScope
 import org.jetbrains.kotlin.gradle.plugin.sources.sourceSetDependencyConfigurationByScope
 import org.jetbrains.kotlin.gradle.plugin.usesPlatformOf
-import org.jetbrains.kotlin.gradle.targets.js.KotlinJsCompilerAttribute
 import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrCompilation
 import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrTarget
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin.Companion.kotlinNpmResolutionManager
@@ -106,18 +105,11 @@ internal class KotlinCompilationNpmResolver(
 
     override fun toString(): String = "KotlinCompilationNpmResolver(${npmProject.name})"
 
-    internal var _packageJsonProducer: PackageJsonProducer? = null
-
-    val packageJsonProducer: PackageJsonProducer
-        get() {
-            return _packageJsonProducer ?: run {
-                val visitor = ConfigurationVisitor()
-                visitor.visit(createAggregatedConfiguration())
-                visitor.toPackageJsonProducer()
-                    .also { _packageJsonProducer = it }
-                /*.also { it.compilationResolver = this }*/
-            }
-        }
+    val packageJsonProducer: PackageJsonProducer by lazy {
+        val visitor = ConfigurationVisitor()
+        visitor.visit(createAggregatedConfiguration())
+        visitor.toPackageJsonProducer()
+    }
 
 //    val packageJsonProducer: PackageJsonProducer
 //        get() {
@@ -128,7 +120,7 @@ internal class KotlinCompilationNpmResolver(
 
     @Synchronized
     fun close(): PackageJsonProducer {
-        return _packageJsonProducer!!
+        return packageJsonProducer
     }
 
     fun createAggregatedConfiguration(): Configuration {
