@@ -23,18 +23,11 @@ import org.jetbrains.kotlin.gradle.tasks.registerTask
 import java.io.File
 
 abstract class KotlinPackageJsonTask : DefaultTask() {
-
-    init {
-        onlyIf {
-            npmResolutionManager.get().isConfiguringState()
-        }
-    }
-
     // Only in configuration phase
     // Not part of configuration caching
 
-    @Transient
-    private val nodeJs: NodeJsRootExtension = project.rootProject.kotlinNodeJsExtension
+    private val nodeJs: NodeJsRootExtension
+        get() = project.rootProject.kotlinNodeJsExtension
 
     private val rootResolver: KotlinRootNpmResolver
         get() = nodeJs.resolver
@@ -67,7 +60,8 @@ abstract class KotlinPackageJsonTask : DefaultTask() {
     abstract val compilationDisambiguatedName: Property<String>
 
     private val packageJsonHandlers: List<PackageJson.() -> Unit>
-        get() = npmResolutionManager.get().parameters.packageJsonHandlers.get().getValue("$projectPath:${compilationDisambiguatedName.get()}")
+        get() = npmResolutionManager.get().parameters.packageJsonHandlers.get()
+            .getValue("$projectPath:${compilationDisambiguatedName.get()}")
 
     @get:Input
     val packageJsonCustomFields: Map<String, Any?> by lazy {
@@ -149,6 +143,11 @@ abstract class KotlinPackageJsonTask : DefaultTask() {
                 }
 
                 task.packageJson.set(compilation.npmProject.packageJsonFile)
+
+                task.onlyIf {
+                    it as KotlinPackageJsonTask
+                    it.npmResolutionManager.get().isConfiguringState()
+                }
 
                 task.dependsOn(target.project.provider { task.findDependentTasks() })
                 task.dependsOn(npmCachesSetupTask)

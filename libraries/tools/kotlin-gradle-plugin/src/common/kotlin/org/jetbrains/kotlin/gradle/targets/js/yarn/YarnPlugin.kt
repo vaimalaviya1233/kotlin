@@ -59,6 +59,11 @@ open class YarnPlugin : Plugin<Project> {
                 task.usesService(service)
             }
 
+            task.onlyIf {
+                it as RootPackageJsonTask
+                it.npmResolutionManager.get().isConfiguringState()
+            }
+
             task.mustRunAfter(rootClean)
         }
 

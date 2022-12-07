@@ -49,7 +49,6 @@ class PackageJsonProducer(
         npmResolutionManager: KotlinNpmResolutionManager,
         logger: Logger
     ): KotlinCompilationNpmResolution {
-        check(!closed) { "$this already closed" }
         check(resolution == null) { "$this already resolved" }
 
         return createPackageJson(
@@ -75,10 +74,13 @@ class PackageJsonProducer(
     }
 
     @Synchronized
-    fun close(): KotlinCompilationNpmResolution {
+    fun close(
+        npmResolutionManager: KotlinNpmResolutionManager,
+        logger: Logger,
+    ): KotlinCompilationNpmResolution {
         check(!closed) { "$this already closed" }
         closed = true
-        return resolution!!
+        return getResolutionOrResolve(npmResolutionManager, logger)
     }
 
     fun createPackageJson(

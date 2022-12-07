@@ -8,31 +8,32 @@ package org.jetbrains.kotlin.gradle.targets.js.npm.tasks
 import org.gradle.api.DefaultTask
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.*
+import org.gradle.work.NormalizeLineEndings
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin.Companion.kotlinNodeJsExtension
 import org.jetbrains.kotlin.gradle.targets.js.npm.KotlinNpmResolutionManager
 import org.jetbrains.kotlin.gradle.targets.js.npm.NpmProject
 import org.jetbrains.kotlin.gradle.targets.js.npm.asNpmEnvironment
 import org.jetbrains.kotlin.gradle.targets.js.npm.asYarnEnvironment
+import org.jetbrains.kotlin.gradle.targets.js.npm.resolver.KotlinRootNpmResolver
 import org.jetbrains.kotlin.gradle.targets.js.yarn.yarn
 import java.io.File
 
 abstract class RootPackageJsonTask : DefaultTask() {
     init {
         check(project == project.rootProject)
-
-        onlyIf {
-            npmResolutionManager.get().isConfiguringState()
-        }
     }
 
     // Only in configuration phase
     // Not part of configuration caching
 
-    @Transient
-    private val nodeJs = project.rootProject.kotlinNodeJsExtension
+    private val nodeJs
+        get() = project.rootProject.kotlinNodeJsExtension
 
-    @Transient
-    private val yarn = project.rootProject.yarn
+    private val yarn
+        get() = project.rootProject.yarn
+
+    private val rootResolver: KotlinRootNpmResolver
+        get() = nodeJs.resolver
 
     // -----
 
@@ -52,13 +53,16 @@ abstract class RootPackageJsonTask : DefaultTask() {
         nodeJs.rootPackageDir.resolve(NpmProject.PACKAGE_JSON)
     }
 
-//    @get:PathSensitive(PathSensitivity.RELATIVE)
-//    @get:IgnoreEmptyDirectories
-//    @get:NormalizeLineEndings
-//    @get:InputFiles
-//    val packageJsonFiles: Collection<File> by lazy {
-//        resolutionManager.get().packageJsonFiles
-//    }
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    @get:IgnoreEmptyDirectories
+    @get:NormalizeLineEndings
+    @get:InputFiles
+    val packageJsonFiles: Collection<File> by lazy {
+        rootResolver.projectResolvers.values
+            .flatMap { it.compilationResolvers }
+            .map { it.packageJsonProducer }
+            .map { it.npmProjectPackageJsonFile }
+    }
 
     @TaskAction
     fun resolve() {

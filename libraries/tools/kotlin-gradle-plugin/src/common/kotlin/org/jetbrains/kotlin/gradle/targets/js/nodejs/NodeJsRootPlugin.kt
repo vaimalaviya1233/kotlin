@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnPlugin
 import org.jetbrains.kotlin.gradle.tasks.CleanDataTask
 import org.jetbrains.kotlin.gradle.tasks.registerTask
 import org.jetbrains.kotlin.gradle.utils.castIsolatedKotlinPluginClassLoaderAware
+import org.jetbrains.kotlin.gradle.utils.doNotTrackStateCompat
 import org.jetbrains.kotlin.gradle.utils.providerWithLazyConvention
 
 open class NodeJsRootPlugin : Plugin<Project> {
@@ -75,6 +76,15 @@ open class NodeJsRootPlugin : Plugin<Project> {
             it.dependsOn(setupFileHasherTask)
             it.group = TASKS_GROUP_NAME
             it.description = "Find, download and link NPM dependencies and projects"
+
+            it.onlyIf { task ->
+                task as KotlinNpmInstallTask
+                task.preparedFiles.all { file ->
+                    file.exists()
+                }
+            }
+
+            it.doNotTrackStateCompat("NPM package manager track by its own")
 
             it.mustRunAfter(rootClean)
         }

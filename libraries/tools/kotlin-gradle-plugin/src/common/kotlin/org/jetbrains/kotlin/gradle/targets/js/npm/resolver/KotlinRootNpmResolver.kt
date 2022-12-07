@@ -17,13 +17,6 @@ import org.jetbrains.kotlin.gradle.targets.js.npm.resolved.KotlinRootNpmResoluti
 import java.io.File
 import java.io.Serializable
 
-/**
- * See [KotlinNpmResolutionManager] for details about resolution process.
- *
- * This class contains many transient properties to deduplicate data when configuration cache is used.
- * Regularly tasks share the same instance of this class, but with configuration cache each task that holds a reference to the instance will
- * create an own copy. We use build services as a single storage for the heavy state of this class.
- */
 class KotlinRootNpmResolver internal constructor(
     val rootProjectName: String,
     val rootProjectVersion: String,
@@ -35,7 +28,7 @@ class KotlinRootNpmResolver internal constructor(
 
     internal var resolution: KotlinRootNpmResolution? = null
 
-    private val projectResolvers: MutableMap<String, KotlinProjectNpmResolver> = mutableMapOf()
+    val projectResolvers: MutableMap<String, KotlinProjectNpmResolver> = mutableMapOf()
 
     fun alreadyResolvedMessage(action: String) = "Cannot $action. NodeJS projects already resolved."
 

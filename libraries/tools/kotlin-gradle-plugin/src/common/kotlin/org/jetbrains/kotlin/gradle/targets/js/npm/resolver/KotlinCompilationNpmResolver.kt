@@ -39,7 +39,7 @@ import java.io.Serializable
 /**
  * See [KotlinNpmResolutionManager] for details about resolution process.
  */
-internal class KotlinCompilationNpmResolver(
+class KotlinCompilationNpmResolver(
     val projectResolver: KotlinProjectNpmResolver,
     val compilation: KotlinJsCompilation
 ) : Serializable {
@@ -59,7 +59,7 @@ internal class KotlinCompilationNpmResolver(
 
     val projectPath: String = project.path
 
-    val packageJsonTaskHolder: TaskProvider<KotlinPackageJsonTask>? =
+    val packageJsonTaskHolder: TaskProvider<KotlinPackageJsonTask> =
         KotlinPackageJsonTask.create(compilation)
 
     val publicPackageJsonTaskHolder: TaskProvider<PublicPackageJsonTask> =
