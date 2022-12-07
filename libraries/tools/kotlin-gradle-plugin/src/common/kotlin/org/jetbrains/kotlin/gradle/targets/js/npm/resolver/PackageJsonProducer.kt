@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.gradle.targets.js.npm.resolved.KotlinCompilationNpmR
 import java.io.Serializable
 import java.io.File
 
-internal class PackageJsonProducer(
+class PackageJsonProducer(
     var internalDependencies: Collection<InternalDependency>,
     var internalCompositeDependencies: Collection<CompositeDependency>,
     var externalGradleDependencies: Collection<FileExternalGradleDependency>,

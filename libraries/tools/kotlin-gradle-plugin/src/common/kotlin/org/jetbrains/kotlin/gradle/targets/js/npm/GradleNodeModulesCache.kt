@@ -13,7 +13,7 @@ import javax.inject.Inject
 /**
  * Cache for storing already created [GradleNodeModule]s
  */
-internal abstract class GradleNodeModulesCache : AbstractNodeModulesCache() {
+abstract class GradleNodeModulesCache : AbstractNodeModulesCache() {
 
     @get:Inject
     abstract val fs: FileSystemOperations

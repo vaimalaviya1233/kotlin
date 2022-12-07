@@ -13,8 +13,8 @@ import org.jetbrains.kotlin.gradle.targets.js.npm.YarnEnvironment
 import org.jetbrains.kotlin.gradle.targets.js.yarn.toVersionString
 import java.io.Serializable
 
-internal class KotlinRootNpmResolution(
-    internal val projects: Map<String, KotlinProjectNpmResolution>,
+class KotlinRootNpmResolution(
+    val projects: Map<String, KotlinProjectNpmResolution>,
     val rootProjectName: String,
     val rootProjectVersion: String
 ) : Serializable {
@@ -51,7 +51,7 @@ internal class KotlinRootNpmResolution(
     }
 }
 
-internal class Installation(val compilationResolutions: Collection<KotlinCompilationNpmResolution>) {
+class Installation(val compilationResolutions: Collection<KotlinCompilationNpmResolution>) {
     internal fun install(
         args: List<String>,
         services: ServiceRegistry,

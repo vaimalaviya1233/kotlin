@@ -11,7 +11,7 @@ import java.io.Serializable
 /**
  * Info about NPM projects inside particular gradle [project].
  */
-internal class KotlinProjectNpmResolution(
+class KotlinProjectNpmResolution(
     val project: String,
     val byCompilation: Map<String, PackageJsonProducer>,
 ) : Serializable {

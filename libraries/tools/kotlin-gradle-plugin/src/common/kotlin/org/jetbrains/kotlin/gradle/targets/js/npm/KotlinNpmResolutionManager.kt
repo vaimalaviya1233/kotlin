@@ -14,9 +14,9 @@ import org.gradle.internal.service.ServiceRegistry
 import org.jetbrains.kotlin.gradle.targets.js.npm.resolved.Installation
 import org.jetbrains.kotlin.gradle.targets.js.npm.resolved.KotlinRootNpmResolution
 
-internal abstract class KotlinNpmResolutionManager : BuildService<KotlinNpmResolutionManager.Parameters> {
+abstract class KotlinNpmResolutionManager : BuildService<KotlinNpmResolutionManager.Parameters> {
 
-    internal interface Parameters : BuildServiceParameters {
+    interface Parameters : BuildServiceParameters {
         val resolution: Property<KotlinRootNpmResolution>
 
         // pulled up from compilation resolver since it was failing with ClassNotFoundException on deserialization, see KT-49061
