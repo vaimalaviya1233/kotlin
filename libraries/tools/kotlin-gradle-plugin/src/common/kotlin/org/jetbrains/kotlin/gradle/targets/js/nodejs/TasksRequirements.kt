@@ -5,8 +5,6 @@
 
 package org.jetbrains.kotlin.gradle.targets.js.nodejs
 
-import org.gradle.api.services.BuildService
-import org.gradle.api.services.BuildServiceParameters
 import org.jetbrains.kotlin.gradle.targets.js.RequiredKotlinJsDependency
 import org.jetbrains.kotlin.gradle.targets.js.npm.NpmDependency
 import org.jetbrains.kotlin.gradle.targets.js.npm.NpmDependencyDeclaration

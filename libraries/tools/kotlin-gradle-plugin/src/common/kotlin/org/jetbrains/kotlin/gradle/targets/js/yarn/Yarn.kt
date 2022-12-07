@@ -16,9 +16,6 @@ import java.io.File
 class Yarn : NpmApi {
     private val yarnWorkspaces = YarnWorkspaces()
 
-    private fun getDelegate(): NpmApi =
-        yarnWorkspaces
-
     override fun preparedFiles(nodeJs: NpmEnvironment): Collection<File> =
         yarnWorkspaces.preparedFiles(nodeJs)
 

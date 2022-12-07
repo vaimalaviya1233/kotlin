@@ -16,7 +16,7 @@ import java.io.File
 
 class YarnImportedPackagesVersionResolver(
     private val logger: Logger,
-    private val npmProjects: Collection<KotlinCompilationNpmResolution>,
+    npmProjects: Collection<KotlinCompilationNpmResolution>,
     private val nodeJsWorldDir: File
 ) {
     private val resolvedVersion = mutableMapOf<String, ResolvedNpmDependency>()

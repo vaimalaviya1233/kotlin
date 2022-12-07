@@ -8,7 +8,6 @@ package org.jetbrains.kotlin.gradle.targets.js.npm
 import groovy.lang.Closure
 import groovy.lang.GString
 import org.gradle.api.Project
-import org.gradle.api.model.ObjectFactory
 import org.gradle.api.plugins.ExtensionAware
 import org.gradle.api.reflect.TypeOf
 import org.jetbrains.kotlin.gradle.plugin.warnNpmGenerateExternals

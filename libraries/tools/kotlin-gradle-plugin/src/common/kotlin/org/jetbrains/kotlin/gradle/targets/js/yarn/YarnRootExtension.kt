@@ -6,21 +6,16 @@
 package org.jetbrains.kotlin.gradle.targets.js.yarn
 
 import org.gradle.api.Action
-import org.gradle.api.Incubating
 import org.gradle.api.Project
 import org.gradle.api.tasks.TaskProvider
 import org.jetbrains.kotlin.gradle.internal.ConfigurationPhaseAware
 import org.jetbrains.kotlin.gradle.logging.kotlinInfo
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsPlatform
-import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin.Companion.kotlinNodeJsTaskProvidersExtension
-import org.jetbrains.kotlin.gradle.targets.js.npm.RequiresNpmDependencies
-import org.jetbrains.kotlin.gradle.targets.js.npm.resolver.implementing
 import org.jetbrains.kotlin.gradle.targets.js.npm.tasks.RootPackageJsonTask
 import org.jetbrains.kotlin.gradle.tasks.internal.CleanableStore
 import java.io.File
 
 open class YarnRootExtension(
-    @Transient
     val project: Project
 ) : ConfigurationPhaseAware<YarnEnv>() {
     init {
@@ -73,21 +68,6 @@ open class YarnRootExtension(
         resolution(path, Action {
             it.include(version)
         })
-    }
-
-    @Incubating
-    fun disableGranularWorkspaces() {
-        val packageJsonUmbrella = project.kotlinNodeJsTaskProvidersExtension
-            .packageJsonUmbrellaTaskProvider
-
-        rootPackageJsonTaskProvider.configure {
-            it.dependsOn(packageJsonUmbrella)
-        }
-
-        project.allprojects
-            .forEach {
-                it.tasks.implementing(RequiresNpmDependencies::class).all {}
-            }
     }
 
     override fun finalizeConfiguration(): YarnEnv {

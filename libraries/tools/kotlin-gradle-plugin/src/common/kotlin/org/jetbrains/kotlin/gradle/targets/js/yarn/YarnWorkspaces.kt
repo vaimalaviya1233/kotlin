@@ -77,8 +77,6 @@ class YarnWorkspaces : YarnBasics() {
             NpmApi.resolveOperationDescription("yarn"),
             cliArgs
         )
-
-//        yarnLockReadTransitiveDependencies(nodeJsWorldDir, npmProjects.flatMap { it.externalNpmDependencies })
     }
 
     private fun saveRootProjectWorkspacesPackageJson(

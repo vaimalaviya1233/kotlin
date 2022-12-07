@@ -30,13 +30,6 @@ internal class KotlinRootNpmResolution(
         npmResolutionManager: KotlinNpmResolutionManager
     ): Installation {
         synchronized(projects) {
-//            state = RootResolverState.PROJECTS_CLOSED
-
-//            val projectResolutions = projectResolvers.values
-//                .map { it.close() }
-//                .associateBy { it.project }
-//            val allNpmPackages = projectResolutions.values.flatMap { it.npmProjects }
-
             npmResolutionManager.parameters.gradleNodeModulesProvider.get().close()
             npmResolutionManager.parameters.compositeNodeModulesProvider.get().close()
 
@@ -67,18 +60,6 @@ internal class Installation(val compilationResolutions: Collection<KotlinCompila
         yarnEnvironment: YarnEnvironment,
     ) {
         synchronized(compilationResolutions) {
-//            if (state == RootResolverState.INSTALLED) {
-//                return KotlinRootNpmResolution(projectResolutions)
-//            }
-//            check(state == RootResolverState.PROJECTS_CLOSED) {
-//                "Projects must be closed"
-//            }
-//            state = RootResolverState.INSTALLED
-
-//            val allNpmPackages = projectResolutions
-//                .values
-//                .flatMap { it.npmProjects }
-
             npmEnvironment.packageManager.resolveRootProject(
                 services,
                 logger,

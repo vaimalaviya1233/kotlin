@@ -25,7 +25,7 @@ abstract class ConfigurationPhaseAware<C : Any> {
         check(configured == null) { "Configuration already finalized for previous property values" }
     }
 
-    inner class Property<T>(var value: T) : Serializable {
+    inner class Property<T>(var value: T) {
         operator fun getValue(receiver: Any, property: KProperty<*>): T = value
 
         operator fun setValue(receiver: Any, property: KProperty<*>, value: T) {

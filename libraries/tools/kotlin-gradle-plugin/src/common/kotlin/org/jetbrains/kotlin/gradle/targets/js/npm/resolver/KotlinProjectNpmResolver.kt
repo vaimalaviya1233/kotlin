@@ -25,7 +25,6 @@ import kotlin.reflect.KClass
  */
 internal class KotlinProjectNpmResolver(
     project: Project,
-//    @Transient
     var resolver: KotlinRootNpmResolver
 ) : Serializable {
     val projectPath by lazy { project.path }
@@ -106,7 +105,6 @@ internal class KotlinProjectNpmResolver(
                 }
                 .filterNotNull()
                 .toMap(),
-            resolver.tasksRequirements.byTask
         )
     }
 }

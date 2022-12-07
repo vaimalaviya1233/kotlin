@@ -40,28 +40,18 @@ import java.io.Serializable
  * See [KotlinNpmResolutionManager] for details about resolution process.
  */
 internal class KotlinCompilationNpmResolver(
-//    @Transient
     val projectResolver: KotlinProjectNpmResolver,
-    @Transient
     val compilation: KotlinJsCompilation
 ) : Serializable {
-    //    @Transient
     var rootResolver = projectResolver.resolver
 
     val npmProject = compilation.npmProject
 
     val compilationDisambiguatedName = compilation.disambiguatedName
 
-//    val packageJsonHandlers by lazy {
-//        compilation.packageJsonHandlers
-//    }
-
     val npmVersion by lazy {
         project.version.toString()
     }
-
-//    val nodeJs get() = rootResolver.nodeJs
-//    private val nodeJs_ get() = nodeJs ?: unavailableValueError("nodeJs")
 
     val target get() = compilation.target
 
@@ -69,11 +59,9 @@ internal class KotlinCompilationNpmResolver(
 
     val projectPath: String = project.path
 
-    @Transient
     val packageJsonTaskHolder: TaskProvider<KotlinPackageJsonTask>? =
         KotlinPackageJsonTask.create(compilation)
 
-    @Transient
     val publicPackageJsonTaskHolder: TaskProvider<PublicPackageJsonTask> =
         project.registerTask<PublicPackageJsonTask>(
             npmProject.publicPackageJsonTaskName
@@ -109,21 +97,14 @@ internal class KotlinCompilationNpmResolver(
 
     val packageJsonProducer: PackageJsonProducer
         get() {
-        return _packageJsonProducer ?: run {
-            val visitor = ConfigurationVisitor()
-            visitor.visit(createAggregatedConfiguration())
-            visitor.toPackageJsonProducer()
-        }.also {
-            _packageJsonProducer = it
+            return _packageJsonProducer ?: run {
+                val visitor = ConfigurationVisitor()
+                visitor.visit(createAggregatedConfiguration())
+                visitor.toPackageJsonProducer()
+            }.also {
+                _packageJsonProducer = it
+            }
         }
-    }
-
-//    val packageJsonProducer: PackageJsonProducer
-//        get() {
-//            val packageJsonProducer = packageJsonProducer_
-//            packageJsonProducer.compilationResolver = this
-//            return packageJsonProducer
-//        }
 
     @Synchronized
     fun close(): PackageJsonProducer? {

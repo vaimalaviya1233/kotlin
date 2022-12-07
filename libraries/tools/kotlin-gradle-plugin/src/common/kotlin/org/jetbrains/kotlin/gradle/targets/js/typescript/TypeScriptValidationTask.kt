@@ -68,9 +68,8 @@ constructor(
 
         val message = "Oops, Kotlin/JS compiler generated invalid d.ts files."
 
-        when (validationStrategy) {
-            KotlinIrJsGeneratedTSValidationStrategy.ERROR -> error(message)
-            KotlinIrJsGeneratedTSValidationStrategy.IGNORE -> {}
+        if (validationStrategy == KotlinIrJsGeneratedTSValidationStrategy.ERROR) {
+            error(message)
         }
     }
 

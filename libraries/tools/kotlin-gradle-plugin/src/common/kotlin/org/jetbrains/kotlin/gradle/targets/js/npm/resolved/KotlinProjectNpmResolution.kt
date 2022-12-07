@@ -5,8 +5,6 @@
 
 package org.jetbrains.kotlin.gradle.targets.js.npm.resolved
 
-import org.jetbrains.kotlin.gradle.targets.js.RequiredKotlinJsDependency
-import org.jetbrains.kotlin.gradle.targets.js.npm.NpmDependency
 import org.jetbrains.kotlin.gradle.targets.js.npm.resolver.PackageJsonProducer
 import java.io.Serializable
 
@@ -16,17 +14,15 @@ import java.io.Serializable
 internal class KotlinProjectNpmResolution(
     val project: String,
     val byCompilation: Map<String, PackageJsonProducer>,
-    val taskRequirements: Map<String, Collection<RequiredKotlinJsDependency>>
 ) : Serializable {
     val npmProjects: Collection<PackageJsonProducer>
         get() = byCompilation.values
 
     operator fun get(compilationName: String): PackageJsonProducer {
-//        check(compilation.target.project.path == project)
         return byCompilation.getValue(compilationName)
     }
 
     companion object {
-        fun empty(project: String) = KotlinProjectNpmResolution(project, emptyMap(), emptyMap())
+        fun empty(project: String) = KotlinProjectNpmResolution(project, emptyMap())
     }
 }

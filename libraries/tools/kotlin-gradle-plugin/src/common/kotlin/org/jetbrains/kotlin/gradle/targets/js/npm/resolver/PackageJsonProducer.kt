@@ -77,9 +77,8 @@ internal class PackageJsonProducer(
     @Synchronized
     fun close(): KotlinCompilationNpmResolution {
         check(!closed) { "$this already closed" }
-        val resolution = resolution!! /* getResolutionOrResolve(npmResolutionManager) */
         closed = true
-        return resolution
+        return resolution!!
     }
 
     fun createPackageJson(
@@ -132,11 +131,7 @@ internal class PackageJsonProducer(
         val allNpmDependencies = disambiguateDependencies(externalNpmDependencies, otherNpmDependencies, logger)
         val packageJsonHandlers =
             npmResolutionManager.parameters.packageJsonHandlers.get()["$projectPath:${compilationDisambiguatedName}"]
-                ?: emptyList() /*if (compilationResolver.compilation != null) {
-                compilationResolver.compilation.packageJsonHandlers
-            } else {
-                compilationResolver.rootResolver.getPackageJsonHandlers(projectPath, compilationResolver.compilationDisambiguatedName)
-            }*/
+                ?: emptyList()
 
         val packageJson = packageJson(
             npmProjectName,

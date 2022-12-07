@@ -6,7 +6,6 @@
 package org.jetbrains.kotlin.gradle.targets.js.nodejs
 
 import org.gradle.api.logging.Logger
-import org.gradle.api.services.BuildServiceRegistry
 import org.jetbrains.kotlin.gradle.internal.ConfigurationPhaseAware
 import org.jetbrains.kotlin.gradle.logging.kotlinInfo
 import org.jetbrains.kotlin.gradle.targets.js.NpmVersions
@@ -15,15 +14,13 @@ import org.jetbrains.kotlin.gradle.targets.js.npm.resolver.KotlinRootNpmResolver
 import org.jetbrains.kotlin.gradle.targets.js.yarn.Yarn
 import org.jetbrains.kotlin.gradle.tasks.internal.CleanableStore
 import java.io.File
-import java.io.Serializable
 
 open class NodeJsRootExtension(
-    sharedServices: BuildServiceRegistry,
     logger: Logger,
     gradleUserHomeDir: File,
     val rootProjectDir: File,
     rootProjectBuildDir: File,
-) : ConfigurationPhaseAware<NodeJsEnv>(), Serializable {
+) : ConfigurationPhaseAware<NodeJsEnv>() {
 
     private val gradleHome = gradleUserHomeDir.also {
         logger.kotlinInfo("Storing cached files in $it")
@@ -92,8 +89,6 @@ open class NodeJsRootExtension(
     }
 
     val versions = NpmVersions()
-
-//    val npmResolutionManager = KotlinNpmResolutionManager(this, npmResolutionManagerStateHolder)
 
     companion object {
         const val EXTENSION_NAME: String = "kotlinNodeJs"

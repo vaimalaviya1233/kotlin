@@ -9,20 +9,16 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.plugins.BasePlugin
-import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
 import org.jetbrains.kotlin.gradle.targets.js.MultiplePluginDeclarationDetector
 import org.jetbrains.kotlin.gradle.targets.js.npm.CompositeNodeModulesCache
 import org.jetbrains.kotlin.gradle.targets.js.npm.GradleNodeModulesCache
 import org.jetbrains.kotlin.gradle.targets.js.npm.KotlinNpmResolutionManager
-import org.jetbrains.kotlin.gradle.targets.js.npm.asNpmEnvironment
-import org.jetbrains.kotlin.gradle.targets.js.npm.resolved.KotlinRootNpmResolution
 import org.jetbrains.kotlin.gradle.targets.js.npm.resolver.KotlinRootNpmResolver
 import org.jetbrains.kotlin.gradle.targets.js.npm.resolver.PACKAGE_JSON_UMBRELLA_TASK_NAME
 import org.jetbrains.kotlin.gradle.targets.js.npm.tasks.KotlinNpmCachesSetup
 import org.jetbrains.kotlin.gradle.targets.js.npm.tasks.KotlinNpmInstallTask
 import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnPlugin
-import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnResolution
 import org.jetbrains.kotlin.gradle.tasks.CleanDataTask
 import org.jetbrains.kotlin.gradle.tasks.registerTask
 import org.jetbrains.kotlin.gradle.utils.castIsolatedKotlinPluginClassLoaderAware
@@ -95,7 +91,7 @@ open class NodeJsRootPlugin : Plugin<Project> {
 
         project.registerTask<Task>(PACKAGE_JSON_UMBRELLA_TASK_NAME)
 
-        val yarnExtension = YarnPlugin.apply(project)
+        YarnPlugin.apply(project)
 
         nodeJs.resolver = KotlinRootNpmResolver(
             project.name,
@@ -113,14 +109,6 @@ open class NodeJsRootPlugin : Plugin<Project> {
                 it.parameters.resolution.set(objectFactory.providerWithLazyConvention {
                     nodeJs.resolver.close()
                 })
-//                it.parameters.rootProjectName.set(project.name)
-//                it.parameters.rootProjectVersion.set(project.version.toString())
-//                it.parameters.tasksRequirements.set(nodeJs.taskRequirements)
-//                it.parameters.versions.set(nodeJs.versions)
-//                it.parameters.projectPackagesDir.set(nodeJs.projectPackagesDir)
-//                it.parameters.rootProjectDir.set(nodeJs.rootProjectDir)
-////                it.parameters.nodeJs.set(nodeJs)
-////                it.parameters.yarn.set(yarnExtension)
                 it.parameters.packageJsonHandlers.set(
                     objectFactory.providerWithLazyConvention {
                         nodeJs.resolver.compilations.associate { compilation ->
@@ -135,22 +123,6 @@ open class NodeJsRootPlugin : Plugin<Project> {
         kotlinNpmInstallTask.configure {
             it.usesService(kotlinNpmResolutionManager)
         }
-
-//        project.extensions.create(
-//            NodeJsRootExtension.EXTENSION_NAME_2,
-//            KotlinNpmResolutionManager::class.java,
-//            nodeJs,
-//            npmResolutionManagerStateHolder,
-//            project.name,
-//            project.version.toString(),
-//            project.gradle.sharedServices,
-//            gradleNodeModulesProvider,
-//            compositeNodeModulesProvider,
-//            MayBeUpToDatePackageJsonTasksRegistry.registerIfAbsent(project),
-//            yarnEnv,
-//            npmEnvironment,
-//            yarnResolutions
-//        )
 
         project.tasks.register("node" + CleanDataTask.NAME_SUFFIX, CleanDataTask::class.java) {
             it.cleanableStoreProvider = project.provider { nodeJs.requireConfigured().cleanableStore }

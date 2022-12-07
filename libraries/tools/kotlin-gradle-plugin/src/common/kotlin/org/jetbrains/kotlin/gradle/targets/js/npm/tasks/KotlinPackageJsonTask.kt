@@ -111,7 +111,6 @@ abstract class KotlinPackageJsonTask : DefaultTask() {
             val target = compilation.target
             val project = target.project
             val npmProject = compilation.npmProject
-            val nodeJs = project.rootProject.kotlinNodeJsExtension
             val nodeJsTaskProviders = project.rootProject.kotlinNodeJsTaskProvidersExtension
 
             val rootClean = project.rootProject.tasks.named(BasePlugin.CLEAN_TASK_NAME)
