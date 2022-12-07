@@ -13,7 +13,6 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinJsCompilation
 import org.jetbrains.kotlin.gradle.targets.js.RequiredKotlinJsDependency
 import org.jetbrains.kotlin.gradle.targets.js.addWasmExperimentalArguments
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin.Companion.kotlinNodeJsExtension
-import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin.Companion.kotlinNodeJsTaskProvidersExtension
 import org.jetbrains.kotlin.gradle.targets.js.npm.RequiresNpmDependencies
 import org.jetbrains.kotlin.gradle.targets.js.npm.npmProject
 import org.jetbrains.kotlin.gradle.tasks.registerTask
@@ -92,7 +91,7 @@ constructor(
             val project = target.project
             NodeJsRootPlugin.apply(project.rootProject)
             val nodeJs = project.rootProject.kotlinNodeJsExtension
-            val nodeJsTaskProviders = project.rootProject.kotlinNodeJsTaskProvidersExtension
+            val nodeJsTaskProviders = project.rootProject.kotlinNodeJsExtension
             val npmProject = compilation.npmProject
 
             return project.registerTask(

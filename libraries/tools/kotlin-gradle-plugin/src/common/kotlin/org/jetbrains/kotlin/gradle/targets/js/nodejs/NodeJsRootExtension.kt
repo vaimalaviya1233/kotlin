@@ -5,25 +5,52 @@
 
 package org.jetbrains.kotlin.gradle.targets.js.nodejs
 
-import org.gradle.api.logging.Logger
+import org.gradle.api.Project
+import org.gradle.api.Task
+import org.gradle.api.tasks.TaskProvider
 import org.jetbrains.kotlin.gradle.internal.ConfigurationPhaseAware
 import org.jetbrains.kotlin.gradle.logging.kotlinInfo
+import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider
 import org.jetbrains.kotlin.gradle.targets.js.NpmVersions
 import org.jetbrains.kotlin.gradle.targets.js.npm.NpmApi
 import org.jetbrains.kotlin.gradle.targets.js.npm.resolver.KotlinRootNpmResolver
+import org.jetbrains.kotlin.gradle.targets.js.npm.resolver.PACKAGE_JSON_UMBRELLA_TASK_NAME
+import org.jetbrains.kotlin.gradle.targets.js.npm.tasks.KotlinNpmCachesSetup
+import org.jetbrains.kotlin.gradle.targets.js.npm.tasks.KotlinNpmInstallTask
+import org.jetbrains.kotlin.gradle.targets.js.npm.tasks.RootPackageJsonTask
 import org.jetbrains.kotlin.gradle.targets.js.yarn.Yarn
+import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnLockCopyTask
 import org.jetbrains.kotlin.gradle.tasks.internal.CleanableStore
 import java.io.File
 
 open class NodeJsRootExtension(
-    logger: Logger,
-    gradleUserHomeDir: File,
-    val rootProjectDir: File,
-    rootProjectBuildDir: File,
+    val project: Project
 ) : ConfigurationPhaseAware<NodeJsEnv>() {
 
-    private val gradleHome = gradleUserHomeDir.also {
-        logger.kotlinInfo("Storing cached files in $it")
+    init {
+        check(project.rootProject == project)
+
+        val projectProperties = PropertiesProvider(project)
+
+        if (projectProperties.errorJsGenerateExternals != null) {
+            project.logger.warn(
+                """
+                |
+                |==========
+                |Please note, Dukat integration in Gradle plugin does not work now, it was removed.
+                |We rethink how we can integrate properly.
+                |==========
+                |
+                """.trimMargin()
+            )
+        }
+    }
+
+    val rootProjectDir
+        get() = project.projectDir
+
+    private val gradleHome = project.gradle.gradleUserHomeDir.also {
+        project.logger.kotlinInfo("Storing cached files in $it")
     }
 
     var installationDir by Property(gradleHome.resolve("nodejs"))
@@ -46,13 +73,15 @@ open class NodeJsRootExtension(
 
     lateinit var resolver: KotlinRootNpmResolver
 
-    val rootPackageDir: File = rootProjectBuildDir.resolve("js")
+    val rootPackageDir: File = project.buildDir.resolve("js")
 
     val projectPackagesDir: File
         get() = rootPackageDir.resolve("packages")
 
     val nodeModulesGradleCacheDir: File
         get() = rootPackageDir.resolve("packages_imported")
+
+    val versions = NpmVersions()
 
     override fun finalizeConfiguration(): NodeJsEnv {
         val platform = NodeJsPlatform.name
@@ -88,10 +117,25 @@ open class NodeJsRootExtension(
         )
     }
 
-    val versions = NpmVersions()
+    val nodeJsSetupTaskProvider: TaskProvider<out NodeJsSetupTask>
+        get() = project.tasks.withType(NodeJsSetupTask::class.java).named(NodeJsSetupTask.NAME)
+
+    val npmInstallTaskProvider: TaskProvider<out KotlinNpmInstallTask>
+        get() = project.tasks.withType(KotlinNpmInstallTask::class.java).named(KotlinNpmInstallTask.NAME)
+
+    val rootPackageJsonTaskProvider: TaskProvider<RootPackageJsonTask>
+        get() = project.tasks.withType(RootPackageJsonTask::class.java).named(RootPackageJsonTask.NAME)
+
+    val packageJsonUmbrellaTaskProvider: TaskProvider<Task>
+        get() = project.tasks.named(PACKAGE_JSON_UMBRELLA_TASK_NAME)
+
+    val npmCachesSetupTaskProvider: TaskProvider<out KotlinNpmCachesSetup>
+        get() = project.tasks.withType(KotlinNpmCachesSetup::class.java).named(KotlinNpmCachesSetup.NAME)
+
+    val storeYarnLockTaskProvider: TaskProvider<out YarnLockCopyTask>
+        get() = project.tasks.withType(YarnLockCopyTask::class.java).named(YarnLockCopyTask.STORE_YARN_LOCK_NAME)
 
     companion object {
         const val EXTENSION_NAME: String = "kotlinNodeJs"
-        const val EXTENSION_NAME_2: String = "kotlinNpmResolutionManager"
     }
 }

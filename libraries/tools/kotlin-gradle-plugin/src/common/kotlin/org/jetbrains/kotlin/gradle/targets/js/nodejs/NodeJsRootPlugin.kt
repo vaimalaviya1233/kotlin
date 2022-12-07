@@ -37,16 +37,6 @@ open class NodeJsRootPlugin : Plugin<Project> {
         val nodeJs = project.extensions.create(
             NodeJsRootExtension.EXTENSION_NAME,
             NodeJsRootExtension::class.java,
-            project.gradle.sharedServices,
-            project.logger,
-            project.gradle.gradleUserHomeDir,
-            project.projectDir,
-            project.buildDir,
-        )
-
-        project.extensions.create(
-            NodeJsTaskProviders.EXTENSION_NAME,
-            NodeJsTaskProviders::class.java,
             project
         )
 
@@ -142,9 +132,6 @@ open class NodeJsRootPlugin : Plugin<Project> {
 
         val Project.kotlinNodeJsExtension: NodeJsRootExtension
             get() = extensions.getByName(NodeJsRootExtension.EXTENSION_NAME).castIsolatedKotlinPluginClassLoaderAware()
-
-        val Project.kotlinNodeJsTaskProvidersExtension: NodeJsTaskProviders
-            get() = extensions.getByName(NodeJsTaskProviders.EXTENSION_NAME).castIsolatedKotlinPluginClassLoaderAware()
 
         internal val Project.kotlinNpmResolutionManager
             get() = gradle.sharedServices.registerIfAbsent("kotlin-npm-resolution-manager", KotlinNpmResolutionManager::class.java) {

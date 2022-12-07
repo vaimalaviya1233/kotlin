@@ -15,9 +15,8 @@ import org.jetbrains.kotlin.gradle.report.BuildMetricsService
 import org.jetbrains.kotlin.gradle.targets.js.dsl.ExperimentalDceDsl
 import org.jetbrains.kotlin.gradle.targets.js.dsl.KotlinJsBinaryMode
 import org.jetbrains.kotlin.gradle.targets.js.dsl.KotlinJsBrowserDsl
+import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin.Companion.kotlinNodeJsExtension
-import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin.Companion.kotlinNodeJsTaskProvidersExtension
-import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsTaskProviders
 import org.jetbrains.kotlin.gradle.targets.js.testing.KotlinJsTest
 import org.jetbrains.kotlin.gradle.targets.js.testing.karma.KotlinKarma
 import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpack
@@ -35,7 +34,6 @@ abstract class KotlinBrowserJsIr @Inject constructor(target: KotlinJsIrTarget) :
     KotlinJsBrowserDsl {
 
     private val nodeJs = project.rootProject.kotlinNodeJsExtension
-    private val nodeJsTaskProviders = project.rootProject.kotlinNodeJsTaskProvidersExtension
 
     private val webpackTaskConfigurations: MutableList<KotlinWebpack.() -> Unit> = mutableListOf()
     private val runTaskConfigurations: MutableList<KotlinWebpack.() -> Unit> = mutableListOf()
@@ -45,9 +43,9 @@ abstract class KotlinBrowserJsIr @Inject constructor(target: KotlinJsIrTarget) :
 
     override fun configureTestDependencies(test: KotlinJsTest) {
         test.dependsOn(
-            nodeJsTaskProviders.npmInstallTaskProvider,
-            nodeJsTaskProviders.storeYarnLockTaskProvider,
-            nodeJsTaskProviders.nodeJsSetupTaskProvider
+            nodeJs.npmInstallTaskProvider,
+            nodeJs.storeYarnLockTaskProvider,
+            nodeJs.nodeJsSetupTaskProvider
         )
     }
 
@@ -140,7 +138,6 @@ abstract class KotlinBrowserJsIr @Inject constructor(target: KotlinJsIrTarget) :
                         mode = mode,
                         entryFileProvider = entryFileProvider,
                         configurationActions = runTaskConfigurations,
-                        nodeJsTaskProviders = nodeJsTaskProviders
                     )
                 }
 
@@ -155,7 +152,6 @@ abstract class KotlinBrowserJsIr @Inject constructor(target: KotlinJsIrTarget) :
         compilation: KotlinJsIrCompilation
     ) {
         val project = compilation.target.project
-        val nodeJs = project.rootProject.kotlinNodeJsExtension
 
         val processResourcesTask = target.project.tasks.named(compilation.processResourcesTaskName)
 
@@ -206,7 +202,6 @@ abstract class KotlinBrowserJsIr @Inject constructor(target: KotlinJsIrTarget) :
                         mode = mode,
                         entryFileProvider = entryFileProvider,
                         configurationActions = webpackTaskConfigurations,
-                        nodeJsTaskProviders = nodeJsTaskProviders
                     )
                 }
 
@@ -238,11 +233,10 @@ abstract class KotlinBrowserJsIr @Inject constructor(target: KotlinJsIrTarget) :
         mode: KotlinJsBinaryMode,
         entryFileProvider: Provider<File>,
         configurationActions: List<KotlinWebpack.() -> Unit>,
-        nodeJsTaskProviders: NodeJsTaskProviders
     ) {
         dependsOn(
-            nodeJsTaskProviders.npmInstallTaskProvider,
-            nodeJsTaskProviders.storeYarnLockTaskProvider,
+            nodeJs.npmInstallTaskProvider,
+            nodeJs.storeYarnLockTaskProvider,
             target.project.tasks.named(compilation.processResourcesTaskName)
         )
 
