@@ -60,7 +60,7 @@ abstract class RootPackageJsonTask : DefaultTask() {
     val packageJsonFiles: Collection<File> by lazy {
         rootResolver.projectResolvers.values
             .flatMap { it.compilationResolvers }
-            .map { it.packageJsonProducer }
+            .map { it.compilationNpmResolution }
             .map { it.npmProjectPackageJsonFile }
     }
 

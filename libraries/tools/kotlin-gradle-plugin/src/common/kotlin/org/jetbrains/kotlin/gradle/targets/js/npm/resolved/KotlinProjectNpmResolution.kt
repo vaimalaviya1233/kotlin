@@ -5,24 +5,20 @@
 
 package org.jetbrains.kotlin.gradle.targets.js.npm.resolved
 
-import org.jetbrains.kotlin.gradle.targets.js.npm.resolver.PackageJsonProducer
+import org.jetbrains.kotlin.gradle.targets.js.npm.resolver.KotlinCompilationNpmResolution
 import java.io.Serializable
 
-/**
- * Info about NPM projects inside particular gradle [project].
- */
 class KotlinProjectNpmResolution(
-    val project: String,
-    val byCompilation: Map<String, PackageJsonProducer>,
+    val byCompilation: Map<String, KotlinCompilationNpmResolution>,
 ) : Serializable {
-    val npmProjects: Collection<PackageJsonProducer>
+    val npmProjects: Collection<KotlinCompilationNpmResolution>
         get() = byCompilation.values
 
-    operator fun get(compilationName: String): PackageJsonProducer {
+    operator fun get(compilationName: String): KotlinCompilationNpmResolution {
         return byCompilation.getValue(compilationName)
     }
 
     companion object {
-        fun empty(project: String) = KotlinProjectNpmResolution(project, emptyMap())
+        fun empty() = KotlinProjectNpmResolution(emptyMap())
     }
 }

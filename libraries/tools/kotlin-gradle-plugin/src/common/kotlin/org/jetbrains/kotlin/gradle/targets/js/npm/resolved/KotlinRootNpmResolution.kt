@@ -18,7 +18,7 @@ class KotlinRootNpmResolution(
     val rootProjectName: String,
     val rootProjectVersion: String
 ) : Serializable {
-    operator fun get(project: String) = projects[project] ?: KotlinProjectNpmResolution.empty(project)
+    operator fun get(project: String) = projects[project] ?: KotlinProjectNpmResolution.empty()
 
     /**
      * Don't use directly, use [KotlinNpmResolutionManager.installIfNeeded] instead.
@@ -33,7 +33,7 @@ class KotlinRootNpmResolution(
             npmResolutionManager.parameters.gradleNodeModulesProvider.get().close()
             npmResolutionManager.parameters.compositeNodeModulesProvider.get().close()
 
-            val projectResolutions: List<KotlinCompilationNpmResolution> = projects.values.flatMap { it.npmProjects }.map { it.close(npmResolutionManager, logger) }
+            val projectResolutions: List<PreparedKotlinCompilationNpmResolution> = projects.values.flatMap { it.npmProjects }.map { it.close(npmResolutionManager, logger) }
             npmEnvironment.packageManager.prepareRootProject(
                 npmEnvironment,
                 rootProjectName,
@@ -51,7 +51,7 @@ class KotlinRootNpmResolution(
     }
 }
 
-class Installation(val compilationResolutions: Collection<KotlinCompilationNpmResolution>) {
+class Installation(val compilationResolutions: Collection<PreparedKotlinCompilationNpmResolution>) {
     internal fun install(
         args: List<String>,
         services: ServiceRegistry,

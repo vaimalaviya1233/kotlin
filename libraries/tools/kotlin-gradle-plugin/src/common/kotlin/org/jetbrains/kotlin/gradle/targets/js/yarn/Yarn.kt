@@ -10,7 +10,7 @@ import org.gradle.internal.service.ServiceRegistry
 import org.jetbrains.kotlin.gradle.targets.js.npm.NpmApi
 import org.jetbrains.kotlin.gradle.targets.js.npm.NpmEnvironment
 import org.jetbrains.kotlin.gradle.targets.js.npm.YarnEnvironment
-import org.jetbrains.kotlin.gradle.targets.js.npm.resolved.KotlinCompilationNpmResolution
+import org.jetbrains.kotlin.gradle.targets.js.npm.resolved.PreparedKotlinCompilationNpmResolution
 import java.io.File
 
 class Yarn : NpmApi {
@@ -24,7 +24,7 @@ class Yarn : NpmApi {
         rootProjectName: String,
         rootProjectVersion: String,
         logger: Logger,
-        subProjects: Collection<KotlinCompilationNpmResolution>,
+        subProjects: Collection<PreparedKotlinCompilationNpmResolution>,
         resolutions: Map<String, String>,
     ) = yarnWorkspaces
         .prepareRootProject(
@@ -41,7 +41,7 @@ class Yarn : NpmApi {
         logger: Logger,
         nodeJs: NpmEnvironment,
         yarn: YarnEnvironment,
-        npmProjects: Collection<KotlinCompilationNpmResolution>,
+        npmProjects: Collection<PreparedKotlinCompilationNpmResolution>,
         cliArgs: List<String>
     ) {
         yarnWorkspaces

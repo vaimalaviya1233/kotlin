@@ -9,11 +9,11 @@ import org.gradle.api.logging.Logger
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.TasksRequirements
 import org.jetbrains.kotlin.gradle.targets.js.npm.*
 import org.jetbrains.kotlin.gradle.targets.js.npm.NpmProject.Companion.PACKAGE_JSON
-import org.jetbrains.kotlin.gradle.targets.js.npm.resolved.KotlinCompilationNpmResolution
+import org.jetbrains.kotlin.gradle.targets.js.npm.resolved.PreparedKotlinCompilationNpmResolution
 import java.io.Serializable
 import java.io.File
 
-class PackageJsonProducer(
+class KotlinCompilationNpmResolution(
     var internalDependencies: Collection<InternalDependency>,
     var internalCompositeDependencies: Collection<CompositeDependency>,
     var externalGradleDependencies: Collection<FileExternalGradleDependency>,
@@ -41,14 +41,14 @@ class PackageJsonProducer(
         )
 
     private var closed = false
-    private var resolution: KotlinCompilationNpmResolution? = null
+    private var resolution: PreparedKotlinCompilationNpmResolution? = null
 
     @Synchronized
     fun resolve(
         skipWriting: Boolean = false,
         npmResolutionManager: KotlinNpmResolutionManager,
         logger: Logger
-    ): KotlinCompilationNpmResolution {
+    ): PreparedKotlinCompilationNpmResolution {
         check(resolution == null) { "$this already resolved" }
 
         return createPackageJson(
@@ -64,7 +64,7 @@ class PackageJsonProducer(
     fun getResolutionOrResolve(
         npmResolutionManager: KotlinNpmResolutionManager,
         logger: Logger,
-    ): KotlinCompilationNpmResolution {
+    ): PreparedKotlinCompilationNpmResolution {
 
         return resolution ?: resolve(
             skipWriting = true,
@@ -77,7 +77,7 @@ class PackageJsonProducer(
     fun close(
         npmResolutionManager: KotlinNpmResolutionManager,
         logger: Logger,
-    ): KotlinCompilationNpmResolution {
+    ): PreparedKotlinCompilationNpmResolution {
         check(!closed) { "$this already closed" }
         closed = true
         return getResolutionOrResolve(npmResolutionManager, logger)
@@ -87,12 +87,12 @@ class PackageJsonProducer(
         skipWriting: Boolean,
         npmResolutionManager: KotlinNpmResolutionManager,
         logger: Logger
-    ): KotlinCompilationNpmResolution {
+    ): PreparedKotlinCompilationNpmResolution {
         val rootResolver = npmResolutionManager.parameters.resolution.get()
 
         internalDependencies.map {
-            val packageJsonProducer: PackageJsonProducer = rootResolver[it.projectPath][it.compilationName]
-            packageJsonProducer.getResolutionOrResolve(
+            val compilationNpmResolution: KotlinCompilationNpmResolution = rootResolver[it.projectPath][it.compilationName]
+            compilationNpmResolution.getResolutionOrResolve(
                 npmResolutionManager,
                 logger
             )
@@ -155,12 +155,11 @@ class PackageJsonProducer(
             packageJson.saveTo(npmProjectPackageJsonFile)
         }
 
-        return KotlinCompilationNpmResolution(
+        return PreparedKotlinCompilationNpmResolution(
             npmProjectDir,
             compositeDependencies,
             importedExternalGradleDependencies,
             allNpmDependencies,
-            packageJson
         )
     }
 

@@ -8,7 +8,7 @@ package org.jetbrains.kotlin.gradle.targets.js.yarn
 import org.gradle.api.logging.Logger
 import org.gradle.internal.service.ServiceRegistry
 import org.jetbrains.kotlin.gradle.targets.js.npm.*
-import org.jetbrains.kotlin.gradle.targets.js.npm.resolved.KotlinCompilationNpmResolution
+import org.jetbrains.kotlin.gradle.targets.js.npm.resolved.PreparedKotlinCompilationNpmResolution
 import java.io.File
 
 class YarnWorkspaces : YarnBasics() {
@@ -25,7 +25,7 @@ class YarnWorkspaces : YarnBasics() {
         rootProjectName: String,
         rootProjectVersion: String,
         logger: Logger,
-        subProjects: Collection<KotlinCompilationNpmResolution>,
+        subProjects: Collection<PreparedKotlinCompilationNpmResolution>,
         resolutions: Map<String, String>,
     ) {
         return prepareRootPackageJson(
@@ -43,7 +43,7 @@ class YarnWorkspaces : YarnBasics() {
         rootProjectName: String,
         rootProjectVersion: String,
         logger: Logger,
-        npmProjects: Collection<KotlinCompilationNpmResolution>,
+        npmProjects: Collection<PreparedKotlinCompilationNpmResolution>,
         resolutions: Map<String, String>
     ) {
         val rootPackageJsonFile = preparedFiles(nodeJs).single()
@@ -63,7 +63,7 @@ class YarnWorkspaces : YarnBasics() {
         logger: Logger,
         nodeJs: NpmEnvironment,
         yarn: YarnEnvironment,
-        npmProjects: Collection<KotlinCompilationNpmResolution>,
+        npmProjects: Collection<PreparedKotlinCompilationNpmResolution>,
         cliArgs: List<String>
     ) {
         val nodeJsWorldDir = nodeJs.rootPackageDir
@@ -83,7 +83,7 @@ class YarnWorkspaces : YarnBasics() {
         rootProjectName: String,
         rootProjectVersion: String,
         logger: Logger,
-        npmProjects: Collection<KotlinCompilationNpmResolution>,
+        npmProjects: Collection<PreparedKotlinCompilationNpmResolution>,
         resolutions: Map<String, String>,
         rootPackageJsonFile: File
     ) {

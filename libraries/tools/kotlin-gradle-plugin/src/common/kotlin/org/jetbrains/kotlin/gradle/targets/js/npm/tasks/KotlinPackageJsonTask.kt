@@ -36,9 +36,9 @@ abstract class KotlinPackageJsonTask : DefaultTask() {
         get() = rootResolver[projectPath][compilationDisambiguatedName.get()]
 
     private fun findDependentTasks(): Collection<Any> =
-        compilationResolver.packageJsonProducer.internalDependencies.map { dependency ->
+        compilationResolver.compilationNpmResolution.internalDependencies.map { dependency ->
             nodeJs.resolver[dependency.projectPath][dependency.compilationName].npmProject.packageJsonTaskPath
-        } + compilationResolver.packageJsonProducer.internalCompositeDependencies.map { dependency ->
+        } + compilationResolver.compilationNpmResolution.internalCompositeDependencies.map { dependency ->
             dependency.includedBuild?.task(":$PACKAGE_JSON_UMBRELLA_TASK_NAME") ?: error("includedBuild instance is not available")
             dependency.includedBuild.task(":${RootPackageJsonTask.NAME}")
         }
@@ -84,7 +84,7 @@ abstract class KotlinPackageJsonTask : DefaultTask() {
     // so npmResolutionManager must not be used
     @get:Nested
     internal val producerInputs: PackageJsonProducerInputs by lazy {
-        compilationResolver.packageJsonProducer.inputs
+        compilationResolver.compilationNpmResolution.inputs
     }
 
     @get:OutputFile

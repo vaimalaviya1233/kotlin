@@ -8,7 +8,7 @@ package org.jetbrains.kotlin.gradle.targets.js.npm
 import org.gradle.api.logging.Logger
 import org.gradle.internal.service.ServiceRegistry
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsEnv
-import org.jetbrains.kotlin.gradle.targets.js.npm.resolved.KotlinCompilationNpmResolution
+import org.jetbrains.kotlin.gradle.targets.js.npm.resolved.PreparedKotlinCompilationNpmResolution
 import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnEnv
 import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnResolution
 import java.io.File
@@ -25,7 +25,7 @@ interface NpmApi : Serializable {
         rootProjectName: String,
         rootProjectVersion: String,
         logger: Logger,
-        subProjects: Collection<KotlinCompilationNpmResolution>,
+        subProjects: Collection<PreparedKotlinCompilationNpmResolution>,
         resolutions: Map<String, String>,
     )
 
@@ -34,7 +34,7 @@ interface NpmApi : Serializable {
         logger: Logger,
         nodeJs: NpmEnvironment,
         yarn: YarnEnvironment,
-        npmProjects: Collection<KotlinCompilationNpmResolution>,
+        npmProjects: Collection<PreparedKotlinCompilationNpmResolution>,
         cliArgs: List<String>
     )
 

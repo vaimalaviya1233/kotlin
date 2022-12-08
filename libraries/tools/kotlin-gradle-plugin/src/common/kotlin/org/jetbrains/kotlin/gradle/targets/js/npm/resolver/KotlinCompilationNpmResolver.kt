@@ -93,22 +93,22 @@ class KotlinCompilationNpmResolver(
 
     override fun toString(): String = "KotlinCompilationNpmResolver(${npmProject.name})"
 
-    private var _packageJsonProducer: PackageJsonProducer? = null
+    private var _compilationNpmResolution: KotlinCompilationNpmResolution? = null
 
-    val packageJsonProducer: PackageJsonProducer
+    val compilationNpmResolution: KotlinCompilationNpmResolution
         get() {
-            return _packageJsonProducer ?: run {
+            return _compilationNpmResolution ?: run {
                 val visitor = ConfigurationVisitor()
                 visitor.visit(createAggregatedConfiguration())
                 visitor.toPackageJsonProducer()
             }.also {
-                _packageJsonProducer = it
+                _compilationNpmResolution = it
             }
         }
 
     @Synchronized
-    fun close(): PackageJsonProducer? {
-        return _packageJsonProducer
+    fun close(): KotlinCompilationNpmResolution? {
+        return _compilationNpmResolution
     }
 
     fun createAggregatedConfiguration(): Configuration {
@@ -267,7 +267,7 @@ class KotlinCompilationNpmResolver(
                 }
         }
 
-        fun toPackageJsonProducer() = PackageJsonProducer(
+        fun toPackageJsonProducer() = KotlinCompilationNpmResolution(
             internalDependencies,
             internalCompositeDependencies,
             externalGradleDependencies.map {
