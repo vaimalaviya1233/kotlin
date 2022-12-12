@@ -6,10 +6,26 @@
 package org.jetbrains.kotlin.gradle.targets.js.npm.tasks
 
 import org.gradle.api.DefaultTask
+import org.gradle.api.artifacts.component.ComponentArtifactIdentifier
+import org.gradle.api.artifacts.component.ComponentIdentifier
+import org.gradle.api.artifacts.result.ResolvedArtifactResult
+import org.gradle.api.artifacts.result.ResolvedComponentResult
+import org.gradle.api.attributes.Category
+import org.gradle.api.attributes.Usage
 import org.gradle.api.plugins.BasePlugin
+import org.gradle.api.provider.ListProperty
+import org.gradle.api.provider.MapProperty
 import org.gradle.api.provider.Property
+import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.*
+import org.jetbrains.kotlin.gradle.plugin.categoryByName
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinJsCompilation
+import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinUsages
+import org.jetbrains.kotlin.gradle.plugin.mpp.disambiguateName
+import org.jetbrains.kotlin.gradle.plugin.sources.KotlinDependencyScope
+import org.jetbrains.kotlin.gradle.plugin.sources.compilationDependencyConfigurationByScope
+import org.jetbrains.kotlin.gradle.plugin.sources.sourceSetDependencyConfigurationByScope
+import org.jetbrains.kotlin.gradle.plugin.usesPlatformOf
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin.Companion.kotlinNodeJsExtension
@@ -35,13 +51,13 @@ abstract class KotlinPackageJsonTask : DefaultTask() {
     private val compilationResolver: KotlinCompilationNpmResolver
         get() = rootResolver[projectPath][compilationDisambiguatedName.get()]
 
-    private fun findDependentTasks(): Collection<Any> =
-        compilationResolver.compilationNpmResolution.internalDependencies.map { dependency ->
-            nodeJs.resolver[dependency.projectPath][dependency.compilationName].npmProject.packageJsonTaskPath
-        } + compilationResolver.compilationNpmResolution.internalCompositeDependencies.map { dependency ->
-            dependency.includedBuild?.task(":$PACKAGE_JSON_UMBRELLA_TASK_NAME") ?: error("includedBuild instance is not available")
-            dependency.includedBuild.task(":${RootPackageJsonTask.NAME}")
-        }
+//    private fun findDependentTasks(): Collection<Any> =
+//        compilationResolver.compilationNpmResolution.internalDependencies.map { dependency ->
+//            nodeJs.resolver[dependency.projectPath][dependency.compilationName].npmProject.packageJsonTaskPath
+//        } + compilationResolver.compilationNpmResolution.internalCompositeDependencies.map { dependency ->
+//            dependency.includedBuild?.task(":$PACKAGE_JSON_UMBRELLA_TASK_NAME") ?: error("includedBuild instance is not available")
+//            dependency.includedBuild.task(":${RootPackageJsonTask.NAME}")
+//        }
 
     // -----
 
@@ -53,6 +69,12 @@ abstract class KotlinPackageJsonTask : DefaultTask() {
 
     @get:Internal
     internal abstract val compositeNodeModules: Property<CompositeNodeModulesCache>
+
+    @get:Input
+    internal abstract val components: Property<ResolvedComponentResult>
+
+    @get:Input
+    internal abstract val map: MapProperty<ComponentArtifactIdentifier, File>
 
     private val projectPath = project.path
 
@@ -82,20 +104,22 @@ abstract class KotlinPackageJsonTask : DefaultTask() {
 
     // nested inputs are processed in configuration phase
     // so npmResolutionManager must not be used
-    @get:Nested
-    internal val producerInputs: PackageJsonProducerInputs by lazy {
-        compilationResolver.compilationNpmResolution.inputs
-    }
+//    @get:Nested
+//    internal val producerInputs: PackageJsonProducerInputs by lazy {
+//        compilationResolver.compilationNpmResolution.inputs
+//    }
 
     @get:OutputFile
     abstract val packageJson: Property<File>
 
     @TaskAction
     fun resolve() {
+        val resolvedConfiguration = components.get() to map.get().map { (key, value) -> key.componentIdentifier to value }.toMap()
         npmResolutionManager.get().resolution.get()[projectPath][compilationDisambiguatedName.get()]
             .resolve(
                 npmResolutionManager = npmResolutionManager.get(),
-                logger = logger
+                logger = logger,
+                resolvedConfiguration = resolvedConfiguration
             )
     }
 
@@ -110,6 +134,38 @@ abstract class KotlinPackageJsonTask : DefaultTask() {
             val npmCachesSetupTask = nodeJsTaskProviders.npmCachesSetupTaskProvider
             val packageJsonTaskName = npmProject.packageJsonTaskName
             val packageJsonUmbrella = nodeJsTaskProviders.packageJsonUmbrellaTaskProvider
+
+            fun createAggregatedConfiguration(): Pair<Provider<ResolvedComponentResult>, Provider<Map<ComponentArtifactIdentifier, File>>> {
+                val all = project.configurations.create(compilation.disambiguateName("npm"))
+
+                all.usesPlatformOf(target)
+                all.attributes.attribute(Usage.USAGE_ATTRIBUTE, KotlinUsages.consumerRuntimeUsage(target))
+                all.attributes.attribute(Category.CATEGORY_ATTRIBUTE, project.categoryByName(Category.LIBRARY))
+                all.isVisible = false
+                all.isCanBeConsumed = false
+                all.isCanBeResolved = true
+                all.description = "NPM configuration for $compilation."
+
+                KotlinDependencyScope.values().forEach { scope ->
+                    val compilationConfiguration = project.compilationDependencyConfigurationByScope(
+                        compilation,
+                        scope
+                    )
+                    all.extendsFrom(compilationConfiguration)
+                    compilation.allKotlinSourceSets.forEach { sourceSet ->
+                        val sourceSetConfiguration = project.configurations.sourceSetDependencyConfigurationByScope(sourceSet, scope)
+                        all.extendsFrom(sourceSetConfiguration)
+                    }
+                }
+
+                // We don't have `kotlin-js-test-runner` in NPM yet
+                all.dependencies.add(nodeJsTaskProviders.versions.kotlinJsTestRunner.createDependency(project))
+
+                return all.incoming.resolutionResult.rootComponent to all.incoming.artifacts.resolvedArtifacts.map {
+                    it.map { it.id to it.file }.toMap()
+                }
+            }
+
             val packageJsonTask = project.registerTask<KotlinPackageJsonTask>(packageJsonTaskName) { task ->
                 task.compilationDisambiguatedName.set(compilation.disambiguatedName)
                 task.description = "Create package.json file for $compilation"
@@ -121,6 +177,11 @@ abstract class KotlinPackageJsonTask : DefaultTask() {
                     disallowChanges()
                     task.usesService(service)
                 }
+
+                val createAggregatedConfiguration = createAggregatedConfiguration()
+                task.components.set(createAggregatedConfiguration.first)
+                task.map.set(createAggregatedConfiguration.second)
+//                task.resolvedConfiguration = createAggregatedConfiguration
 
                 task.gradleNodeModules.apply {
                     val service =
@@ -149,7 +210,7 @@ abstract class KotlinPackageJsonTask : DefaultTask() {
                     it.npmResolutionManager.get().isConfiguringState()
                 }
 
-                task.dependsOn(target.project.provider { task.findDependentTasks() })
+//                task.dependsOn(target.project.provider { task.findDependentTasks() })
                 task.dependsOn(npmCachesSetupTask)
                 task.mustRunAfter(rootClean)
             }
