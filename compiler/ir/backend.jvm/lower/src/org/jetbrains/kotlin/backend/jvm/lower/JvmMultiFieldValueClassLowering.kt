@@ -7,6 +7,8 @@ package org.jetbrains.kotlin.backend.jvm.lower
 
 import org.jetbrains.kotlin.backend.common.ScopeWithIr
 import org.jetbrains.kotlin.backend.common.ir.inline
+import org.jetbrains.kotlin.backend.common.lower.inline.InlinedFunctionArguments
+import org.jetbrains.kotlin.backend.common.lower.inline.InlinedFunctionDefaultArguments
 import org.jetbrains.kotlin.backend.common.lower.irCatch
 import org.jetbrains.kotlin.backend.common.pop
 import org.jetbrains.kotlin.backend.common.push
@@ -1457,7 +1459,7 @@ private sealed class BlockOrBody {
         override val element get() = body
     }
 
-    data class Block(val block: IrBlock) : BlockOrBody() {
+    data class Block(val block: IrContainerExpression) : BlockOrBody() {
         override val element get() = block
     }
 }
@@ -1483,12 +1485,12 @@ private fun findNearestBlocksForVariables(variables: Set<IrVariable>, body: Bloc
             require(stack.removeLast() == BlockOrBody.Body(body)) { "Invalid stack" }
         }
 
-        override fun visitBlock(expression: IrBlock) {
-            currentStackElement()?.let { childrenBlocks.getOrPut(it) { mutableListOf() }.add(Block(expression)) }
-            stack.add(Block(expression))
-            super.visitBlock(expression)
-            require(stack.removeLast() == Block(expression)) { "Invalid stack" }
-        }
+//        override fun visitBlock(expression: IrBlock) {
+//            currentStackElement()?.let { childrenBlocks.getOrPut(it) { mutableListOf() }.add(Block(expression)) }
+//            stack.add(Block(expression))
+//            super.visitBlock(expression)
+//            require(stack.removeLast() == Block(expression)) { "Invalid stack" }
+//        }
 
         private fun currentStackElement() = stack.lastOrNull()
 
@@ -1499,9 +1501,22 @@ private fun findNearestBlocksForVariables(variables: Set<IrVariable>, body: Bloc
             }
             super.visitValueAccess(expression)
         }
+
+        override fun visitContainerExpression(expression: IrContainerExpression) {
+            if (expression is IrComposite && expression.origin != InlinedFunctionArguments && expression.origin != InlinedFunctionDefaultArguments) {
+                return super.visitContainerExpression(expression)
+            }
+            currentStackElement()?.let { childrenBlocks.getOrPut(it) { mutableListOf() }.add(Block(expression)) }
+            stack.add(Block(expression))
+            super.visitContainerExpression(expression)
+            require(stack.removeLast() == Block(expression)) { "Invalid stack" }
+        }
     })
 
     fun dfs(currentBlock: BlockOrBody, variable: IrVariable): BlockOrBody? {
+        if (currentBlock is Block && currentBlock.block is IrInlinedFunctionBlock) {
+            return childrenBlocks[currentBlock]?.firstNotNullOfOrNull { dfs(it, variable) }
+        }
         if (variable in (variableUsages[currentBlock] ?: listOf())) return currentBlock
         val childrenResult = childrenBlocks[currentBlock]?.mapNotNull { dfs(it, variable) } ?: listOf()
         return when (childrenResult.size) {
@@ -1581,6 +1596,11 @@ private fun BlockOrBody.makeBodyWithAddedVariables(context: JvmBackendContext, v
                 for (statement in container.statements) {
                     statement.removeInnerEmptyBlocks()
                     if (statement is IrContainerExpression && statement.statements.isEmpty()) continue
+//                    if (statement is IrContainerExpression && (statement.origin == InlinedFunctionArguments || statement.origin == InlinedFunctionDefaultArguments)) {
+//                        variableDeclarationPerStatement[statement]?.let { statement.statements.addAll(0, it) }
+//                        add(statement)
+//                        continue
+//                    }
                     val varsBefore = variableDeclarationPerStatement[statement]
                     if (varsBefore != null) {
                         addAll(varsBefore)
