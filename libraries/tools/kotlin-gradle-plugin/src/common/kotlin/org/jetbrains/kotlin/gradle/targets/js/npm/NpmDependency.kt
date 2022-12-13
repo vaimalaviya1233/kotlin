@@ -9,9 +9,12 @@ import org.gradle.api.artifacts.Dependency
 import org.gradle.api.artifacts.FileCollectionDependency
 import org.gradle.api.artifacts.component.ComponentIdentifier
 import org.gradle.api.file.FileCollection
+import org.gradle.api.internal.artifacts.dependencies.DefaultSelfResolvingDependency
 import org.gradle.api.internal.artifacts.dependencies.SelfResolvingDependencyInternal
+import org.gradle.api.internal.file.FileCollectionInternal
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.tasks.TaskDependency
+import org.gradle.internal.component.local.model.OpaqueComponentArtifactIdentifier
 import org.jetbrains.kotlin.gradle.targets.js.npm.NpmProject.Companion.PACKAGE_JSON
 import java.io.File
 
@@ -20,7 +23,8 @@ data class NpmDependency(
     val scope: Scope = Scope.NORMAL,
     private val name: String,
     private val version: String,
-) : FileCollectionDependency,
+) : /*DefaultSelfResolvingDependency(objectFactory.fileCollection().from(File("{\"name\": \"$name\", \"version\": \"$version\" }")) as FileCollectionInternal),*/
+    FileCollectionDependency,
     SelfResolvingDependencyInternal {
 
     enum class Scope {
@@ -37,19 +41,21 @@ data class NpmDependency(
     override fun getName() = name
 
     override fun getVersion() = version
+    override fun getTargetComponentId(): ComponentIdentifier? {
+        return null
+    }
 
-    internal var parent: NpmDependency? = null
-    internal val dependencies = mutableSetOf<NpmDependency>()
-    internal var resolvedVersion: String? = null
-    internal var integrity: String? = null
+    //    internal var parent: NpmDependency? = null
+//    internal val dependencies = mutableSetOf<NpmDependency>()
+//    internal var resolvedVersion: String? = null
+//    internal var integrity: String? = null
 
     override fun resolve(transitive: Boolean): Set<File> =
         resolve()
 
-    override fun getTargetComponentId(): ComponentIdentifier? = null
     override fun resolve(): MutableSet<File> = mutableSetOf()
 
-    override fun getFiles(): FileCollection = objectFactory.fileCollection()
+    override fun getFiles(): FileCollection = objectFactory.fileCollection().from(File("{\"name\": \"$name\", \"version\": \"$version\" }"))
 
     override fun getBuildDependencies(): TaskDependency = TaskDependency { mutableSetOf() }
 

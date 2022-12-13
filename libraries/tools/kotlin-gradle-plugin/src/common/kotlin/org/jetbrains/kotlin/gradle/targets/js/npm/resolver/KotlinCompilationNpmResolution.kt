@@ -7,12 +7,15 @@ package org.jetbrains.kotlin.gradle.targets.js.npm.resolver
 
 import org.gradle.api.artifacts.component.ComponentIdentifier
 import org.gradle.api.artifacts.component.ModuleComponentIdentifier
+import org.gradle.api.artifacts.component.ProjectComponentIdentifier
 import org.gradle.api.artifacts.result.ResolvedComponentResult
 import org.gradle.api.artifacts.result.ResolvedDependencyResult
 import org.gradle.api.logging.Logger
+import org.jetbrains.kotlin.gradle.plugin.KotlinCompilation
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.TasksRequirements
 import org.jetbrains.kotlin.gradle.targets.js.npm.*
 import org.jetbrains.kotlin.gradle.targets.js.npm.NpmProject.Companion.PACKAGE_JSON
+import org.jetbrains.kotlin.gradle.targets.js.npm.resolved.KotlinRootNpmResolution
 import org.jetbrains.kotlin.gradle.targets.js.npm.resolved.PreparedKotlinCompilationNpmResolution
 import java.io.Serializable
 import java.io.File
@@ -99,16 +102,16 @@ class KotlinCompilationNpmResolution(
     ): PreparedKotlinCompilationNpmResolution {
         val rootResolver = npmResolutionManager.parameters.resolution.get()
 
-        val visitor = ConfigurationVisitor()
+        val visitor = ConfigurationVisitor(rootResolver)
         visitor.visit(resolvedConfiguration.first to resolvedConfiguration.second)
 
-//        internalDependencies.map {
-//            val compilationNpmResolution: KotlinCompilationNpmResolution = rootResolver[it.projectPath][it.compilationName]
-//            compilationNpmResolution.getResolutionOrResolve(
-//                npmResolutionManager,
-//                logger
-//            )
-//        }
+        visitor.internalDependencies.map {
+            val compilationNpmResolution: KotlinCompilationNpmResolution = rootResolver[it.projectPath][it.compilationName]
+            compilationNpmResolution.getResolutionOrResolve(
+                npmResolutionManager,
+                logger
+            )
+        }
         val importedExternalGradleDependencies = visitor.externalGradleDependencies.mapNotNull {
             npmResolutionManager.parameters.gradleNodeModulesProvider.get().get(it.component.module, it.component.version, it.artifact)
         } /*+ fileCollectionDependencies.flatMap { dependency ->
@@ -214,7 +217,7 @@ class KotlinCompilationNpmResolution(
     }
 }
 
-class ConfigurationVisitor {
+class ConfigurationVisitor(val rootResolution: KotlinRootNpmResolution) {
     val internalDependencies = mutableSetOf<InternalDependency>()
     val internalCompositeDependencies = mutableSetOf<CompositeDependency>()
     val externalGradleDependencies = mutableSetOf<ExternalGradleDependency>()
@@ -296,20 +299,20 @@ class ConfigurationVisitor {
     ) {
 //            val artifactId = artifact.id
 //        val componentIdentifier = dependency.id
-
+//
 //            if (artifactId `is` CompositeProjectComponentArtifactMetadata) {
 //                visitCompositeProjectDependency(dependency, componentIdentifier as ProjectComponentIdentifier)
 //                return
 //            }
 
-//        if (componentIdentifier is ProjectComponentIdentifier) {
-//            visitProjectDependency(componentIdentifier)
-//            return
-//        }
+        if (dependency is ProjectComponentIdentifier) {
+            visitProjectDependency(dependency)
+            return
+        }
 
-        if (dependency is ModuleComponentIdentifier)
-
-        externalGradleDependencies.add(ExternalGradleDependency(dependency, artifact))
+        if (dependency is ModuleComponentIdentifier) {
+            externalGradleDependencies.add(ExternalGradleDependency(dependency, artifact))
+        }
     }
 
 //    private fun visitCompositeProjectDependency(
@@ -334,23 +337,21 @@ class ConfigurationVisitor {
 //        }
 //    }
 
-//    private fun visitProjectDependency(
-//        componentIdentifier: ProjectComponentIdentifier
-//    ) {
-//        val dependentProject = project.findProject(componentIdentifier.projectPath)
-//            ?: error("Cannot find project ${componentIdentifier.projectPath}")
-//
-//        rootResolver.findDependentResolver(project, dependentProject)
-//            ?.forEach { dependentResolver ->
-//                internalDependencies.add(
-//                    InternalDependency(
-//                        dependentResolver.projectPath,
-//                        dependentResolver.compilationDisambiguatedName,
-//                        dependentResolver.npmProject.name
-//                    )
-//                )
-//            }
-//    }
+    private fun visitProjectDependency(
+        componentIdentifier: ProjectComponentIdentifier
+    ) {
+        val dependentProject = rootResolution[componentIdentifier.projectPath]
+
+        val dependentCompilation = dependentProject.npmProjects.single { it.compilationDisambiguatedName.contains("main", ignoreCase = true) }
+
+        internalDependencies.add(
+            InternalDependency(
+                dependentCompilation.projectPath,
+                dependentCompilation.compilationDisambiguatedName,
+                dependentCompilation.npmProjectName
+            )
+        )
+    }
 
 //    fun toPackageJsonProducer() = PackageJsonProducer(
 //        internalDependencies,
