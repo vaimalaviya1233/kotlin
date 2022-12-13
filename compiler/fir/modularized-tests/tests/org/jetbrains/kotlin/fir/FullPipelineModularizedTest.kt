@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 private val LANGUAGE_VERSION: String = System.getProperty("fir.bench.language.version", "1.4")
 
 class FullPipelineModularizedTest : AbstractFullPipelineModularizedTest() {
+    override val useK2 = true
 
     override fun configureArguments(args: K2JVMCompilerArguments, moduleData: ModuleData) {
         args.useK2 = true

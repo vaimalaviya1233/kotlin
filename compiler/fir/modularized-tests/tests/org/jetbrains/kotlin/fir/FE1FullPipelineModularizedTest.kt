@@ -8,6 +8,8 @@ package org.jetbrains.kotlin.fir
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 
 class FE1FullPipelineModularizedTest : AbstractFullPipelineModularizedTest() {
+    override val useK2 = false
+
     override fun configureArguments(args: K2JVMCompilerArguments, moduleData: ModuleData) {
         args.useK2 = false
         args.jvmDefault = "compatibility"

@@ -207,11 +207,15 @@ abstract class AbstractModularizedTest : KtUsefulTestCase() {
             .filter { (moduleName == null) || it.name == moduleName }
             .filter { !it.isCommon }
 
-
+        var i = 0
         for (module in modules.progress(step = 0.0) { "Analyzing ${it.qualifiedName}" }) {
             if (processModule(module).stop()) {
                 break
             }
+            i++
+            /*if (i == 1) {
+                break
+            }*/
         }
 
         afterPass(pass)

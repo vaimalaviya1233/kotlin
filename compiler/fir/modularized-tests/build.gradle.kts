@@ -6,6 +6,7 @@
 plugins {
     kotlin("jvm")
     id("jps-compatible")
+    kotlin("plugin.serialization")
 }
 
 repositories {
@@ -14,6 +15,8 @@ repositories {
 
 dependencies {
     testApi(intellijCore())
+
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.4.1")
 
     testRuntimeOnly("xerces:xercesImpl:2.12.0")
     testRuntimeOnly(commonDependency("commons-lang:commons-lang"))

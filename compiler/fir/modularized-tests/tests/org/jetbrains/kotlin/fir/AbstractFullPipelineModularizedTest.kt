@@ -5,6 +5,8 @@
 
 package org.jetbrains.kotlin.fir
 
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import org.jetbrains.kotlin.build.JvmSourceRoot
 import org.jetbrains.kotlin.cli.common.*
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
@@ -19,6 +21,7 @@ import org.jetbrains.kotlin.modules.KotlinModuleXmlBuilder
 import org.jetbrains.kotlin.util.PerformanceCounter
 import java.io.FileOutputStream
 import java.io.PrintStream
+import java.io.PrintWriter
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -28,6 +31,7 @@ private val JVM_TARGET: String = System.getProperty("fir.bench.jvm.target", "1.8
 abstract class AbstractFullPipelineModularizedTest : AbstractModularizedTest() {
 
     private val asyncProfilerControl = AsyncProfilerControl()
+    protected abstract val useK2: Boolean
 
     data class ModuleStatus(val data: ModuleData, val targetInfo: String) {
         var compilationError: String? = null
@@ -40,32 +44,10 @@ abstract class AbstractFullPipelineModularizedTest : AbstractModularizedTest() {
     private val errorModules = mutableListOf<ModuleStatus>()
     private val crashedModules = mutableListOf<ModuleStatus>()
 
-    protected data class CumulativeTime(
-        val gcInfo: Map<String, GCInfo>,
-        val components: Map<String, Long>,
-        val files: Int,
-        val lines: Int
-    ) {
-        constructor() : this(emptyMap(), emptyMap(), 0, 0)
-
-        operator fun plus(other: CumulativeTime): CumulativeTime {
-            return CumulativeTime(
-                (gcInfo.values + other.gcInfo.values).groupingBy { it.name }.reduce { key, accumulator, element ->
-                    GCInfo(key, accumulator.gcTime + element.gcTime, accumulator.collections + element.collections)
-                },
-                (components.toList() + other.components.toList()).groupingBy { (name, _) -> name }.fold(0L) { a, b -> a + b.second },
-                files + other.files,
-                lines + other.lines
-            )
-        }
-
-        fun totalTime() = components.values.sum()
-    }
-
-    protected lateinit var totalPassResult: CumulativeTime
+    protected lateinit var totalPassResult: MutableMap<String, CumulativeTime>
 
     override fun beforePass(pass: Int) {
-        totalPassResult = CumulativeTime()
+        totalPassResult = mutableMapOf()
         totalModules.clear()
         okModules.clear()
         errorModules.clear()
@@ -82,9 +64,10 @@ abstract class AbstractFullPipelineModularizedTest : AbstractModularizedTest() {
         require(okModules.isNotEmpty()) { "All of $totalModules is failed" }
     }
 
-    protected fun formatReportTable(stream: PrintStream) {
-        val total = totalPassResult
-        var totalGcTimeMs = 0L
+    private fun formatReportTable(stream: PrintStream, title: String, time: CumulativeTime) {
+        println(title);
+
+        /*var totalGcTimeMs = 0L
         var totalGcCount = 0L
         printTable(stream) {
             row("Name", "Time", "Count")
@@ -96,15 +79,14 @@ abstract class AbstractFullPipelineModularizedTest : AbstractModularizedTest() {
                     cell(count.toString())
                 }
             }
-            for (measurement in total.gcInfo.values) {
+            for (measurement in time.gcInfo.values) {
                 totalGcTimeMs += measurement.gcTime
                 totalGcCount += measurement.collections
                 gcRow(measurement.name, measurement.gcTime, measurement.collections)
             }
             separator()
             gcRow("Total", totalGcTimeMs, totalGcCount)
-
-        }
+        }*/
 
         printTable(stream) {
             row("Phase", "Time", "Files", "L/S")
@@ -118,12 +100,12 @@ abstract class AbstractFullPipelineModularizedTest : AbstractModularizedTest() {
                     linePerSecondCell(lines, timeMs, timeUnit = TableTimeUnit.MS)
                 }
             }
-            for (component in total.components) {
-                phase(component.key, component.value, total.files, total.lines)
+            for (component in time.components) {
+                phase(component.key, component.value, time.files, time.lines)
             }
 
             separator()
-            phase("Total", total.totalTime(), total.files, total.lines)
+            phase("Total", time.totalTime(), time.files, time.lines)
         }
 
     }
@@ -213,11 +195,17 @@ abstract class AbstractFullPipelineModularizedTest : AbstractModularizedTest() {
     }
 
     open fun formatReport(stream: PrintStream, finalReport: Boolean) {
+        val writer = PrintWriter("/home/ivankochurkin/Documents/JetBrains/performance/" + (if (useK2) "k2" else "k1") + "-performance-report.json")
+        val jsonSerializer = Json { prettyPrint = true }
+        val json = jsonSerializer.encodeToString(totalPassResult)
+        writer.write(json)
+        writer.close()
+
         stream.println("TOTAL MODULES: ${totalModules.size}")
         stream.println("OK MODULES: ${okModules.size}")
         stream.println("FAILED MODULES: ${totalModules.size - okModules.size}")
 
-        formatReportTable(stream)
+        formatReportTable(stream, "TOTAL", totalPassResult.values.fold(CumulativeTime()) { acc, time -> acc + time })
 
         if (finalReport) {
             with(stream) {
@@ -281,7 +269,7 @@ abstract class AbstractFullPipelineModularizedTest : AbstractModularizedTest() {
 
         tmp.toFile().deleteRecursively()
         if (result == ExitCode.OK) {
-            totalPassResult += resultTime
+            totalPassResult[moduleData.name] = resultTime
         }
 
         return handleResult(result, moduleData, collector, manager.getTargetInfo())
