@@ -1027,11 +1027,20 @@ public fun <T : Comparable<T>> MutableList<T>.sortDescending(): Unit {
  */
 public fun <T : Comparable<T>> Iterable<T>.sorted(): List<T> {
     if (this is Collection) {
-        if (size <= 1) return this.toList()
-        @Suppress("UNCHECKED_CAST")
-        return (toTypedArray<Comparable<T>>() as Array<T>).apply { sort() }.asList()
+        return sorted()
     }
     return toMutableList().apply { sort() }
+}
+
+/**
+ * Returns a list of all elements sorted according to their natural sort order.
+ *
+ * The sort is _stable_. It means that equal elements preserve their order relative to each other after sorting.
+ */
+public fun <T : Comparable<T>> Collection<T>.sorted(): List<T> {
+    if (size <= 1) return this.toList()
+    @Suppress("UNCHECKED_CAST")
+    return (toTypedArray<Comparable<T>>() as Array<T>).apply { sort() }.asList()
 }
 
 /**
@@ -1069,12 +1078,18 @@ public fun <T : Comparable<T>> Iterable<T>.sortedDescending(): List<T> {
  * The sort is _stable_. It means that equal elements preserve their order relative to each other after sorting.
  */
 public fun <T> Iterable<T>.sortedWith(comparator: Comparator<in T>): List<T> {
-    if (this is Collection) {
-       if (size <= 1) return this.toList()
-       @Suppress("UNCHECKED_CAST")
-       return (toTypedArray<Any?>() as Array<T>).apply { sortWith(comparator) }.asList()
-    }
     return toMutableList().apply { sortWith(comparator) }
+}
+
+/**
+ * Returns a list of all elements sorted according to the specified [comparator].
+ *
+ * The sort is _stable_. It means that equal elements preserve their order relative to each other after sorting.
+ */
+public fun <T> Collection<T>.sortedWith(comparator: Comparator<in T>): List<T> {
+    if (size <= 1) return this.toList()
+    @Suppress("UNCHECKED_CAST")
+    return (toTypedArray<Any?>() as Array<T>).apply { sortWith(comparator) }.asList()
 }
 
 /**
@@ -1310,13 +1325,20 @@ public fun <T> Iterable<T>.toHashSet(): HashSet<T> {
  */
 public fun <T> Iterable<T>.toList(): List<T> {
     if (this is Collection) {
-        return when (size) {
-            0 -> emptyList()
-            1 -> listOf(if (this is List) get(0) else iterator().next())
-            else -> this.toMutableList()
-        }
+        return toList()
     }
     return this.toMutableList().optimizeReadOnlyList()
+}
+
+/**
+ * Returns a [List] containing all elements.
+ */
+public fun <T> Collection<T>.toList(): List<T> {
+    return when (size) {
+        0 -> emptyList()
+        1 -> listOf(if (this is List) get(0) else iterator().next())
+        else -> this.toMutableList()
+    }
 }
 
 /**
@@ -1342,13 +1364,31 @@ public fun <T> Collection<T>.toMutableList(): MutableList<T> {
  */
 public fun <T> Iterable<T>.toSet(): Set<T> {
     if (this is Collection) {
-        return when (size) {
-            0 -> emptySet()
-            1 -> setOf(if (this is List) this[0] else iterator().next())
-            else -> toCollection(LinkedHashSet<T>(mapCapacity(size)))
-        }
+        return toSet()
     }
     return toCollection(LinkedHashSet<T>()).optimizeReadOnlySet()
+}
+
+/**
+ * Returns a [Set] of all elements.
+ *
+ * The returned set preserves the element iteration order of the original collection.
+ */
+public fun <T> Collection<T>.toSet(): Set<T> {
+    return when (size) {
+        0 -> emptySet()
+        1 -> setOf(if (this is List) this[0] else iterator().next())
+        else -> toCollection(LinkedHashSet<T>(mapCapacity(size)))
+    }
+}
+
+/**
+ * Returns a single list of all elements yielded from results of [transform] function being invoked on each element of original collection.
+ *
+ * @sample samples.collections.Collections.Transformations.flatMap
+ */
+public inline fun <T, R> Collection<T>.flatMap(transform: (T) -> Collection<R>): List<R> {
+    return flatMapTo(ArrayList(), transform)
 }
 
 /**
@@ -1434,6 +1474,17 @@ public inline fun <T, R, C : MutableCollection<in R>> Iterable<T>.flatMapIndexed
     var index = 0
     for (element in this) {
         val list = transform(checkIndexOverflow(index++), element)
+        destination.addAll(list)
+    }
+    return destination
+}
+
+/**
+ * Appends all elements yielded from results of [transform] function being invoked on each element of original collection, to the given [destination].
+ */
+public inline fun <T, R, C : MutableCollection<in R>> Collection<T>.flatMapTo(destination: C, transform: (T) -> Collection<R>): C {
+    for (element in this) {
+        val list = transform(element)
         destination.addAll(list)
     }
     return destination
@@ -1736,6 +1787,15 @@ public inline fun <T> Iterable<T>.all(predicate: (T) -> Boolean): Boolean {
 public fun <T> Iterable<T>.any(): Boolean {
     if (this is Collection) return !isEmpty()
     return iterator().hasNext()
+}
+
+/**
+ * Returns `true` if collection has at least one element.
+ *
+ * @sample samples.collections.Collections.Aggregates.any
+ */
+public fun <T> Collection<T>.any(): Boolean {
+    return !isEmpty()
 }
 
 /**
@@ -2611,8 +2671,16 @@ public fun <T> Iterable<T>.minWithOrNull(comparator: Comparator<in T>): T? {
  * @sample samples.collections.Collections.Aggregates.none
  */
 public fun <T> Iterable<T>.none(): Boolean {
-    if (this is Collection) return isEmpty()
     return !iterator().hasNext()
+}
+
+/**
+ * Returns `true` if the collection has no elements.
+ *
+ * @sample samples.collections.Collections.Aggregates.none
+ */
+public fun <T> Collection<T>.none(): Boolean {
+    return isEmpty()
 }
 
 /**

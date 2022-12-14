@@ -59,6 +59,14 @@ public inline operator fun <T> MutableCollection<in T>.plusAssign(elements: Iter
 }
 
 /**
+ * Adds all elements of the given [elements] collection to this mutable collection.
+ */
+@kotlin.internal.InlineOnly
+public inline operator fun <T> MutableCollection<in T>.plusAssign(elements: Collection<T>) {
+    this.addAll(elements)
+}
+
+/**
  * Adds all elements of the given [elements] array to this mutable collection.
  */
 @kotlin.internal.InlineOnly
