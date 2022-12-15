@@ -26,9 +26,13 @@ private object EmptyMap : Map<Any?, Nothing>, Serializable {
     override fun get(key: Any?): Nothing? = null
     override val entries: Set<Map.Entry<Any?, Nothing>> get() = EmptySet
     override val keys: Set<Any?> get() = EmptySet
-    override val values: Collection<Nothing> get() = EmptyList
+    override val values: Collection<Nothing> get() = emptyList()
 
     private fun readResolve(): Any = EmptyMap
+}
+
+private object EmptyHashMap {
+    val Instance = HashMap<Nothing, Nothing>(0)
 }
 
 /**
@@ -37,7 +41,7 @@ private object EmptyMap : Map<Any?, Nothing>, Serializable {
  * The returned map is serializable (JVM).
  * @sample samples.collections.Maps.Instantiation.emptyReadOnlyMap
  */
-public fun <K, V> emptyMap(): Map<K, V> = @Suppress("UNCHECKED_CAST") (EmptyMap as Map<K, V>)
+public fun <K, V> emptyMap(): Map<K, V> = @Suppress("UNCHECKED_CAST") (EmptyHashMap.Instance as Map<K, V>)
 
 /**
  * Returns a new read-only map with the specified contents, given as a list of pairs

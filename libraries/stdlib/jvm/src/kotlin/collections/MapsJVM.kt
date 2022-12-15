@@ -30,14 +30,14 @@ public fun <K, V> mapOf(pair: Pair<K, V>): Map<K, V> = java.util.Collections.sin
 @SinceKotlin("1.3")
 @kotlin.internal.InlineOnly
 internal actual inline fun <K, V> buildMapInternal(builderAction: MutableMap<K, V>.() -> Unit): Map<K, V> {
-    return build(createMapBuilder<K, V>().apply(builderAction))
+    return HashMap<K, V>().apply(builderAction)
 }
 
 @PublishedApi
 @SinceKotlin("1.3")
 @kotlin.internal.InlineOnly
 internal actual inline fun <K, V> buildMapInternal(capacity: Int, builderAction: MutableMap<K, V>.() -> Unit): Map<K, V> {
-    return build(createMapBuilder<K, V>(capacity).apply(builderAction))
+    return HashMap<K, V>(capacity).apply(builderAction)
 }
 
 @PublishedApi

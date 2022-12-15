@@ -25,15 +25,18 @@ internal object EmptySet : Set<Nothing>, Serializable {
 
     override fun iterator(): Iterator<Nothing> = EmptyIterator
 
-    private fun readResolve(): Any = EmptySet
+    private fun readResolve(): Any = emptySet<Any>()
 }
 
+private object EmptyHashSet {
+    val Instance = HashSet<Nothing>()
+}
 
 /**
  * Returns an empty read-only set.  The returned set is serializable (JVM).
  * @sample samples.collections.Collections.Sets.emptyReadOnlySet
  */
-public fun <T> emptySet(): Set<T> = EmptySet
+public fun <T> emptySet(): Set<T> = EmptyHashSet.Instance
 
 /**
  * Returns a new read-only set with the given elements.

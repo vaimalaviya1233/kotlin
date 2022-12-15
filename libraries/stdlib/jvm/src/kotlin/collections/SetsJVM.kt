@@ -21,14 +21,14 @@ public fun <T> setOf(element: T): Set<T> = java.util.Collections.singleton(eleme
 @SinceKotlin("1.3")
 @kotlin.internal.InlineOnly
 internal actual inline fun <E> buildSetInternal(builderAction: MutableSet<E>.() -> Unit): Set<E> {
-    return build(createSetBuilder<E>().apply(builderAction))
+    return HashSet<E>().apply(builderAction)
 }
 
 @PublishedApi
 @SinceKotlin("1.3")
 @kotlin.internal.InlineOnly
 internal actual inline fun <E> buildSetInternal(capacity: Int, builderAction: MutableSet<E>.() -> Unit): Set<E> {
-    return build(createSetBuilder<E>(capacity).apply(builderAction))
+    return HashSet<E>(capacity).apply(builderAction)
 }
 
 @PublishedApi
