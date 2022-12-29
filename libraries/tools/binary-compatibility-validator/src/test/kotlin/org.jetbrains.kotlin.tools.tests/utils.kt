@@ -46,7 +46,7 @@ private fun assertEqualsToFile(expectedFile: File, actual: CharSequence) {
     }
 }
 
-fun assertEqualsWithFirstLineDiff(expectedText: String, actualText: String, message: String, diffLinesSurround: Int = 50) {
+fun assertEqualsWithFirstLineDiff(expectedText: String, actualText: String, message: String, diffLinesSurround: Int = 1) {
     val actualLinesIterator = actualText.lineSequence().iterator()
     val expectedLinesIterator = expectedText.lineSequence().iterator()
 
@@ -54,36 +54,34 @@ fun assertEqualsWithFirstLineDiff(expectedText: String, actualText: String, mess
     val expectedBufferLines = LinkedList<String?>()
 
     var diffFound = false
-    var linesAfterDiff = 0
+    var diffLine = -1
     var line = 0
 
-    while ((actualLinesIterator.hasNext() || expectedLinesIterator.hasNext()) && linesAfterDiff < diffLinesSurround) {
+    while ((actualLinesIterator.hasNext() || expectedLinesIterator.hasNext()) && (!diffFound || line - diffLine < diffLinesSurround)) {
         line++
 
-        val actualLine: String? = if (actualLinesIterator.hasNext()) "$line: ${actualLinesIterator.next()}" else null
+        val actualLine: String? = if (actualLinesIterator.hasNext()) actualLinesIterator.next() else null
         actualBufferLines.add(actualLine)
 
-        val expectedLine: String? = if (expectedLinesIterator.hasNext()) "$line: ${expectedLinesIterator.next()}" else null
+        val expectedLine: String? = if (expectedLinesIterator.hasNext()) expectedLinesIterator.next() else null
         expectedBufferLines.add(expectedLine)
 
-        if (actualBufferLines.count() > diffLinesSurround * 2) {
+        if (actualBufferLines.size > diffLinesSurround * 2 + 1) {
             actualBufferLines.removeFirst()
             expectedBufferLines.removeFirst()
         }
 
-        if (diffFound) {
-            linesAfterDiff++
-        } else {
-            if (actualLine != expectedLine) {
-                diffFound = true
-            }
+        if (!diffFound && actualLine != expectedLine) {
+            diffFound = true
+            diffLine = line
         }
     }
 
-    val actualTextAroundDiff = actualBufferLines.filterNotNull().joinToString("\n")
-    val expectedTextAroundDiff = expectedBufferLines.filterNotNull().joinToString("\n")
-
     if (diffFound) {
+        val lineInfo = "↓↓↓ Line $diffLine, $diffLinesSurround lines around the first difference ↓↓↓"
+        val actualTextAroundDiff = actualBufferLines.filterNotNull().joinToString("\n", prefix = "$lineInfo\n")
+        val expectedTextAroundDiff = expectedBufferLines.filterNotNull().joinToString("\n", prefix = "$lineInfo\n")
+
         assertNotEquals(expectedTextAroundDiff, actualTextAroundDiff, "Sanity check - chunks should be different")
 
         assertEquals(
