@@ -22,18 +22,6 @@ public:
         while ((page = empty_.Pop())) page->Destroy();
     }
 
-    T* SweepSingle(AtomicStack<T>& from, AtomicStack<T>& to) noexcept {
-        T* page;
-        while ((page = from.Pop())) {
-            if (page->Sweep()) {
-                to.Push(page);
-                return page;
-            }
-            empty_.Push(page);
-        }
-        return nullptr;
-    }
-
     void Sweep() noexcept {
         while (SweepSingle(unswept_, ready_)) {}
     }
@@ -80,6 +68,18 @@ public:
     }
 
 private:
+    T* SweepSingle(AtomicStack<T>& from, AtomicStack<T>& to) noexcept {
+        T* page;
+        while ((page = from.Pop())) {
+            if (page->Sweep()) {
+                to.Push(page);
+                return page;
+            }
+            empty_.Push(page);
+        }
+        return nullptr;
+    }
+
     AtomicStack<T> empty_;
     AtomicStack<T> ready_;
     AtomicStack<T> used_;
