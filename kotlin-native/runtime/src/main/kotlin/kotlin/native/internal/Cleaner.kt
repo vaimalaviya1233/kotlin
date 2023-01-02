@@ -69,7 +69,7 @@ public interface Cleaner
 // by function name in the compiler.
 @ExperimentalStdlibApi
 @ExportForCompiler
-@OptIn(FreezingIsDeprecated::class)
+@OptIn(FreezingIsDeprecated::class, ObsoleteWorkersApi::class)
 fun <T> createCleaner(argument: T, block: (T) -> Unit): Cleaner {
     if (!argument.isShareable())
         throw IllegalArgumentException("$argument must be shareable")
@@ -92,6 +92,7 @@ fun <T> createCleaner(argument: T, block: (T) -> Unit): Cleaner {
  * Perform GC on a worker that executes Cleaner blocks.
  */
 @InternalForKotlinNative
+@OptIn(ObsoleteWorkersApi::class)
 fun performGCOnCleanerWorker() =
     getCleanerWorker().execute(TransferMode.SAFE, {}) {
         GC.collect()
@@ -101,20 +102,24 @@ fun performGCOnCleanerWorker() =
  * Wait for a worker that executes Cleaner blocks to complete its scheduled tasks.
  */
 @InternalForKotlinNative
+@OptIn(ObsoleteWorkersApi::class)
 fun waitCleanerWorker() =
     getCleanerWorker().execute(TransferMode.SAFE, {}) {
         Unit
     }.result
 
 @GCUnsafeCall("Kotlin_CleanerImpl_getCleanerWorker")
+@OptIn(ObsoleteWorkersApi::class)
 external private fun getCleanerWorker(): Worker
 
 @ExportForCppRuntime("Kotlin_CleanerImpl_shutdownCleanerWorker")
+@OptIn(ObsoleteWorkersApi::class)
 private fun shutdownCleanerWorker(worker: Worker, executeScheduledCleaners: Boolean) {
     worker.requestTermination(executeScheduledCleaners).result
 }
 
 @ExportForCppRuntime("Kotlin_CleanerImpl_createCleanerWorker")
+@OptIn(ObsoleteWorkersApi::class)
 private fun createCleanerWorker(): Worker {
     return Worker.start(errorReporting = false, name = "Cleaner worker")
 }

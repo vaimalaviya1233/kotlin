@@ -28,6 +28,7 @@ import kotlinx.cinterop.*
  */
 @Suppress("NON_PUBLIC_PRIMARY_CONSTRUCTOR_OF_INLINE_CLASS")
 @OptIn(FreezingIsDeprecated::class)
+@ObsoleteWorkersApi
 public value class Worker @PublishedApi internal constructor(val id: Int) {
     companion object {
         /**
@@ -213,6 +214,7 @@ public value class Worker @PublishedApi internal constructor(val id: Int) {
  * @param block to be executed.
  * @return value returned by the block.
  */
+@ObsoleteWorkersApi
 public inline fun <R> withWorker(name: String? = null, errorReporting: Boolean = true, block: Worker.() -> R): R {
     val worker = Worker.start(errorReporting, name)
     try {
