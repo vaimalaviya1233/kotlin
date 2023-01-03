@@ -127,25 +127,14 @@ public expect annotation class RefinesInSwift()
 public expect annotation class ShouldRefineInSwift()
 
 /**
- * Worker API is considered obsolete.
+ * Worker API is obsolete. Consider using [kotlinx.coroutines](https://github.com/Kotlin/kotlinx.coroutines) instead.
  *
- * Consider using kotlinx.coroutines API instead.
+ * See [coroutines guide](https://kotlinlang.org/docs/coroutines-guide.html) to get started with coroutines.
  */
+// TODO: A separate doc for Workers API to kotlinx.coroutines API migration.
 @SinceKotlin("1.8")
 @RequiresOptIn(level = RequiresOptIn.Level.WARNING)
-@Target(
-    AnnotationTarget.CLASS,
-    AnnotationTarget.ANNOTATION_CLASS,
-    AnnotationTarget.PROPERTY,
-    AnnotationTarget.FIELD,
-    AnnotationTarget.LOCAL_VARIABLE,
-    AnnotationTarget.VALUE_PARAMETER,
-    AnnotationTarget.CONSTRUCTOR,
-    AnnotationTarget.FUNCTION,
-    AnnotationTarget.PROPERTY_GETTER,
-    AnnotationTarget.PROPERTY_SETTER,
-    AnnotationTarget.TYPEALIAS,
-)
 @Retention(AnnotationRetention.BINARY)
+@MustBeDocumented
 @OptionalExpectation
 public expect annotation class ObsoleteWorkersApi
