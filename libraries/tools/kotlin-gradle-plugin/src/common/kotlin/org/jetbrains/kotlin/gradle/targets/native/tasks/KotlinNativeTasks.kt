@@ -16,6 +16,7 @@ import org.gradle.api.artifacts.result.DependencyResult
 import org.gradle.api.artifacts.result.ResolvedDependencyResult
 import org.gradle.api.file.*
 import org.gradle.api.model.ObjectFactory
+import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
 import org.gradle.api.provider.ProviderFactory
 import org.gradle.api.tasks.*
@@ -262,6 +263,9 @@ abstract class AbstractKotlinNativeCompile<
     @get:Nested
     var kotlinPluginData: Provider<KotlinCompilerPluginData>? = null
 
+    @get:Input
+    abstract val klibUseRelativeBasePath: Property<Boolean>
+
     // Used by IDE via reflection.
     @get:Internal
     override val serializedCompilerArguments: List<String>
@@ -313,6 +317,8 @@ internal constructor(
 ) : AbstractKotlinNativeCompile<KotlinCommonOptions, StubK2NativeCompilerArguments>(objectFactory),
     KotlinCompile<KotlinCommonOptions>,
     KotlinCompilationTask<KotlinCommonCompilerOptions> {
+
+    private val rootProjectDir = project.rootDir
 
     @get:Input
     override val outputKind = LIBRARY
@@ -477,7 +483,11 @@ internal constructor(
             artifactVersion,
             createSharedCompilationDataOrNull(),
             sources.asFileTree,
-            commonSourcesTree
+            commonSourcesTree,
+            klibUseRelativeBasePath.get(),
+            projectLayout.buildDirectory.get().asFile,
+            projectLayout.projectDirectory.asFile,
+            rootProjectDir
         )
 
         KotlinNativeCompilerRunner(

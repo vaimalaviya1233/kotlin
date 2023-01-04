@@ -63,6 +63,8 @@ internal abstract class AbstractKotlinCompileConfig<TASK : AbstractKotlinCompile
         configureTask { task ->
             val propertiesProvider = project.kotlinPropertiesProvider
 
+            task.rootProjectDir.value(project.rootDir)
+
             task.taskBuildCacheableOutputDirectory
                 .value(getKotlinBuildDir(task).map { it.dir("cacheable") })
                 .disallowChanges()
@@ -100,6 +102,8 @@ internal abstract class AbstractKotlinCompileConfig<TASK : AbstractKotlinCompile
 
             task.incremental = false
             task.useModuleDetection.convention(false)
+
+            task.klibUseRelativePathBase.value(propertiesProvider.kotlinKlibUseRelativePathBase).finalizeValueOnRead()
         }
     }
 

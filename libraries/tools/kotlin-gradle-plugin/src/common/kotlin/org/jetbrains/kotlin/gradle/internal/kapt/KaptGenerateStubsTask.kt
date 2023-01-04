@@ -117,6 +117,16 @@ abstract class KaptGenerateStubsTask @Inject constructor(
             args.reportPerf = true
         }
 
+        if (klibUseRelativePathBase.get() &&
+            compilerOptions.freeCompilerArgs.get().none { it.startsWith("-Xklib-relative-path-base") }
+        ) {
+            args.relativePathBases = arrayOf(
+                projectLayout.buildDirectory.get().asFile.absolutePath,
+                projectLayout.projectDirectory.asFile.absolutePath,
+                rootProjectDir.get().absolutePath
+            )
+        }
+
         val pluginOptionsWithKapt = pluginOptions.toSingleCompilerPluginOptions().withWrappedKaptOptions(withApClasspath = kaptClasspath)
         args.pluginOptions = (pluginOptionsWithKapt.arguments).toTypedArray()
 

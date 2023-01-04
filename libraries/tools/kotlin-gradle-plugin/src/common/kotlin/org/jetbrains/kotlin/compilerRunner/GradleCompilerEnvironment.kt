@@ -24,4 +24,3 @@ internal class GradleCompilerEnvironment(
         toolsJar: File?
     ): List<File> = if (toolsJar != null ) compilerClasspath + toolsJar else compilerClasspath.toList()
 }
-
