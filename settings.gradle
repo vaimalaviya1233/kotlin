@@ -822,3 +822,12 @@ if (buildProperties.isKotlinNativeEnabled) {
     include ':kotlin-native-shared'
     project(":kotlin-native-shared").projectDir = "$rootDir/kotlin-native/shared" as File
 }
+include 'plugins:jso'
+findProject(':plugins:jso')?.name = 'jso'
+include 'plugins:jso:jso-compiler'
+findProject(':plugins:jso:jso-compiler')?.name = 'jso-compiler'
+include 'plugins:jso:jso-compiler:jso-compiler-plugin.k1'
+findProject(':plugins:jso:jso-compiler:jso-compiler-plugin.k1')?.name = 'jso-compiler-plugin.k1'
+include 'plugins:jso:jso-compiler:jso-compiler-plugin.k2'
+findProject(':plugins:jso:jso-compiler:jso-compiler-plugin.k2')?.name = 'jso-compiler-plugin.k2'
+
