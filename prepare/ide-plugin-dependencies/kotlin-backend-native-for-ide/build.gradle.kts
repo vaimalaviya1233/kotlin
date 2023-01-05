@@ -1,4 +1,5 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+import org.gradle.internal.jvm.Jvm
 
 plugins {
     kotlin("jvm")
@@ -52,17 +53,17 @@ idePluginDependency {
                         "jre/lib/rt.jar",
                         "../Classes/classes.jar",
                         jdkHome = it.metadata.installationPath.asFile
-                    )
+                    ) ?: error("Can't find rt.jar or classes.jar")
                 },
                 javaLauncher.map {
                     firstFromJavaHomeThatExists(
                         "jre/lib/jsse.jar",
                         "../Classes/jsse.jar",
                         jdkHome = it.metadata.installationPath.asFile
-                    )
+                    ) ?: error("Can't find jsse.jar")
                 },
                 javaLauncher.map {
-                    org.gradle.internal.jvm.Jvm.forHome(it.metadata.installationPath.asFile).toolsJar
+                    Jvm.forHome(it.metadata.installationPath.asFile).toolsJar ?: error("Can't find tools.jar")
                 }
             )
         )
@@ -73,7 +74,7 @@ idePluginDependency {
         manifest.attributes.apply {
             put("Implementation-Vendor", "JetBrains")
             put("Implementation-Title", jarBaseName)
-            put("Implementation-Version", version)
+            put("Implementation-Version", archiveVersion)
         }
         from {
             zipTree(proguard.get().singleOutputFile())
