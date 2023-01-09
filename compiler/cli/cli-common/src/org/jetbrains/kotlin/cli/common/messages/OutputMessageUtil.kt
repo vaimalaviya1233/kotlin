@@ -13,80 +13,69 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.jetbrains.kotlin.cli.common.messages
 
-package org.jetbrains.kotlin.cli.common.messages;
+import java.io.File
+import java.io.PrintWriter
+import java.io.Serializable
+import java.io.StringWriter
 
-import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+object OutputMessageUtil {
+    private const val SOURCE_FILES_PREFIX = "Sources:"
+    private const val OUTPUT_FILES_PREFIX = "Output:"
 
-import java.io.File;
-import java.io.PrintWriter;
-import java.io.Serializable;
-import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.Collection;
-
-public class OutputMessageUtil {
-    private static final String SOURCE_FILES_PREFIX = "Sources:";
-    private static final String OUTPUT_FILES_PREFIX = "Output:";
-
-    @NotNull
-    public static String renderException(@NotNull Throwable e) {
-        StringWriter out = new StringWriter();
-        e.printStackTrace(new PrintWriter(out));
-        return out.toString();
+    @JvmStatic
+    fun renderException(e: Throwable): String {
+        val out = StringWriter()
+        e.printStackTrace(PrintWriter(out))
+        return out.toString()
     }
 
-    @NotNull
-    public static String formatOutputMessage(Collection<File> sourceFiles, File outputFile) {
-        return OUTPUT_FILES_PREFIX + "\n" + outputFile.getPath() + "\n" +
-               SOURCE_FILES_PREFIX + "\n" + StringUtil.join(sourceFiles, "\n");
-    }
+    fun formatOutputMessage(sourceFiles: Collection<File?>?, outputFile: File): String =
+        """$OUTPUT_FILES_PREFIX
+           ${outputFile.path}
+           $SOURCE_FILES_PREFIX
+           ${sourceFiles?.joinToString("\n") ?: ""}""".trimIndent()
 
-    @Nullable
-    public static Output parseOutputMessage(@NotNull String message) {
-        String[] strings = message.split("\n");
+    @JvmStatic
+    fun parseOutputMessage(message: String): Output? {
+        val strings = message.split("\n".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
 
         // Must have at least one line per prefix
-        if (strings.length <= 2) return null;
-
-        if (!OUTPUT_FILES_PREFIX.equals(strings[0])) return null;
-
-        if (SOURCE_FILES_PREFIX.equals(strings[1])) {
+        if (strings.size <= 2) return null
+        if (OUTPUT_FILES_PREFIX != strings[0]) return null
+        return if (SOURCE_FILES_PREFIX == strings[1]) {
             // Output:
             // Sources:
             // ...
-            return new Output(parseSourceFiles(strings, 2), null);
-        }
-        else {
-            File outputFile = new File(strings[1]);
-
-            if (!SOURCE_FILES_PREFIX.equals(strings[2])) return null;
-
-            return new Output(parseSourceFiles(strings, 3), outputFile);
+            Output(
+                parseSourceFiles(
+                    strings,
+                    2
+                ), null
+            )
+        } else {
+            val outputFile = File(strings[1])
+            if (SOURCE_FILES_PREFIX != strings[2]) null else Output(
+                parseSourceFiles(
+                    strings,
+                    3
+                ), outputFile
+            )
         }
     }
 
-    private static Collection<File> parseSourceFiles(String[] strings, int start) {
-        Collection<File> sourceFiles = new ArrayList<>();
-        for (int i = start; i < strings.length; i++) {
-            sourceFiles.add(new File(strings[i]));
+    private fun parseSourceFiles(strings: Array<String>, start: Int): Collection<File> {
+        val sourceFiles: MutableCollection<File> = ArrayList()
+        for (i in start until strings.size) {
+            sourceFiles.add(File(strings[i]))
         }
-        return sourceFiles;
+        return sourceFiles
     }
 
-    public static class Output implements Serializable {
-        @NotNull
-        public final Collection<File> sourceFiles;
-        @Nullable
-        public final File outputFile;
-
-        public Output(@NotNull Collection<File> sourceFiles, @Nullable File outputFile) {
-            this.sourceFiles = sourceFiles;
-            this.outputFile = outputFile;
+    class Output(@JvmField val sourceFiles: Collection<File>, @JvmField val outputFile: File?) : Serializable {
+        companion object {
+            const val serialVersionUID = 0L
         }
-
-        static final long serialVersionUID = 0L;
     }
 }
