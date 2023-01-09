@@ -5,7 +5,7 @@
 package org.jetbrains.kotlin.generators.util
 
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.text.StringUtilRt
 import java.io.File
 import java.io.IOException
 import kotlin.io.path.*
@@ -86,11 +86,11 @@ object GeneratorsFileUtil {
 
     fun isFileContentChangedIgnoringLineSeparators(file: File, content: String): Boolean {
         val currentContent: String = try {
-            StringUtil.convertLineSeparators(file.readText(Charsets.UTF_8))
+            StringUtilRt.convertLineSeparators(file.readText(Charsets.UTF_8))
         } catch (ignored: Throwable) {
             return true
         }
-        return StringUtil.convertLineSeparators(content) != currentContent
+        return StringUtilRt.convertLineSeparators(content) != currentContent
     }
 
     fun collectPreviouslyGeneratedFiles(generationPath: File): List<File> {

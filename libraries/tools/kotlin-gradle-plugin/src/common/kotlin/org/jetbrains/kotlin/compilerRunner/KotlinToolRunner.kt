@@ -5,7 +5,6 @@
 
 package org.jetbrains.kotlin.compilerRunner
 
-import com.intellij.openapi.util.text.StringUtil.escapeStringCharacters
 import org.gradle.api.Project
 import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.logging.Logger
@@ -15,6 +14,7 @@ import org.gradle.process.ExecResult
 import org.gradle.process.JavaExecSpec
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.konan.target.HostManager
+import org.jetbrains.kotlin.utils.escapeStringCharacters
 import java.io.File
 import java.lang.reflect.InvocationTargetException
 import java.net.URLClassLoader

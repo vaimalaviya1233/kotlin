@@ -17,10 +17,10 @@
 package org.jetbrains.kotlin.psi;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.psi.stubs.KotlinPlaceHolderWithTextStub;
 import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes;
+import org.jetbrains.kotlin.utils.StringsKt;
 
 public class KtEscapeStringTemplateEntry extends KtStringTemplateEntry {
     public KtEscapeStringTemplateEntry(@NotNull ASTNode node) {
@@ -37,6 +37,6 @@ public class KtEscapeStringTemplateEntry extends KtStringTemplateEntry {
     }
 
     public String getUnescapedValue() {
-        return StringUtil.unescapeStringCharacters(getText());
+        return StringsKt.unescapeStringCharacters(getText());
     }
 }

@@ -16,7 +16,6 @@
 
 package org.jetbrains.kotlin.js.translate.expression;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -63,6 +62,7 @@ import org.jetbrains.kotlin.resolve.inline.InlineUtil;
 import org.jetbrains.kotlin.types.KotlinType;
 import org.jetbrains.kotlin.types.expressions.DoubleColonLHS;
 
+import java.beans.Introspector;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -333,7 +333,7 @@ public final class ExpressionVisitor extends TranslatorVisitor<JsNode> {
             case "kotlin.LongArray":
             case "kotlin.FloatArray":
             case "kotlin.DoubleArray":
-                return getKotlinPrimitiveClassRef(context, StringUtil.decapitalize(fqName.shortName().asString()) + "Class");
+                return getKotlinPrimitiveClassRef(context, Introspector.decapitalize(fqName.shortName().asString()) + "Class");
 
             default: {
                 if (descriptor instanceof FunctionClassDescriptor) {

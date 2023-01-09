@@ -17,9 +17,9 @@
 package org.jetbrains.kotlin.cli.common.repl
 
 import com.google.common.base.Throwables
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.LineSeparator
 import org.jetbrains.kotlin.utils.repl.ReplEscapeType
+import org.jetbrains.kotlin.utils.replaceAll
 import java.io.File
 import java.net.URLClassLoader
 
@@ -30,16 +30,19 @@ private val XML_REPLACEMENTS: List<String> = listOf("#r", "#n", "#diez")
 private val END_LINE: String = LineSeparator.getSystemLineSeparator().separatorString
 private const val XML_PREAMBLE = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
 
-fun String.replUnescapeLineBreaks() = StringUtil.replace(this, XML_REPLACEMENTS, SOURCE_CHARS)
-fun String.replEscapeLineBreaks() = StringUtil.replace(this, SOURCE_CHARS, XML_REPLACEMENTS)
+val XML_REPLACES_REFS: List<String> = mutableListOf("&lt;", "&gt;", "&amp;", "&#39;", "&quot;")
+val XML_REPLACES_DISP: List<String> = mutableListOf("<", ">", "&", "'", "\"")
+
+fun String.replUnescapeLineBreaks() = replaceAll(XML_REPLACEMENTS, SOURCE_CHARS)
+fun String.replEscapeLineBreaks() = replaceAll(SOURCE_CHARS, XML_REPLACEMENTS)
 
 fun String.replOutputAsXml(escapeType: ReplEscapeType): String {
-    val escapedXml = StringUtil.escapeXmlEntities(replEscapeLineBreaks())
+    val escapedXml = replEscapeLineBreaks().replaceAll(XML_REPLACES_DISP, XML_REPLACES_REFS)
     return "$XML_PREAMBLE<output type=\"$escapeType\">$escapedXml</output>"
 }
 
 fun String.replInputAsXml(): String {
-    val escapedXml = StringUtil.escapeXmlEntities(replEscapeLineBreaks())
+    val escapedXml = replEscapeLineBreaks().replaceAll(XML_REPLACES_DISP, XML_REPLACES_REFS)
     return "$XML_PREAMBLE<input>$escapedXml</input>"
 }
 

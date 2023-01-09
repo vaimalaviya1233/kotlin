@@ -6,7 +6,7 @@
 package org.jetbrains.kotlin.analysis.api.impl.base.util
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
@@ -94,7 +94,7 @@ object LibraryUtils {
             p.load(stream)
             val modules = p.getProperty("MODULES")
             if (modules != null) {
-                return StringUtil.split(StringUtil.unquoteString(modules), " ")
+                return StringUtilRt.unquoteString(modules).split(" ")
             }
         }
         return null

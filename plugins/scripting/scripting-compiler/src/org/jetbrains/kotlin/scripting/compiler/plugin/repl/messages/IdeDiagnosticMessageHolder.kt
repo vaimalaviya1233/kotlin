@@ -5,10 +5,12 @@
 
 package org.jetbrains.kotlin.scripting.compiler.plugin.repl.messages
 
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiFile
+import org.jetbrains.kotlin.cli.common.repl.XML_REPLACES_DISP
+import org.jetbrains.kotlin.cli.common.repl.XML_REPLACES_REFS
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticUtils
+import org.jetbrains.kotlin.utils.replaceAll
 import org.w3c.dom.ls.DOMImplementationLS
 import javax.xml.parsers.DocumentBuilderFactory
 
@@ -34,7 +36,7 @@ class IdeDiagnosticMessageHolder : DiagnosticMessageHolder {
             reportEntry.setAttribute("severity", diagnostic.severity.toString())
             reportEntry.setAttribute("rangeStart", errorRange.startOffset.toString())
             reportEntry.setAttribute("rangeEnd", errorRange.endOffset.toString())
-            reportEntry.appendChild(errorReport.createTextNode(StringUtil.escapeXmlEntities(message)))
+            reportEntry.appendChild(errorReport.createTextNode(message.replaceAll(XML_REPLACES_DISP, XML_REPLACES_REFS)))
 
             rootElement.appendChild(reportEntry)
         }

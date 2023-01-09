@@ -8,7 +8,6 @@ package org.jetbrains.kotlin.cli.js;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ExceptionUtil;
@@ -440,12 +439,13 @@ public class K2JSCompiler extends CLICompiler<K2JSCompilerArguments> {
             }
 
             String sourceMapSourceRoots = arguments.getSourceMapBaseDirs();
-            if (sourceMapSourceRoots == null && StringUtil.isNotEmpty(arguments.getSourceMapPrefix())) {
+            String sourceMapPrefix = arguments.getSourceMapPrefix();
+            if (sourceMapSourceRoots == null && sourceMapPrefix != null && !sourceMapPrefix.isEmpty()) {
                 sourceMapSourceRoots = calculateSourceMapSourceRoot(messageCollector, arguments);
             }
 
             if (sourceMapSourceRoots != null) {
-                List<String> sourceMapSourceRootList = StringUtil.split(sourceMapSourceRoots, File.pathSeparator);
+                List<String> sourceMapSourceRootList = StringsKt.split(sourceMapSourceRoots, File.pathSeparator);
                 configuration.put(JSConfigurationKeys.SOURCE_MAP_SOURCE_ROOTS, sourceMapSourceRootList);
             }
         }
@@ -508,7 +508,7 @@ public class K2JSCompiler extends CLICompiler<K2JSCompilerArguments> {
                                                              SourceMapSourceEmbedding.INLINING;
         if (sourceMapContentEmbedding == null) {
             String message = "Unknown source map source embedding mode: " + sourceMapEmbedContentString + ". Valid values are: " +
-                             StringUtil.join(sourceMapContentEmbeddingMap.keySet(), ", ");
+                             StringsKt.join(sourceMapContentEmbeddingMap.keySet(), ", ");
             messageCollector.report(ERROR, message, null);
             sourceMapContentEmbedding = SourceMapSourceEmbedding.INLINING;
         }

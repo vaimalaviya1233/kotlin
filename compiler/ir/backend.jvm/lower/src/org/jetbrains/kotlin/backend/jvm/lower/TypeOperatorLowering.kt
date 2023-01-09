@@ -5,7 +5,6 @@
 
 package org.jetbrains.kotlin.backend.jvm.lower
 
-import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.kotlin.backend.common.FileLoweringPass
 import org.jetbrains.kotlin.backend.common.lower.IrBuildingTransformer
 import org.jetbrains.kotlin.backend.common.lower.at
@@ -37,6 +36,7 @@ import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
 import org.jetbrains.kotlin.ir.visitors.acceptVoid
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.types.Variance
+import org.jetbrains.kotlin.utils.shortenText
 import org.jetbrains.org.objectweb.asm.Handle
 import org.jetbrains.org.objectweb.asm.Opcodes
 import org.jetbrains.org.objectweb.asm.commons.Method
@@ -769,7 +769,7 @@ private class TypeOperatorLowering(private val backendContext: JvmBackendContext
         }
     }
 
-    private fun String.trimForRuntimeAssertion() = StringUtil.trimMiddle(this, 50)
+    private fun String.trimForRuntimeAssertion() = shortenText(50, 50 shr 1)
 
     private fun IrFunction.isDelegated() =
         origin == IrDeclarationOrigin.DELEGATED_PROPERTY_ACCESSOR ||

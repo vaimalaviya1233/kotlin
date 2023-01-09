@@ -5,7 +5,6 @@
 
 package org.jetbrains.kotlin.resolve.jvm
 
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettings
@@ -25,6 +24,7 @@ import org.jetbrains.kotlin.resolve.scopes.receivers.ReceiverValue
 import org.jetbrains.kotlin.types.*
 import org.jetbrains.kotlin.types.checker.isClassType
 import org.jetbrains.kotlin.types.typeUtil.immediateSupertypes
+import org.jetbrains.kotlin.utils.shortenText
 
 class RuntimeAssertionInfo(val needNotNullAssertion: Boolean, val message: String) {
     interface DataFlowExtras {
@@ -78,7 +78,7 @@ class RuntimeAssertionInfo(val needNotNullAssertion: Boolean, val message: Strin
 }
 
 private val KtExpression.textForRuntimeAssertionInfo
-    get() = StringUtil.trimMiddle(text, 50)
+    get() = text.shortenText(50, 50 shl 1)
 
 class RuntimeAssertionsDataFlowExtras(
     private val c: ResolutionContext<*>,

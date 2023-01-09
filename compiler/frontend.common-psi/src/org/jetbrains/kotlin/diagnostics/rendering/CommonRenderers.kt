@@ -5,9 +5,9 @@
 
 package org.jetbrains.kotlin.diagnostics.rendering
 
-import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.types.Variance
+import org.jetbrains.kotlin.utils.trimTextToSize
 import java.io.PrintWriter
 import java.io.StringWriter
 
@@ -22,7 +22,7 @@ object CommonRenderers {
     val THROWABLE = Renderer<Throwable> {
         val writer = StringWriter()
         it.printStackTrace(PrintWriter(writer))
-        StringUtil.first(writer.toString(), 2048, true)
+        writer.toString().trimTextToSize(2048, true)
     }
 
     @JvmField

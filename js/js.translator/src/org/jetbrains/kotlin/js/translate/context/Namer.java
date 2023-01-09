@@ -16,7 +16,6 @@
 
 package org.jetbrains.kotlin.js.translate.context;
 
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.builtins.PrimitiveType;
@@ -37,6 +36,7 @@ import org.jetbrains.kotlin.js.translate.utils.JsDescriptorUtils;
 import org.jetbrains.kotlin.name.FqNameUnsafe;
 import org.jetbrains.kotlin.resolve.BindingContext;
 import org.jetbrains.kotlin.resolve.DescriptorUtils;
+import org.jetbrains.kotlin.utils.StringsKt;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -149,7 +149,7 @@ public final class Namer {
         SuggestedName suggestedName = new NameSuggestion().suggest(functionDescriptor, bindingContext);
         assert suggestedName != null : "Suggested name can be null only for module descriptors: " + functionDescriptor;
         String mangledName = suggestedName.getNames().get(0);
-        return StringUtil.join(Arrays.asList(moduleName, qualifier, mangledName), ".");
+        return StringsKt.join(Arrays.asList(moduleName, qualifier, mangledName), ".");
     }
 
     @NotNull

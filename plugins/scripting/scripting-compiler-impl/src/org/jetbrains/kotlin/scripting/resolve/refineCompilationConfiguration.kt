@@ -8,7 +8,7 @@ package org.jetbrains.kotlin.scripting.resolve
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.openapi.vfs.*
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -94,7 +94,7 @@ class ScriptLightVirtualFile(name: String, private val _path: String?, text: Str
     LightVirtualFile(
         name,
         KotlinLanguage.INSTANCE,
-        StringUtil.convertLineSeparators(text)
+        StringUtilRt.convertLineSeparators(text)
     ) {
 
     init {

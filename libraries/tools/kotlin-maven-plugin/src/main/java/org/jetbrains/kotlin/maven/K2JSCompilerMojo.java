@@ -16,7 +16,6 @@
 
 package org.jetbrains.kotlin.maven;
 
-import com.intellij.openapi.util.text.StringUtil;
 import kotlin.collections.CollectionsKt;
 import org.apache.maven.artifact.DependencyResolutionRequiredException;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -29,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments;
 import org.jetbrains.kotlin.cli.js.K2JSCompiler;
 import org.jetbrains.kotlin.utils.JsLibraryUtils;
+import org.jetbrains.kotlin.utils.StringsKt;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -116,7 +116,7 @@ public class K2JSCompilerMojo extends KotlinCompileMojoBase<K2JSCompilerArgument
             throw new MojoExecutionException("Unresolved dependencies", e);
         }
         getLog().debug("libraries: " + libraries);
-        arguments.setLibraries(StringUtil.join(libraries, File.pathSeparator));
+        arguments.setLibraries(StringsKt.join(libraries, File.pathSeparator));
 
         arguments.setSourceMap(sourceMap);
         arguments.setSourceMapPrefix(sourceMapPrefix);

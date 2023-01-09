@@ -1,7 +1,6 @@
 package org.jetbrains.kotlin.maven;
 
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import kotlin.text.StringsKt;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -107,8 +106,8 @@ class MavenExecutionResult {
                 }
                 Arrays.sort(expectedPaths);
 
-                String expected = StringUtil.join(Arrays.asList(expectedPaths), "\n");
-                String actual = StringUtil.join(Arrays.asList(actualPaths), "\n");
+                String expected = org.jetbrains.kotlin.utils.StringsKt.join(Arrays.asList(expectedPaths), "\n");
+                String actual = org.jetbrains.kotlin.utils.StringsKt.join(Arrays.asList(actualPaths), "\n");
                 Assert.assertEquals("Compiled files differ", expected, actual);
             }
         });

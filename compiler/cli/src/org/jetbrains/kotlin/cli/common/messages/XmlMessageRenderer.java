@@ -16,9 +16,12 @@
 
 package org.jetbrains.kotlin.cli.common.messages;
 
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.kotlin.utils.StringsKt;
+
+import java.util.Arrays;
+import java.util.List;
 
 public class XmlMessageRenderer implements MessageRenderer {
     @Override
@@ -44,8 +47,13 @@ public class XmlMessageRenderer implements MessageRenderer {
         return out.toString();
     }
 
+    // the constantsare copied from the com.intellij.openapi.util.text.StringUtil to avoid
+    // the dependency that brings too much things transitively
+    private static final List<String> REPLACES_REFS = Arrays.asList("&lt;", "&gt;", "&amp;", "&#39;", "&quot;");
+    private static final List<String> REPLACES_DISP = Arrays.asList("<", ">", "&", "'", "\"");
+
     private static String e(String str) {
-        return StringUtil.escapeXmlEntities(str);
+        return StringsKt.replaceAll(str, REPLACES_DISP, REPLACES_REFS);
     }
 
     @Override

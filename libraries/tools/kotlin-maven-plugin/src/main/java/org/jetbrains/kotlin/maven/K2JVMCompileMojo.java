@@ -16,7 +16,6 @@
 
 package org.jetbrains.kotlin.maven;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiJavaModule;
 import kotlin.collections.MapsKt;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -37,6 +36,7 @@ import org.jetbrains.kotlin.incremental.IncrementalJvmCompilerRunnerKt;
 import org.jetbrains.kotlin.maven.incremental.FileCopier;
 import org.jetbrains.kotlin.maven.incremental.MavenICReporter;
 import org.jetbrains.kotlin.maven.kapt.AnnotationProcessingManager;
+import org.jetbrains.kotlin.utils.StringsKt;
 
 import java.io.*;
 import java.net.URL;
@@ -44,7 +44,6 @@ import java.nio.file.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.intellij.openapi.util.text.StringUtil.join;
 import static org.jetbrains.kotlin.maven.Util.filterClassPath;
 
 /**
@@ -163,7 +162,7 @@ public class K2JVMCompileMojo extends KotlinCompileMojoBase<K2JVMCompilerArgumen
         List<String> classpathList = getClasspath();
 
         if (!classpathList.isEmpty()) {
-            String classPathString = join(classpathList, File.pathSeparator);
+            String classPathString = StringsKt.join(classpathList, File.pathSeparator);
             if (isJava9Module(sourceRoots)) {
                 getLog().debug("Module path: " + classPathString);
                 arguments.setJavaModulePath(classPathString);
@@ -264,7 +263,7 @@ public class K2JVMCompileMojo extends KotlinCompileMojoBase<K2JVMCompilerArgumen
                         filteredClasspath.add(path);
                     }
                 }
-                arguments.setClasspath(StringUtil.join(filteredClasspath, File.pathSeparator));
+                arguments.setClasspath(StringsKt.join(filteredClasspath, File.pathSeparator));
             }
 
             IncrementalJvmCompilerRunnerKt.makeIncrementally(cachesDir, sourceRoots, arguments, messageCollector, icReporter);

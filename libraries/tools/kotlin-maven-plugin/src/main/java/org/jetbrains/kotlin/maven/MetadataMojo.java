@@ -26,12 +26,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.cli.common.CLICompiler;
 import org.jetbrains.kotlin.cli.common.arguments.K2MetadataCompilerArguments;
 import org.jetbrains.kotlin.cli.metadata.K2MetadataCompiler;
+import org.jetbrains.kotlin.utils.StringsKt;
 
 import java.io.File;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.openapi.util.text.StringUtil.join;
 import static org.jetbrains.kotlin.maven.Util.filterClassPath;
 
 @Mojo(name = "metadata", defaultPhase = LifecyclePhase.PROCESS_SOURCES, requiresDependencyResolution = ResolutionScope.COMPILE, threadSafe = true)
@@ -71,7 +71,7 @@ public class MetadataMojo extends KotlinCompileMojoBase<K2MetadataCompilerArgume
         classpathList.remove(project.getBuild().getOutputDirectory());
 
         if (!classpathList.isEmpty()) {
-            String classPathString = join(classpathList, File.pathSeparator);
+            String classPathString = StringsKt.join(classpathList, File.pathSeparator);
             getLog().debug("Classpath: " + classPathString);
             arguments.setClasspath(classPathString);
         }

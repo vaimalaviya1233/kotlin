@@ -6,7 +6,7 @@
 package org.jetbrains.kotlin.scripting.compiler.plugin.repl
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.impl.PsiFileFactoryImpl
@@ -74,7 +74,7 @@ open class GenericReplChecker(
                 LightVirtualFile(
                     "$scriptFileName${KotlinParserDefinition.STD_SCRIPT_EXT}",
                     KotlinLanguage.INSTANCE,
-                    StringUtil.convertLineSeparators(codeLine.code)
+                    StringUtilRt.convertLineSeparators(codeLine.code)
                 ).apply {
                     charset = CharsetToolkit.UTF8_CHARSET
                 }

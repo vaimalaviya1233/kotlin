@@ -5,7 +5,7 @@
 
 package org.jetbrains.kotlin.lombok.k2.generators
 
-import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.text.Strings
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.Visibility
@@ -276,7 +276,7 @@ class BuilderGenerator(session: FirSession) : FirDeclarationGenerationExtension(
     }
 
     private val String.singularForm: String?
-        get() = StringUtil.unpluralize(this)
+        get() = Strings.unpluralize(this)
 
     private fun JavaClassifierType.parameterType(index: Int): JavaType? {
         return typeArguments.getOrNull(index)

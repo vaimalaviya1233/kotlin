@@ -5,7 +5,6 @@
 
 package org.jetbrains.kotlin.asJava.elements
 
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
 import org.jetbrains.kotlin.asJava.LightClassGenerationSupport
 import org.jetbrains.kotlin.asJava.computeExpression
@@ -13,6 +12,7 @@ import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
+import org.jetbrains.kotlin.utils.escapeStringCharacters
 
 open class KtLightPsiLiteral(
     override val kotlinOrigin: KtExpression,
@@ -34,7 +34,8 @@ open class KtLightPsiLiteral(
 
     override fun replace(newElement: PsiElement): PsiElement {
         val value = (newElement as? PsiLiteral)?.value as? String ?: return this
-        kotlinOrigin.replace(KtPsiFactory(project).createExpression("\"${StringUtil.escapeStringCharacters(value)}\""))
+        kotlinOrigin.replace(KtPsiFactory(project).createExpression("\"${escapeStringCharacters(value)}\""))
+
         return this
     }
 

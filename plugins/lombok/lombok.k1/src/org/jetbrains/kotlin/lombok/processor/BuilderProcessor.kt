@@ -5,7 +5,7 @@
 
 package org.jetbrains.kotlin.lombok.processor
 
-import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.text.Strings
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
 import org.jetbrains.kotlin.descriptors.annotations.CompositeAnnotations
@@ -239,7 +239,7 @@ class BuilderProcessor(private val config: LombokConfig) : Processor {
     }
 
     private val String.singularForm: String?
-        get() = StringUtil.unpluralize(this)
+        get() = Strings.unpluralize(this)
 
     private class BuilderData(val builder: Builder, val constructingClass: ClassDescriptor)
 

@@ -18,7 +18,6 @@ package org.jetbrains.kotlin.js.translate.context;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,6 +53,7 @@ import org.jetbrains.kotlin.resolve.source.PsiSourceElementKt;
 import org.jetbrains.kotlin.serialization.js.ModuleKind;
 import org.jetbrains.kotlin.types.KotlinType;
 import org.jetbrains.kotlin.types.typeUtil.TypeUtilsKt;
+import org.jetbrains.kotlin.utils.StringsKt;
 
 import java.util.*;
 
@@ -347,7 +347,7 @@ public final class StaticContext {
 
             String qualifier = AnnotationsUtils.getFileQualifier(getBindingContext(), suggested.getDescriptor());
             if (qualifier != null) {
-                for (String qualifierPart : StringUtil.split(qualifier, ".")) {
+                for (String qualifierPart : StringsKt.split(qualifier, ".")) {
                     expression = pureFqn(qualifierPart, expression);
                 }
             }

@@ -24,7 +24,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.PackageIndex;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
@@ -41,6 +40,7 @@ import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Query;
 import com.intellij.util.messages.MessageBusConnection;
 import kotlin.collections.CollectionsKt;
+import kotlin.text.StringsKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.asJava.KtLightClassMarker;
@@ -229,9 +229,9 @@ public class KotlinJavaPsiFacade implements Disposable {
 
     @NotNull
     private PsiClass[] findClassesInDumbMode(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
-        String packageName = StringUtil.getPackageName(qualifiedName);
+        String packageName = StringsKt.substringBeforeLast(qualifiedName, '.', "");
         PsiPackage pkg = findPackage(packageName, scope);
-        String className = StringUtil.getShortName(qualifiedName);
+        String className = StringsKt.substringAfterLast(qualifiedName, '.', qualifiedName);
         if (pkg == null && packageName.length() < qualifiedName.length()) {
             PsiClass[] containingClasses = findClassesInDumbMode(packageName, scope);
             if (containingClasses.length == 1) {

@@ -5,7 +5,6 @@
 
 package org.jetbrains.kotlin.js.translate.utils;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,6 +44,7 @@ import org.jetbrains.kotlin.resolve.source.PsiSourceElementKt;
 import org.jetbrains.kotlin.types.DynamicTypesKt;
 import org.jetbrains.kotlin.types.KotlinType;
 import org.jetbrains.kotlin.types.TypeUtils;
+import org.jetbrains.kotlin.utils.StringsKt;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -642,7 +642,7 @@ public final class TranslationUtils {
     @NotNull
     public static JsExpression getIntrinsicFqn(@NotNull String name) {
         JsExpression fqn = pureFqn(Namer.KOTLIN_NAME, null);
-        for (String part : StringUtil.split(name, ".")) {
+        for (String part : StringsKt.split(name, ".")) {
             fqn = pureFqn(part, fqn);
         }
         return fqn;

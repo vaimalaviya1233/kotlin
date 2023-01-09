@@ -6,7 +6,6 @@
 package org.jetbrains.kotlin.cli.js
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.kotlin.backend.common.CompilationException
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.backend.common.phaser.PhaseConfig
@@ -750,12 +749,12 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
             }
 
             var sourceMapSourceRoots = arguments.sourceMapBaseDirs
-            if (sourceMapSourceRoots == null && StringUtil.isNotEmpty(arguments.sourceMapPrefix)) {
+            if (sourceMapSourceRoots == null && arguments.sourceMapPrefix?.isEmpty() != false) {
                 sourceMapSourceRoots = K2JSCompiler.calculateSourceMapSourceRoot(messageCollector, arguments)
             }
 
             if (sourceMapSourceRoots != null) {
-                val sourceMapSourceRootList = StringUtil.split(sourceMapSourceRoots, File.pathSeparator)
+                val sourceMapSourceRootList = sourceMapSourceRoots.split(File.pathSeparator)
                 configuration.put(JSConfigurationKeys.SOURCE_MAP_SOURCE_ROOTS, sourceMapSourceRootList)
             }
 
