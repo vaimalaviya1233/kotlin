@@ -247,6 +247,7 @@ abstract class KotlinLibraryProperResolverWithAttributes<L : KotlinLibrary>(
 
         val candidateCompilerVersion = candidate.versions.compilerVersion
         val candidateAbiVersion = candidate.versions.abiVersion
+        // check for the version
         val candidateLibraryVersion = candidate.versions.libraryVersion
 
         if (candidateAbiVersion?.isCompatible() != true) {
