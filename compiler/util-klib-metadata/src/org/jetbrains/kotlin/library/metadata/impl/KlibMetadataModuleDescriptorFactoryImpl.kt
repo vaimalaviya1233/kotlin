@@ -45,6 +45,7 @@ class KlibMetadataModuleDescriptorFactoryImpl(
         lookupTracker: LookupTracker
     ): ModuleDescriptorImpl {
 
+        println("--- bobko lib to deserialize " + library.libraryFile)
         val libraryProto = parseModuleHeader(library.moduleHeaderData)
 
         val moduleName = Name.special(libraryProto.moduleName)
