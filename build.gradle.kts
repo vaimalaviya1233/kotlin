@@ -39,6 +39,7 @@ plugins {
     signing
     id("org.jetbrains.kotlin.jvm") apply false
     id("org.jetbrains.kotlin.plugin.serialization") apply false
+    id("org.jetbrains.kotlinx.kover") version "0.6.1" apply false
 }
 
 pill {

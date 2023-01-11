@@ -2,6 +2,7 @@
 plugins {
     kotlin("jvm")
     id("jps-compatible")
+    id("org.jetbrains.kotlinx.kover")
 }
 
 dependencies {
@@ -42,6 +43,7 @@ sourceSets {
 projectTest(parallel = true) {
     workingDir = rootDir
     dependsOn(":kotlin-stdlib-js-ir:packFullRuntimeKLib")
+    finalizedBy(tasks.named("koverReport"))
 }
 
 projectTest("testJvmICWithJdk11", parallel = true) {
