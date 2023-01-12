@@ -58,6 +58,6 @@ dependencies {
     implementation(kotlinStdlib())
     implementation(commonDependency("org.jetbrains.kotlin:kotlin-reflect")) { isTransitive = false }
     api("org.jetbrains.kotlin:kotlin-native-utils:$kotlinVersion")
-    api("org.jetbrains.kotlin:kotlin-util-klib:$kotlinVersion")
+    implementation("org.jetbrains.kotlin:kotlin-util-klib:$kotlinVersion")
     testApiJUnit5()
 }
