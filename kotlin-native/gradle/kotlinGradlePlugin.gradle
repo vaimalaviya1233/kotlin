@@ -1,4 +1,4 @@
-import org.jetbrains.kotlin.UtilsKt
+//import org.jetbrains.kotlin.UtilsKt
 
 def kotlinRoot = ext.properties.containsKey("rootBuildDirectory") ? file("${ext.rootBuildDirectory}/..") : rootProject.projectDir
 File versionPropertiesFile = new File(kotlinRoot, "gradle/versions.properties")
