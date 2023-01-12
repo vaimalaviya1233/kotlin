@@ -73,6 +73,10 @@ data class KotlinAbiVersion(val major: Int, val minor: Int, val patch: Int) {
         /**
          * # KotlinAbiVersion bump history
          *
+         * - Bump 1.7.0 -> 1.8.0
+         *   The bump is caused by incompatible change in KotlinIr.proto
+         *   `1b6a43ba69a 2022-07-21 Vsevolod Tolstopyatov Update IR serialization to reflect changes in IrSyntheticBodyKind for enum entries`
+         *
          * - Bump 1.6.0 -> 1.7.0
          *   `76da9df1021 2022-05-26 Pavel Kunyavskiy Bump klib ABI version`
          * - The bump is caused by incompatible change in KotlinIr.proto
@@ -111,6 +115,6 @@ data class KotlinAbiVersion(val major: Int, val minor: Int, val patch: Int) {
          *
          * - ...
          */
-        val CURRENT = KotlinAbiVersion(1, 7, 0)
+        val CURRENT = KotlinAbiVersion(1, 8, 0)
     }
 }
