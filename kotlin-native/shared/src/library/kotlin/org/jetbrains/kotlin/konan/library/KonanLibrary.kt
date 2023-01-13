@@ -19,5 +19,8 @@ interface KonanLibrary : BitcodeLibrary, KotlinLibrary {
     val linkerOpts: List<String>
 }
 
-val KonanLibrary.includedHeaders
-    get() = manifestProperties.propertyList(KLIB_PROPERTY_INCLUDED_HEADERS, escapeInQuotes = true)
+val KonanLibrary.includedHeaders: List<String>
+    get() {
+        println("--- bobko org.jetbrains.kotlin.konan.library.KonanLibraryKt#getIncludedHeaders")
+        return manifestProperties.propertyList(KLIB_PROPERTY_INCLUDED_HEADERS, escapeInQuotes = true)
+    }
