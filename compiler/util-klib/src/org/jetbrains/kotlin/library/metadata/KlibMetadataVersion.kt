@@ -24,6 +24,8 @@ class KlibMetadataVersion(vararg numbers: Int) : BinaryVersion(*numbers) {
 
         @JvmField
         val INVALID_VERSION = KlibMetadataVersion()
+
+        fun parse(plainString: String): KlibMetadataVersion? = parseVersionArray(plainString)?.let { KlibMetadataVersion(*it) }
     }
 }
 
