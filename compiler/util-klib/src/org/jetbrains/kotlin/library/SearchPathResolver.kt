@@ -258,6 +258,8 @@ abstract class KotlinLibraryProperResolverWithAttributes<L : KotlinLibrary>(
                         "The library produced by $candidateCompilerVersion compiler"
             )
         }
+        println("--- bobko klib version check")
+//        logger.log("--- bobko klib version check")
         if (candidate.versions.metadataVersion?.isCompatible() == false) {
             warning("KLIB metadata", KlibMetadataVersion.INSTANCE.toString(), candidate.versions.metadataVersion.toString())
             return false
