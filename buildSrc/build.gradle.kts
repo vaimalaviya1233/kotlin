@@ -112,6 +112,7 @@ sourceSets["main"].withConvention(org.jetbrains.kotlin.gradle.plugin.KotlinSourc
         kotlin.srcDir("../kotlin-native/shared/src/main/kotlin")
         kotlin.srcDir("../kotlin-native/build-tools/src/main/kotlin")
         kotlin.srcDir("../kotlin-native/tools/kotlin-native-gradle-plugin/src/main/kotlin")
+        kotlin.srcDir("../compiler/util-klib/src")
         kotlin.srcDir("../native/utils/src")
     }
     kotlin.srcDir(project.kotlinNativeVersionSrc())
@@ -176,7 +177,6 @@ dependencies {
 
     implementation("org.jetbrains.kotlinx:kotlinx-metadata-jvm:0.5.0")
     implementation("org.jetbrains.kotlinx:kotlinx-metadata-klib:$metadataVersion")
-    implementation("org.jetbrains.kotlin:kotlin-util-klib:${project.bootstrapKotlinVersion}")
     if (kotlinBuildProperties.isInJpsBuildIdeaSync) {
         implementation("org.jetbrains.kotlin:kotlin-native-utils:${project.bootstrapKotlinVersion}")
     }
