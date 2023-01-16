@@ -15,7 +15,7 @@
 
 namespace kotlin::gc {
 
-class GCHandle;
+class GCStateHolder;
 
 struct MemoryUsage {
     uint64_t objectsCount;
@@ -100,12 +100,16 @@ private:
     void marked(MemoryUsage usage);
 
 public:
+    // TODO: Probably makes sense to split out GCHandle and statistics handling.
+    static void SetGlobalGCStateHolder(GCStateHolder* holder) noexcept;
+
     static GCHandle create(uint64_t epoch);
     static GCHandle createFakeForTests();
     static GCHandle getByEpoch(uint64_t epoch);
     static void ClearForTests();
 
     uint64_t getEpoch() { return epoch_; }
+    void started() noexcept;
     void finished();
     void finalizersDone();
     void finalizersScheduled(uint64_t finalizersCount);

@@ -53,33 +53,6 @@ struct SweepTraits {
 
 } // namespace
 
-void gc::ConcurrentMarkAndSweep::ThreadData::SafePointAllocation(size_t size) noexcept {
-    gcScheduler_.OnSafePointAllocation(size);
-    mm::SuspendIfRequested();
-}
-
-void gc::ConcurrentMarkAndSweep::ThreadData::Schedule() noexcept {
-    ThreadStateGuard guard(ThreadState::kNative);
-    gc_.state_.schedule();
-}
-
-void gc::ConcurrentMarkAndSweep::ThreadData::ScheduleAndWaitFullGC() noexcept {
-    ThreadStateGuard guard(ThreadState::kNative);
-    auto scheduled_epoch = gc_.state_.schedule();
-    gc_.state_.waitEpochFinished(scheduled_epoch);
-}
-
-void gc::ConcurrentMarkAndSweep::ThreadData::ScheduleAndWaitFullGCWithFinalizers() noexcept {
-    ThreadStateGuard guard(ThreadState::kNative);
-    auto scheduled_epoch = gc_.state_.schedule();
-    gc_.state_.waitEpochFinalized(scheduled_epoch);
-}
-
-void gc::ConcurrentMarkAndSweep::ThreadData::OnOOM(size_t size) noexcept {
-    RuntimeLogDebug({kTagGC}, "Attempt to GC on OOM at size=%zu", size);
-    ScheduleAndWaitFullGC();
-}
-
 NO_EXTERNAL_CALLS_CHECK void gc::ConcurrentMarkAndSweep::ThreadData::OnSuspendForGC() noexcept {
     std::unique_lock lock(markingMutex);
     if (!markingRequested.load()) return;
@@ -97,61 +70,38 @@ NO_EXTERNAL_CALLS_CHECK void gc::ConcurrentMarkAndSweep::ThreadData::OnSuspendFo
 }
 
 gc::ConcurrentMarkAndSweep::ConcurrentMarkAndSweep(
-        mm::ObjectFactory<ConcurrentMarkAndSweep>& objectFactory, GCScheduler& gcScheduler) noexcept :
+        mm::ObjectFactory<ConcurrentMarkAndSweep>& objectFactory) noexcept :
 #ifndef CUSTOM_ALLOCATOR
     objectFactory_(objectFactory),
 #endif
-    gcScheduler_(gcScheduler),
-    finalizerProcessor_(std_support::make_unique<FinalizerProcessor>([this](int64_t epoch) {
+    finalizerProcessor_([](int64_t epoch) noexcept {
         GCHandle::getByEpoch(epoch).finalizersDone();
-        state_.finalized(epoch);
-    })) {
-    gcScheduler_.SetScheduleGC([this]() NO_INLINE {
-        RuntimeLogDebug({kTagGC}, "Scheduling GC by thread %d", konan::currentThreadId());
-        // This call acquires a lock, so we need to ensure that we're in the safe state.
-        NativeOrUnregisteredThreadGuard guard(/* reentrant = */ true);
-        state_.schedule();
-    });
-    gcThread_ = ScopedThread(ScopedThread::attributes().name("GC thread"), [this] {
-        while (true) {
-            auto epoch = state_.waitScheduled();
-            if (epoch.has_value()) {
-                PerformFullGC(*epoch);
-            } else {
-                break;
-            }
-        }
-    });
+    }) {
     markingBehavior_ = kotlin::compiler::gcMarkSingleThreaded() ? MarkingBehavior::kDoNotMark : MarkingBehavior::kMarkOwnStack;
     RuntimeLogDebug({kTagGC}, "Concurrent Mark & Sweep GC initialized");
 }
 
-gc::ConcurrentMarkAndSweep::~ConcurrentMarkAndSweep() {
-    state_.shutdown();
-}
-
 void gc::ConcurrentMarkAndSweep::StartFinalizerThreadIfNeeded() noexcept {
     NativeOrUnregisteredThreadGuard guard(true);
-    finalizerProcessor_->StartFinalizerThreadIfNone();
-    finalizerProcessor_->WaitFinalizerThreadInitialized();
+    finalizerProcessor_.StartFinalizerThreadIfNone();
+    finalizerProcessor_.WaitFinalizerThreadInitialized();
 }
 
 void gc::ConcurrentMarkAndSweep::StopFinalizerThreadIfRunning() noexcept {
     NativeOrUnregisteredThreadGuard guard(true);
-    finalizerProcessor_->StopFinalizerThread();
+    finalizerProcessor_.StopFinalizerThread();
 }
 
 bool gc::ConcurrentMarkAndSweep::FinalizersThreadIsRunning() noexcept {
-    return finalizerProcessor_->IsRunning();
+    return finalizerProcessor_.IsRunning();
 }
 
 void gc::ConcurrentMarkAndSweep::SetMarkingBehaviorForTests(MarkingBehavior markingBehavior) noexcept {
     markingBehavior_ = markingBehavior;
 }
 
-bool gc::ConcurrentMarkAndSweep::PerformFullGC(int64_t epoch) noexcept {
-    auto gcHandle = GCHandle::create(epoch);
-    SetMarkingRequested(epoch);
+void gc::ConcurrentMarkAndSweep::RunGC(GCHandle& gcHandle) noexcept {
+    SetMarkingRequested(gcHandle.getEpoch());
     bool didSuspend = mm::RequestThreadsSuspension();
     RuntimeAssert(didSuspend, "Only GC thread can request suspension");
     gcHandle.suspensionRequested();
@@ -164,10 +114,7 @@ bool gc::ConcurrentMarkAndSweep::PerformFullGC(int64_t epoch) noexcept {
     heap_.PrepareForGC();
 #endif
 
-    auto& scheduler = gcScheduler_;
-    scheduler.gcData().OnPerformFullGC();
-
-    state_.start(epoch);
+    gcHandle.started();
 
     CollectRootSetAndStartMarking(gcHandle);
 
@@ -176,8 +123,6 @@ bool gc::ConcurrentMarkAndSweep::PerformFullGC(int64_t epoch) noexcept {
 
     mm::WaitForThreadsSuspension();
     mm::ExtraObjectDataFactory& extraObjectDataFactory = mm::GlobalData::Instance().extraObjectDataFactory();
-    auto markStats = gcHandle.getMarked();
-    scheduler.gcData().UpdateAliveSetBytes(markStats.totalObjectsSize);
 
     gc::SweepExtraObjects<SweepTraits>(gcHandle, extraObjectDataFactory);
 
@@ -193,11 +138,9 @@ bool gc::ConcurrentMarkAndSweep::PerformFullGC(int64_t epoch) noexcept {
     heap_.Sweep();
 #endif
     kotlin::compactObjectPoolInMainThread();
-    state_.finish(epoch);
     gcHandle.finalizersScheduled(finalizerQueue.size());
     gcHandle.finished();
-    finalizerProcessor_->ScheduleTasks(std::move(finalizerQueue), epoch);
-    return true;
+    finalizerProcessor_.ScheduleTasks(std::move(finalizerQueue), gcHandle.getEpoch());
 }
 
 namespace {

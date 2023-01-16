@@ -31,6 +31,8 @@ object BinaryOptions : BinaryOptionRegistry() {
 
     val objcExportDisableSwiftMemberNameMangling by booleanOption()
 
+    val gc by option<GC> { it.shorthand }
+
     val gcSchedulerType by option<GCSchedulerType>()
 
     val gcMarkSingleThreaded by booleanOption()
@@ -92,9 +94,9 @@ open class BinaryOptionRegistry {
                 }
             }
 
-    protected inline fun <reified T : Enum<T>> option(): PropertyDelegateProvider<Any?, ReadOnlyProperty<Any?, CompilerConfigurationKey<T>>> =
+    protected inline fun <reified T : Enum<T>> option(noinline shorthand: (T) -> String? = { null }): PropertyDelegateProvider<Any?, ReadOnlyProperty<Any?, CompilerConfigurationKey<T>>> =
             PropertyDelegateProvider { _, property ->
-                val option = BinaryOption(property.name, EnumValueParser(enumValues<T>().toList()))
+                val option = BinaryOption(property.name, EnumValueParser(enumValues<T>().toList(), shorthand))
                 register(option)
                 ReadOnlyProperty { _, _ ->
                     option.compilerConfigurationKey
@@ -116,10 +118,22 @@ private object StringValueParser : BinaryOption.ValueParser<String> {
 }
 
 @PublishedApi
-internal class EnumValueParser<T : Enum<T>>(val values: List<T>) : BinaryOption.ValueParser<T> {
-    // TODO: should we really ignore case here?
-    override fun parse(value: String): T? = values.firstOrNull { it.name.equals(value, ignoreCase = true) }
+internal class EnumValueParser<T : Enum<T>>(
+    private val variants: List<T>,
+    private val shorthand: (T) -> String?,
+) : BinaryOption.ValueParser<T> {
+    override fun parse(value: String): T? = variants.firstOrNull { variant ->
+        listOfNotNull(variant.name, shorthand(variant)).any {
+            // TODO: should we really ignore case here?
+            it.equals(value, ignoreCase = true)
+        }
+    }
 
     override val validValuesHint: String?
-        get() = values.joinToString("|")
+        get() = variants.map { variant ->
+            val alternative = shorthand(variant)?.let { shorthand ->
+                " (or: $shorthand)"
+            } ?: ""
+            "$variant$alternative"
+        }.joinToString("|")
 }

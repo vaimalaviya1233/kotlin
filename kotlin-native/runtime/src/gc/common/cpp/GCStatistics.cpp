@@ -3,6 +3,7 @@
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
+#include "GCState.hpp"
 #include "GCStatistics.hpp"
 #include "Mutex.hpp"
 #include "Porting.h"
@@ -14,6 +15,7 @@
 #include <cinttypes>
 #include <mutex>
 
+using namespace kotlin;
 
 extern "C" {
 void Kotlin_Internal_GC_GCInfoBuilder_setEpoch(KRef thiz, KLong value);
@@ -97,6 +99,8 @@ GCInfo* statByEpoch(uint64_t epoch) {
     return nullptr;
 }
 
+gc::GCStateHolder* globalStateHolder = nullptr;
+
 } // namespace
 
 extern "C" void Kotlin_Internal_GC_GCInfoBuilder_Fill(KRef builder, int id) {
@@ -113,6 +117,11 @@ extern "C" void Kotlin_Internal_GC_GCInfoBuilder_Fill(KRef builder, int id) {
         }
     }
     copy.build(builder);
+}
+
+// static
+void gc::GCHandle::SetGlobalGCStateHolder(gc::GCStateHolder* holder) noexcept {
+    globalStateHolder = holder;
 }
 
 namespace kotlin::gc {
@@ -142,7 +151,17 @@ void GCHandle::ClearForTests() {
     current = {};
     last = {};
 }
+
+void GCHandle::started() noexcept {
+    if (auto* stateHolder = globalStateHolder) {
+        stateHolder->start(epoch_);
+    }
+}
+
 void GCHandle::finished() {
+    if (auto* stateHolder = globalStateHolder) {
+        stateHolder->finish(epoch_);
+    }
     std::lock_guard guard(lock);
     if (auto* stat = statByEpoch(epoch_)) {
         stat->endTime = static_cast<KLong>(konan::getTimeNanos());
@@ -198,6 +217,9 @@ void GCHandle::threadsAreResumed() {
     }
 }
 void GCHandle::finalizersDone() {
+    if (auto* stateHolder = globalStateHolder) {
+        stateHolder->finalized(epoch_);
+    }
     std::lock_guard guard(lock);
     if (auto* stat = statByEpoch(epoch_)) {
         stat->finalizersDoneTime = static_cast<KLong>(konan::getTimeNanos());

@@ -9,7 +9,8 @@
 #include <cstddef>
 
 #include "Allocator.hpp"
-#include "GCScheduler.hpp"
+#include "GCStatistics.hpp"
+#include "Logging.hpp"
 #include "ObjectFactory.hpp"
 #include "Utils.hpp"
 #include "Types.h"
@@ -34,33 +35,21 @@ public:
     public:
         using ObjectData = NoOpGC::ObjectData;
 
-        ThreadData(NoOpGC& gc, mm::ThreadData& threadData, GCSchedulerThreadData&) noexcept {}
+        ThreadData(NoOpGC& gc, mm::ThreadData& threadData) noexcept {}
         ~ThreadData() = default;
-
-        void SafePointFunctionPrologue() noexcept {}
-        void SafePointLoopBody() noexcept {}
-        void SafePointAllocation(size_t size) noexcept {}
-
-        void Schedule() noexcept {}
-        void ScheduleAndWaitFullGC() noexcept {}
-        void ScheduleAndWaitFullGCWithFinalizers() noexcept {}
-
-        void OnOOM(size_t size) noexcept {}
-
-        Allocator CreateAllocator() noexcept { return Allocator(); }
-
     private:
     };
 
-    NoOpGC(mm::ObjectFactory<NoOpGC>&, GCScheduler&) noexcept {
+    explicit NoOpGC(mm::ObjectFactory<NoOpGC>&) noexcept {
         RuntimeLogDebug({kTagGC}, "No-op GC initialized");
     }
     ~NoOpGC() = default;
 
-    GCScheduler& scheduler() noexcept { return scheduler_; }
-
-private:
-    GCScheduler scheduler_;
+    void RunGC(GCHandle& handle) noexcept {
+        handle.started();
+        handle.finished();
+        handle.finalizersDone();
+    }
 };
 
 } // namespace gc

@@ -5,8 +5,8 @@
 
 package org.jetbrains.kotlin.backend.konan
 
-enum class GC {
-    NOOP,
-    SAME_THREAD_MARK_AND_SWEEP,
-    CONCURRENT_MARK_AND_SWEEP
+enum class GC(val shorthand: String?) {
+    NOOP(null),
+    STOP_THE_WORLD_MARK_AND_SWEEP("stw"),
+    PARALLEL_MARK_CONCURRENT_SWEEP("pmcs"),
 }

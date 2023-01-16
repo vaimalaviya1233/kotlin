@@ -9,17 +9,20 @@
 #include <atomic>
 #include <cstring>
 
-#include "GCScheduler.hpp"
 #include "Heap.hpp"
 #include "MediumPage.hpp"
 #include "Memory.h"
 #include "SmallPage.hpp"
 
+namespace kotlin::mm {
+class ThreadData;
+}
+
 namespace kotlin::alloc {
 
 class CustomAllocator {
 public:
-    explicit CustomAllocator(Heap& heap, gc::GCSchedulerThreadData& gcScheduler) noexcept;
+    explicit CustomAllocator(Heap& heap, mm::ThreadData& threadData) noexcept;
 
     ObjHeader* CreateObject(const TypeInfo* typeInfo) noexcept;
 
@@ -34,7 +37,6 @@ private:
     uint8_t* AllocateInSmallPage(uint32_t cellCount) noexcept;
 
     Heap& heap_;
-    gc::GCSchedulerThreadData& gcScheduler_;
     MediumPage* mediumPage_;
     SmallPage* smallPages_[SMALL_PAGE_MAX_BLOCK_SIZE + 1];
 };

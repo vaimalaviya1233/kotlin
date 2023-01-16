@@ -124,6 +124,27 @@ fun CompilerConfiguration.setupFromArguments(arguments: K2NativeCompilerArgument
         putIfNotNull(BinaryOptions.memoryModel, memoryModelFromArgument)
     }
 
+    val gcFromArgument = when (arguments.gc) {
+        null -> null
+        "noop" -> GC.NOOP
+        "stms" -> GC.STOP_THE_WORLD_MARK_AND_SWEEP
+        "cms" -> GC.PARALLEL_MARK_CONCURRENT_SWEEP
+        else -> {
+            // Dirty, but this exists only as part of -Xgc deprecation cycle.
+            val hint = EnumValueParser<GC>(enumValues<GC>().toList()) { it.shorthand }.validValuesHint!!
+            report(ERROR, "Unsupported GC ${arguments.gc}. Please use -Xbinary=gc=<value> where value is $hint")
+            null
+        }
+    }?.also { gc ->
+        val value = gc.shorthand ?: gc.name
+        report(WARNING, "-Xgc= is deprecated. Please use -Xbinary=gc=$value")
+    }
+
+    // TODO: revise priority and/or report conflicting values.
+    if (get(BinaryOptions.gc) == null) {
+        putIfNotNull(BinaryOptions.gc, gcFromArgument)
+    }
+
     when {
         arguments.generateWorkerTestRunner -> put(GENERATE_TEST_RUNNER, TestRunnerKind.WORKER)
         arguments.generateTestRunner -> put(GENERATE_TEST_RUNNER, TestRunnerKind.MAIN_THREAD)
@@ -180,16 +201,6 @@ fun CompilerConfiguration.setupFromArguments(arguments: K2NativeCompilerArgument
         else -> {
             report(ERROR, "Unsupported destroy runtime mode ${arguments.destroyRuntimeMode}")
             DestroyRuntimeMode.ON_SHUTDOWN
-        }
-    })
-    putIfNotNull(GARBAGE_COLLECTOR, when (arguments.gc) {
-        null -> null
-        "noop" -> GC.NOOP
-        "stms" -> GC.SAME_THREAD_MARK_AND_SWEEP
-        "cms" -> GC.CONCURRENT_MARK_AND_SWEEP
-        else -> {
-            report(ERROR, "Unsupported GC ${arguments.gc}")
-            null
         }
     })
     putIfNotNull(PROPERTY_LAZY_INITIALIZATION, when (arguments.propertyLazyInitialization) {
@@ -261,7 +272,7 @@ internal fun CompilerConfiguration.setupCommonOptionsForCaches(konanConfig: Kona
     put(PROPERTY_LAZY_INITIALIZATION, konanConfig.propertyLazyInitialization)
     put(BinaryOptions.stripDebugInfoFromNativeLibs, !konanConfig.useDebugInfoInNativeLibs)
     put(ALLOCATION_MODE, konanConfig.allocationMode)
-    put(GARBAGE_COLLECTOR, konanConfig.gc)
+    put(BinaryOptions.gc, konanConfig.gc)
     put(BinaryOptions.gcSchedulerType, konanConfig.gcSchedulerType)
     put(BinaryOptions.freezing, konanConfig.freezing)
     put(BinaryOptions.runtimeAssertionsMode, konanConfig.runtimeAssertsMode)

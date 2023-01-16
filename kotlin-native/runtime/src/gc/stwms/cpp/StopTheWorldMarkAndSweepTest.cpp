@@ -3,7 +3,7 @@
  * that can be found in the LICENSE file.
  */
 
-#include "SameThreadMarkAndSweep.hpp"
+#include "StopTheWorldMarkAndSweep.hpp"
 
 #include <condition_variable>
 #include <future>
@@ -27,7 +27,7 @@
 
 using namespace kotlin;
 
-// These tests can only work if `GC` is `SameThreadMarkAndSweep`.
+// These tests can only work if `GC` is `StopTheWorldMarkAndSweep`.
 
 namespace {
 
@@ -201,7 +201,7 @@ std_support::vector<ObjHeader*> Alive(mm::ThreadData& threadData) {
 }
 
 bool IsMarked(ObjHeader* objHeader) {
-    auto nodeRef = mm::ObjectFactory<gc::SameThreadMarkAndSweep>::NodeRef::From(objHeader);
+    auto nodeRef = mm::ObjectFactory<gc::StopTheWorldMarkAndSweep>::NodeRef::From(objHeader);
     return nodeRef.ObjectData().marked();
 }
 

@@ -7,6 +7,8 @@
 
 #include <utility>
 
+#include "GlobalData.hpp"
+#include "GCScheduler.hpp"
 #include "ObjectAlloc.hpp"
 
 namespace kotlin {
@@ -22,18 +24,19 @@ public:
     static void Free(void* instance) noexcept { freeInObjectPool(instance); }
 };
 
-template <typename BaseAllocator, typename GCThreadData>
+template <typename BaseAllocator>
 class AllocatorWithGC {
 public:
-    AllocatorWithGC(BaseAllocator base, GCThreadData& gc) noexcept : base_(std::move(base)), gc_(gc) {}
+    explicit AllocatorWithGC(BaseAllocator base) noexcept : base_(std::move(base)) {}
 
     void* Alloc(size_t size) noexcept {
-        gc_.SafePointAllocation(size);
+        auto& scheduler = mm::GlobalData::Instance().gcScheduler();
+        scheduler.onAllocation(size);
         if (void* ptr = base_.Alloc(size)) {
             return ptr;
         }
         // Tell GC that we failed to allocate, and try one more time.
-        gc_.OnOOM(size);
+        scheduler.onOOM(size);
         return base_.Alloc(size);
     }
 
@@ -41,7 +44,6 @@ public:
 
 private:
     BaseAllocator base_;
-    GCThreadData& gc_;
 };
 
 } // namespace gc

@@ -18,6 +18,7 @@
 #define RUNTIME_MUTEX_H
 
 #include <atomic>
+#include <mutex>
 #include <thread>
 
 #include "KAssert.h"
@@ -76,6 +77,39 @@ public:
 
 private:
     std::atomic_flag flag_ = ATOMIC_FLAG_INIT;
+};
+
+template <MutexThreadStateHandling threadStateHandling>
+class Mutex;
+
+template <>
+class Mutex<MutexThreadStateHandling::kIgnore> : private Pinned {
+public:
+    void lock() noexcept {
+        kotlin::NativeOrUnregisteredThreadGuard guard(/* reentrant = */ true);
+        mutex_.lock();
+    }
+
+    void unlock() noexcept {
+        kotlin::NativeOrUnregisteredThreadGuard guard(/* reentrant = */ true);
+        mutex_.unlock();
+    }
+
+private:
+    std::mutex mutex_;
+};
+
+template <>
+class Mutex<MutexThreadStateHandling::kSwitchIfRegistered> : private Pinned {
+public:
+    void lock() noexcept {
+    }
+
+    void unlock() noexcept {
+    }
+
+private:
+    std::mutex mutex_;
 };
 
 } // namespace kotlin

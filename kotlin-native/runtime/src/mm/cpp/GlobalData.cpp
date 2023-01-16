@@ -7,7 +7,7 @@
 
 using namespace kotlin;
 
-mm::GlobalData::GlobalData() = default;
+mm::GlobalData::GlobalData() noexcept : gcScheduler_(gc_) {}
 
 // static
 mm::GlobalData mm::GlobalData::instance_ [[clang::no_destroy]];

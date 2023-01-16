@@ -151,7 +151,10 @@ internal enum class Sanitizer(val compilerFlag: String?) {
  */
 internal enum class GCType(val compilerFlag: String?) {
     UNSPECIFIED(null),
-    NOOP("-Xgc=noop"),
+    NOOP("-Xbinary=gc=noop"),
+    STW("-Xbinary=gc=stw"),
+    PMCS("-Xbinary=gc=pmcs"),
+    // TODO: Remove the latter two.
     STMS("-Xgc=stms"),
     CMS("-Xgc=cms");
 
@@ -160,9 +163,8 @@ internal enum class GCType(val compilerFlag: String?) {
 
 internal enum class GCScheduler(val compilerFlag: String?) {
     UNSPECIFIED(null),
-    DISABLED("-Xbinary=gcSchedulerType=disabled"),
-    WITH_TIMER("-Xbinary=gcSchedulerType=with_timer"),
-    ON_SAFE_POINTS("-Xbinary=gcSchedulerType=on_safe_points"),
+    MANUAL("-Xbinary=gcSchedulerType=manual"),
+    ADAPTIVE("-Xbinary=gcSchedulerType=adaptive"),
     AGGRESSIVE("-Xbinary=gcSchedulerType=aggressive");
 
     override fun toString() = compilerFlag?.let { "($it)" }.orEmpty()

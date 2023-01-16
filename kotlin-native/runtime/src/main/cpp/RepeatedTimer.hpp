@@ -21,15 +21,15 @@ namespace kotlin {
 template <typename Clock = steady_clock>
 class RepeatedTimer : private Pinned {
 public:
-    template <typename Rep, typename Period, typename F>
-    RepeatedTimer(std::string_view name, std::chrono::duration<Rep, Period> interval, F&& f) noexcept :
+    template <typename Rep, typename Period, typename F, typename... Args>
+    RepeatedTimer(std::string_view name, std::chrono::duration<Rep, Period> interval, F&& f, Args&&... args) noexcept :
         interval_(interval),
         next_(Clock::now() + interval_),
-        thread_(ScopedThread::attributes().name(name), &RepeatedTimer::Run<F>, this, std::forward<F>(f)) {}
+        thread_(ScopedThread::attributes().name(name), &RepeatedTimer::Run<F, Args...>, this, std::forward<F>(f), std::forward<Args>(args)...) {}
 
-    template <typename Rep, typename Period, typename F>
-    RepeatedTimer(std::chrono::duration<Rep, Period> interval, F&& f) noexcept :
-        RepeatedTimer("Timer thread", interval, std::forward<F>(f)) {}
+    template <typename Rep, typename Period, typename F, typename... Args>
+    RepeatedTimer(std::chrono::duration<Rep, Period> interval, F&& f, Args&&... args) noexcept :
+        RepeatedTimer("Timer thread", interval, std::forward<F>(f), std::forward<Args>(args)...) {}
 
     ~RepeatedTimer() {
         {
@@ -54,8 +54,8 @@ public:
     }
 
 private:
-    template <typename F>
-    void Run(F&& f) noexcept {
+    template <typename F, typename... Args>
+    void Run(F&& f, Args&&... args) noexcept {
         std::unique_lock lock(mutex_);
         while (run_) {
             scheduledInterrupt_ = false;
@@ -64,7 +64,7 @@ private:
             }
             // The function must be executed in the unlocked environment.
             lock.unlock();
-            std::invoke(std::forward<F>(f));
+            std::invoke(std::forward<F>(f), std::forward<Args>(args)...);
             lock.lock();
             next_ = Clock::now() + interval_;
         }

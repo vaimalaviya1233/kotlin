@@ -29,10 +29,11 @@ public:
     StableRefRegistry& stableRefRegistry() noexcept { return stableRefRegistry_; }
     ExtraObjectDataFactory& extraObjectDataFactory() noexcept { return extraObjectDataFactory_; }
     gc::GC& gc() noexcept { return gc_; }
+    gcScheduler::GCScheduler& gcScheduler() noexcept { return gcScheduler_; }
     AppStateTracking& appStateTracking() noexcept { return appStateTracking_; }
 
 private:
-    GlobalData();
+    GlobalData() noexcept;
     ~GlobalData() = delete;
 
     // This `GlobalData` is never destroyed.
@@ -44,6 +45,7 @@ private:
     StableRefRegistry stableRefRegistry_;
     ExtraObjectDataFactory extraObjectDataFactory_;
     gc::GC gc_;
+    gcScheduler::GCScheduler gcScheduler_;
 };
 
 } // namespace mm

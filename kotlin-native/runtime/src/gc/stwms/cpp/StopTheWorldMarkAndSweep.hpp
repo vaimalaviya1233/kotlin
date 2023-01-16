@@ -3,13 +3,13 @@
  * that can be found in the LICENSE file.
  */
 
-#ifndef RUNTIME_GC_STMS_SAME_THREAD_MARK_AND_SWEEP_H
-#define RUNTIME_GC_STMS_SAME_THREAD_MARK_AND_SWEEP_H
+#pragma once
 
 #include <cstddef>
 
 #include "Allocator.hpp"
-#include "GCScheduler.hpp"
+#include "FinalizerProcessor.hpp"
+#include "GCStatistics.hpp"
 #include "IntrusiveList.hpp"
 #include "ObjectFactory.hpp"
 #include "Types.h"
@@ -23,15 +23,9 @@ class ThreadData;
 
 namespace gc {
 
-// Stop-the-world Mark-and-Sweep that runs on mutator threads. Can support targets that do not have threads.
-class SameThreadMarkAndSweep : private Pinned {
+// Stop-the-world Mark-and-Sweep.
+class StopTheWorldMarkAndSweep : private Pinned {
 public:
-    enum class SafepointFlag {
-        kNone,
-        kNeedsSuspend,
-        kNeedsGC,
-    };
-
     class ObjectData {
     public:
         bool tryMark() noexcept {
@@ -70,43 +64,28 @@ public:
 
     class ThreadData : private Pinned {
     public:
-        using ObjectData = SameThreadMarkAndSweep::ObjectData;
-        using Allocator = AllocatorWithGC<Allocator, ThreadData>;
+        using ObjectData = StopTheWorldMarkAndSweep::ObjectData;
+        using Allocator = AllocatorWithGC<Allocator>;
 
-        ThreadData(SameThreadMarkAndSweep& gc, mm::ThreadData& threadData, GCSchedulerThreadData& gcScheduler) noexcept :
-            gc_(gc), gcScheduler_(gcScheduler) {}
+        ThreadData(StopTheWorldMarkAndSweep& gc, mm::ThreadData& threadData) noexcept {}
         ~ThreadData() = default;
-
-        void SafePointSlowPath(SafepointFlag flag) noexcept;
-        void SafePointAllocation(size_t size) noexcept;
-
-        void Schedule() noexcept { ScheduleAndWaitFullGC(); }
-        void ScheduleAndWaitFullGC() noexcept;
-        void ScheduleAndWaitFullGCWithFinalizers() noexcept { ScheduleAndWaitFullGC(); }
-
-        void OnOOM(size_t size) noexcept;
-
-        Allocator CreateAllocator() noexcept { return Allocator(gc::Allocator(), *this); }
-
-    private:
-
-        SameThreadMarkAndSweep& gc_;
-        GCSchedulerThreadData& gcScheduler_;
     };
 
     using Allocator = ThreadData::Allocator;
 
-    SameThreadMarkAndSweep(mm::ObjectFactory<SameThreadMarkAndSweep>& objectFactory, GCScheduler& gcScheduler) noexcept;
-    ~SameThreadMarkAndSweep() = default;
+    explicit StopTheWorldMarkAndSweep(mm::ObjectFactory<StopTheWorldMarkAndSweep>& objectFactory) noexcept;
+    ~StopTheWorldMarkAndSweep() = default;
+
+    void StartFinalizerThreadIfNeeded() noexcept;
+    void StopFinalizerThreadIfRunning() noexcept;
+    bool FinalizersThreadIsRunning() noexcept;
+
+    void RunGC(GCHandle& handle) noexcept;
 
 private:
-    // Returns `true` if GC has happened, and `false` if not (because someone else has suspended the threads).
-    bool PerformFullGC() noexcept;
+    mm::ObjectFactory<StopTheWorldMarkAndSweep>& objectFactory_;
 
-    uint64_t epoch_ = 0;
-
-    mm::ObjectFactory<SameThreadMarkAndSweep>& objectFactory_;
-    GCScheduler& gcScheduler_;
+    FinalizerProcessor<mm::ObjectFactory<StopTheWorldMarkAndSweep>::FinalizerQueue> finalizerProcessor_;
 
     MarkQueue markQueue_;
 };
@@ -114,25 +93,25 @@ private:
 namespace internal {
 
 struct MarkTraits {
-    using MarkQueue = gc::SameThreadMarkAndSweep::MarkQueue;
+    using MarkQueue = gc::StopTheWorldMarkAndSweep::MarkQueue;
 
     static void clear(MarkQueue& queue) noexcept { queue.clear(); }
 
     static ObjHeader* tryDequeue(MarkQueue& queue) noexcept {
         if (auto* top = queue.try_pop_front()) {
-            auto node = mm::ObjectFactory<gc::SameThreadMarkAndSweep>::NodeRef::From(*top);
+            auto node = mm::ObjectFactory<gc::StopTheWorldMarkAndSweep>::NodeRef::From(*top);
             return node->GetObjHeader();
         }
         return nullptr;
     }
 
     static bool tryEnqueue(MarkQueue& queue, ObjHeader* object) noexcept {
-        auto& objectData = mm::ObjectFactory<gc::SameThreadMarkAndSweep>::NodeRef::From(object).ObjectData();
+        auto& objectData = mm::ObjectFactory<gc::StopTheWorldMarkAndSweep>::NodeRef::From(object).ObjectData();
         return queue.try_push_front(objectData);
     }
 
     static bool tryMark(ObjHeader* object) noexcept {
-        auto& objectData = mm::ObjectFactory<gc::SameThreadMarkAndSweep>::NodeRef::From(object).ObjectData();
+        auto& objectData = mm::ObjectFactory<gc::StopTheWorldMarkAndSweep>::NodeRef::From(object).ObjectData();
         return objectData.tryMark();
     }
 
@@ -143,11 +122,7 @@ struct MarkTraits {
     }
 };
 
-SameThreadMarkAndSweep::SafepointFlag loadSafepointFlag() noexcept;
-
 } // namespace internal
 
 } // namespace gc
 } // namespace kotlin
-
-#endif // RUNTIME_GC_STMS_SAME_THREAD_MARK_AND_SWEEP_H

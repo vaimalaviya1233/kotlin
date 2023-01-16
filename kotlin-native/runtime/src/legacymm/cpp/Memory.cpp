@@ -3556,6 +3556,13 @@ KLong Kotlin_native_internal_GC_getTargetHeapBytes(KRef) {
 
 void Kotlin_native_internal_GC_setTargetHeapBytes(KRef, KLong) {}
 
+
+KDouble Kotlin_native_internal_GC_getWeakTargetHeapCoefficient(KRef) {
+    return 1.0;
+}
+
+void Kotlin_native_internal_GC_setWeakTargetHeapCoefficient(KRef, KDouble) {}
+
 KDouble Kotlin_native_internal_GC_getTargetHeapUtilization(KRef) {
     return 1.0;
 }

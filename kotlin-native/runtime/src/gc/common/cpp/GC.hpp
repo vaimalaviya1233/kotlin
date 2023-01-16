@@ -5,7 +5,6 @@
 
 #pragma once
 
-#include "GCScheduler.hpp"
 #include "Memory.h"
 #include "Types.h"
 #include "Utils.hpp"
@@ -18,6 +17,8 @@ class ThreadData;
 }
 
 namespace gc {
+
+class GCHandle;
 
 class GC : private Pinned {
 public:
@@ -32,20 +33,12 @@ public:
 
         Impl& impl() noexcept { return *impl_; }
 
-        void SafePointFunctionPrologue() noexcept;
-        void SafePointLoopBody() noexcept;
-
-        void Schedule() noexcept;
-        void ScheduleAndWaitFullGC() noexcept;
-        void ScheduleAndWaitFullGCWithFinalizers() noexcept;
-
         void Publish() noexcept;
         void ClearForTests() noexcept;
 
         ObjHeader* CreateObject(const TypeInfo* typeInfo) noexcept;
         ArrayHeader* CreateArray(const TypeInfo* typeInfo, uint32_t elements) noexcept;
 
-        void OnStoppedForGC() noexcept;
         void OnSuspendForGC() noexcept;
 
     private:
@@ -59,12 +52,15 @@ public:
 
     static size_t GetAllocatedHeapSize(ObjHeader* object) noexcept;
 
+    void OnSafePoint() noexcept;
+
+    // Run GC on the current thread.
+    void RunGC(GCHandle& handle) noexcept;
+
     size_t GetHeapObjectsCountUnsafe() const noexcept;
     size_t GetTotalHeapObjectsSizeUnsafe() const noexcept;
     size_t GetExtraObjectsCountUnsafe() const noexcept;
     size_t GetTotalExtraObjectsSizeUnsafe() const noexcept;
-
-    gc::GCSchedulerConfig& gcSchedulerConfig() noexcept;
 
     void ClearForTests() noexcept;
 

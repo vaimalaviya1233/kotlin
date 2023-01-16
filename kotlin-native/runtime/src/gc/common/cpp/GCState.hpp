@@ -10,8 +10,23 @@
 #include <atomic>
 #include <optional>
 
+#include "KAssert.h"
+#include "Utils.hpp"
+
+namespace kotlin::gc {
+
 class GCStateHolder {
 public:
+    class Delegate {
+    public:
+        virtual ~Delegate() = default;
+        virtual void onStartedEpoch(int64_t epoch) noexcept = 0;
+        virtual void onFinishedEpoch(int64_t epoch) noexcept = 0;
+        virtual void onFinalizedEpoch(int64_t epoch) noexcept = 0;
+    };
+
+    explicit GCStateHolder(Delegate& delegate) noexcept : delegate_(delegate) {}
+
     int64_t schedule() {
         std::unique_lock lock(mutex_);
         if (*scheduledEpoch <= *startedEpoch) {
@@ -31,14 +46,17 @@ public:
 
     void start(int64_t epoch) {
         startedEpoch.set(epoch);
+        delegate_.onStartedEpoch(epoch);
     }
 
     void finish(int64_t epoch) {
         finishedEpoch.set(epoch);
+        delegate_.onFinishedEpoch(epoch);
     }
 
     void finalized(int64_t epoch) {
         finalizedEpoch.set(epoch);
+        delegate_.onFinalizedEpoch(epoch);
     }
 
     void waitEpochFinished(int64_t epoch) {
@@ -90,6 +108,8 @@ private:
         std::condition_variable cond_;
     };
 
+    Delegate& delegate_;
+
     std::mutex mutex_;
     // Use a separate conditional variable for each counter to mitigate a winpthreads bug (see KT-50948 for details).
     ValueWithCondVar<int64_t> startedEpoch{0, mutex_};
@@ -98,3 +118,5 @@ private:
     ValueWithCondVar<int64_t> finalizedEpoch{0, mutex_};
     bool shutdownFlag_ = false;
 };
+
+}

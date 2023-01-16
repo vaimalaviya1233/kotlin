@@ -16,26 +16,6 @@ gc::GC::ThreadData::ThreadData(GC& gc, mm::ThreadData& threadData) noexcept : im
 
 gc::GC::ThreadData::~ThreadData() = default;
 
-ALWAYS_INLINE void gc::GC::ThreadData::SafePointFunctionPrologue() noexcept {
-    impl_->gc().SafePointFunctionPrologue();
-}
-
-ALWAYS_INLINE void gc::GC::ThreadData::SafePointLoopBody() noexcept {
-    impl_->gc().SafePointLoopBody();
-}
-
-void gc::GC::ThreadData::Schedule() noexcept {
-    impl_->gc().Schedule();
-}
-
-void gc::GC::ThreadData::ScheduleAndWaitFullGC() noexcept {
-    impl_->gc().ScheduleAndWaitFullGC();
-}
-
-void gc::GC::ThreadData::ScheduleAndWaitFullGCWithFinalizers() noexcept {
-    impl_->gc().ScheduleAndWaitFullGCWithFinalizers();
-}
-
 void gc::GC::ThreadData::Publish() noexcept {
     impl_->objectFactoryThreadQueue().Publish();
 }
@@ -52,10 +32,6 @@ ALWAYS_INLINE ArrayHeader* gc::GC::ThreadData::CreateArray(const TypeInfo* typeI
     return impl_->objectFactoryThreadQueue().CreateArray(typeInfo, elements);
 }
 
-void gc::GC::ThreadData::OnStoppedForGC() noexcept {
-    impl_->gcScheduler().OnStoppedForGC();
-}
-
 void gc::GC::ThreadData::OnSuspendForGC() noexcept { }
 
 gc::GC::GC() noexcept : impl_(std_support::make_unique<Impl>()) {}
@@ -65,6 +41,12 @@ gc::GC::~GC() = default;
 // static
 size_t gc::GC::GetAllocatedHeapSize(ObjHeader* object) noexcept {
     return mm::ObjectFactory<GCImpl>::GetAllocatedHeapSize(object);
+}
+
+void gc::GC::OnSafePoint() noexcept {}
+
+void gc::GC::RunGC(GCHandle& handle) noexcept {
+    impl_->gc().RunGC(handle);
 }
 
 size_t gc::GC::GetHeapObjectsCountUnsafe() const noexcept {
@@ -78,10 +60,6 @@ size_t gc::GC::GetExtraObjectsCountUnsafe() const noexcept {
 }
 size_t gc::GC::GetTotalExtraObjectsSizeUnsafe() const noexcept {
     return mm::GlobalData::Instance().extraObjectDataFactory().GetTotalObjectsSizeUnsafe();
-}
-
-gc::GCSchedulerConfig& gc::GC::gcSchedulerConfig() noexcept {
-    return impl_->gcScheduler().config();
 }
 
 void gc::GC::ClearForTests() noexcept {

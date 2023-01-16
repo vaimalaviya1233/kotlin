@@ -102,19 +102,9 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
         }
     }
     val destroyRuntimeMode: DestroyRuntimeMode get() = configuration.get(KonanConfigKeys.DESTROY_RUNTIME_MODE)!!
-    private val defaultGC get() = if (target.supportsThreads()) GC.CONCURRENT_MARK_AND_SWEEP else GC.SAME_THREAD_MARK_AND_SWEEP
+    private val defaultGC = GC.PARALLEL_MARK_CONCURRENT_SWEEP
     val gc: GC by lazy {
-        val configGc = configuration.get(KonanConfigKeys.GARBAGE_COLLECTOR)
-        val (gcFallbackReason, realGc) = when {
-            configGc == GC.CONCURRENT_MARK_AND_SWEEP && !target.supportsThreads() ->
-                "Concurrent mark and sweep gc is not supported for this target. Fallback to Same thread mark and sweep is done" to GC.SAME_THREAD_MARK_AND_SWEEP
-            configGc == null -> null to defaultGC
-            else -> null to configGc
-        }
-        if (gcFallbackReason != null) {
-            configuration.report(CompilerMessageSeverity.STRONG_WARNING, gcFallbackReason)
-        }
-        realGc
+        configuration.get(BinaryOptions.gc) ?: defaultGC
     }
     val runtimeAssertsMode: RuntimeAssertsMode get() = configuration.get(BinaryOptions.runtimeAssertionsMode) ?: RuntimeAssertsMode.IGNORE
     val workerExceptionHandling: WorkerExceptionHandling get() = configuration.get(KonanConfigKeys.WORKER_EXCEPTION_HANDLING) ?: when (memoryModel) {
@@ -156,8 +146,8 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
                 ?: SourceInfoType.NOOP
 
     val defaultGCSchedulerType get() = when {
-        !target.supportsThreads() -> GCSchedulerType.ON_SAFE_POINTS
-        else -> GCSchedulerType.WITH_TIMER
+        gc == GC.NOOP -> GCSchedulerType.MANUAL
+        else -> GCSchedulerType.ADAPTIVE
     }
 
     val gcSchedulerType: GCSchedulerType by lazy {
@@ -269,7 +259,7 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
                 }
             }
             AllocationMode.CUSTOM -> {
-                if (gc != GC.CONCURRENT_MARK_AND_SWEEP) {
+                if (gc != GC.PARALLEL_MARK_CONCURRENT_SWEEP) {
                     configuration.report(CompilerMessageSeverity.STRONG_WARNING,
                             "Custom allocator is currently only integrated with concurrent mark and sweep gc. Performance will not be ideal with selected gc.")
                 }
@@ -291,20 +281,32 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
             }
             MemoryModel.EXPERIMENTAL -> {
                 add("common_gc.bc")
+                add("common_gc_scheduler.bc")
                 add("experimental_memory_manager.bc")
                 when (gc) {
-                    GC.SAME_THREAD_MARK_AND_SWEEP -> {
-                        add("same_thread_ms_gc.bc")
+                    GC.STOP_THE_WORLD_MARK_AND_SWEEP -> {
+                        add("stwms_gc.bc")
                     }
                     GC.NOOP -> {
                         add("noop_gc.bc")
                     }
-                    GC.CONCURRENT_MARK_AND_SWEEP -> {
+                    GC.PARALLEL_MARK_CONCURRENT_SWEEP -> {
                         if (allocationMode == AllocationMode.CUSTOM) {
                             add("concurrent_ms_gc_custom.bc")
                         } else {
                             add("concurrent_ms_gc.bc")
                         }
+                    }
+                }
+                when (gcSchedulerType) {
+                    GCSchedulerType.MANUAL -> {
+                        add("manual_gc_scheduler.bc")
+                    }
+                    GCSchedulerType.ADAPTIVE -> {
+                        add("adaptive_gc_scheduler.bc")
+                    }
+                    GCSchedulerType.AGGRESSIVE -> {
+                        add("aggressive_gc_scheduler.bc")
                     }
                 }
             }

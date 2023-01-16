@@ -13,41 +13,9 @@
 
 using namespace kotlin;
 
-namespace {
-
-ALWAYS_INLINE void SafePointRegular(gc::GC::ThreadData& threadData, size_t weight) noexcept {
-    threadData.impl().gcScheduler().OnSafePointRegular(weight);
-    auto flag = gc::internal::loadSafepointFlag();
-    if (flag != gc::SameThreadMarkAndSweep::SafepointFlag::kNone) {
-        threadData.impl().gc().SafePointSlowPath(flag);
-    }
-}
-
-} // namespace
-
 gc::GC::ThreadData::ThreadData(GC& gc, mm::ThreadData& threadData) noexcept : impl_(std_support::make_unique<Impl>(gc, threadData)) {}
 
 gc::GC::ThreadData::~ThreadData() = default;
-
-ALWAYS_INLINE void gc::GC::ThreadData::SafePointFunctionPrologue() noexcept {
-    SafePointRegular(*this, GCSchedulerThreadData::kFunctionPrologueWeight);
-}
-
-ALWAYS_INLINE void gc::GC::ThreadData::SafePointLoopBody() noexcept {
-    SafePointRegular(*this, GCSchedulerThreadData::kLoopBodyWeight);
-}
-
-void gc::GC::ThreadData::Schedule() noexcept {
-    impl_->gc().Schedule();
-}
-
-void gc::GC::ThreadData::ScheduleAndWaitFullGC() noexcept {
-    impl_->gc().ScheduleAndWaitFullGC();
-}
-
-void gc::GC::ThreadData::ScheduleAndWaitFullGCWithFinalizers() noexcept {
-    impl_->gc().ScheduleAndWaitFullGCWithFinalizers();
-}
 
 void gc::GC::ThreadData::Publish() noexcept {
     impl_->objectFactoryThreadQueue().Publish();
@@ -65,10 +33,6 @@ ALWAYS_INLINE ArrayHeader* gc::GC::ThreadData::CreateArray(const TypeInfo* typeI
     return impl_->objectFactoryThreadQueue().CreateArray(typeInfo, elements);
 }
 
-void gc::GC::ThreadData::OnStoppedForGC() noexcept {
-    impl_->gcScheduler().OnStoppedForGC();
-}
-
 void gc::GC::ThreadData::OnSuspendForGC() noexcept { }
 
 gc::GC::GC() noexcept : impl_(std_support::make_unique<Impl>()) {}
@@ -78,6 +42,14 @@ gc::GC::~GC() = default;
 // static
 size_t gc::GC::GetAllocatedHeapSize(ObjHeader* object) noexcept {
     return mm::ObjectFactory<GCImpl>::GetAllocatedHeapSize(object);
+}
+
+void gc::GC::OnSafePoint() noexcept {
+    mm::SuspendIfRequested();
+}
+
+void gc::GC::RunGC(GCHandle& handle) noexcept {
+    impl_->gc().RunGC(handle);
 }
 
 size_t gc::GC::GetHeapObjectsCountUnsafe() const noexcept {
@@ -93,21 +65,22 @@ size_t gc::GC::GetTotalExtraObjectsSizeUnsafe() const noexcept {
     return mm::GlobalData::Instance().extraObjectDataFactory().GetTotalObjectsSizeUnsafe();
 }
 
-gc::GCSchedulerConfig& gc::GC::gcSchedulerConfig() noexcept {
-    return impl_->gcScheduler().config();
-}
-
 void gc::GC::ClearForTests() noexcept {
+    impl_->gc().StopFinalizerThreadIfRunning();
     impl_->objectFactory().ClearForTests();
     GCHandle::ClearForTests();
 }
 
-void gc::GC::StartFinalizerThreadIfNeeded() noexcept {}
+void gc::GC::StartFinalizerThreadIfNeeded() noexcept {
+    impl_->gc().StartFinalizerThreadIfNeeded();
+}
 
-void gc::GC::StopFinalizerThreadIfRunning() noexcept {}
+void gc::GC::StopFinalizerThreadIfRunning() noexcept {
+    impl_->gc().StopFinalizerThreadIfRunning();
+}
 
 bool gc::GC::FinalizersThreadIsRunning() noexcept {
-    return false;
+    return impl_->gc().FinalizersThreadIsRunning();
 }
 
 // static
