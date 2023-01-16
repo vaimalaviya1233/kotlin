@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.util.Logger
 import org.jetbrains.kotlin.util.WithLogger
 import org.jetbrains.kotlin.util.removeSuffixIfPresent
 import org.jetbrains.kotlin.util.suffixIfNot
+import java.lang.management.ManagementFactory
 import java.nio.file.InvalidPathException
 import java.nio.file.Paths
 
@@ -257,6 +258,8 @@ abstract class KotlinLibraryProperResolverWithAttributes<L : KotlinLibrary>(
                         "The library produced by $candidateCompilerVersion compiler"
             )
         }
+        Exception("--- bobko").printStackTrace()
+        println("--- bobko " + ManagementFactory.getRuntimeMXBean().getName())
         if (candidate.versions.metadataVersion?.isCompatible() == false) {
             warning("KLIB metadata", KlibMetadataVersion.INSTANCE.toString(), candidate.versions.metadataVersion.toString())
             return false
