@@ -5,6 +5,8 @@
 
 package org.jetbrains.kotlin.metadata.deserialization
 
+// This file can't have imports from this module because it's attached into `buildSrc`. See `buildSrc/build.gradle.kts`
+
 /**
  * Subclasses of this class are used to identify different versions of the binary output of the compiler and their compatibility guarantees.
  * - Major version should be increased only when the new binary format is neither forward- nor backward compatible.
