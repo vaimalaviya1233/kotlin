@@ -211,6 +211,13 @@ object GC {
             setTargetHeapBytes(value)
         }
 
+    var weakTargetHeapCoefficient: Double
+        get() = getWeakTargetHeapCoefficient()
+        set(value) {
+            require(value > 0 && value <= 1) { "weakTargetHeapCoefficient must be in (0, 1] interval: $value" }
+            setWeakTargetHeapCoefficient(value)
+        }
+
     /**
      * What fraction of the Kotlin heap should be populated.
      * Only used if [autotune] is true. See [targetHeapBytes] for more details.

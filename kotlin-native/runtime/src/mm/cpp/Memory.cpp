@@ -376,6 +376,7 @@ GC_SCHEDULER_CONFIG(KLong, TargetHeapBytes, targetHeapBytes)
 GC_SCHEDULER_CONFIG(KLong, MaxHeapBytes, maxHeapBytes)
 GC_SCHEDULER_CONFIG(KLong, MinHeapBytes, minHeapBytes)
 GC_SCHEDULER_CONFIG(KDouble, TargetHeapUtilization, targetHeapUtilization)
+GC_SCHEDULER_CONFIG(KDouble, WeakTargetHeapCoefficient, weakTargetHeapCoefficient)
 
 extern "C" OBJ_GETTER(Kotlin_native_internal_GC_detectCycles, ObjHeader*) {
     // TODO: Remove when legacy MM is gone.

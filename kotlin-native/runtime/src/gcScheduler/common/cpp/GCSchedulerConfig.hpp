@@ -27,6 +27,8 @@ struct GCSchedulerConfig {
     int64_t minHeapBytes = 1024 * 1024;
     // The maximum value of targetHeapBytes for autoTune = true
     int64_t maxHeapBytes = std::numeric_limits<int64_t>::max();
+    double weakTargetHeapCoefficient = 0.9;
+    bool assistsEnabled = true;
 
     std::chrono::microseconds regularGcInterval() const { return std::chrono::microseconds(regularGcIntervalMicroseconds); }
 
@@ -38,7 +40,9 @@ struct GCSchedulerConfig {
             this->targetHeapBytes == rhs.targetHeapBytes &&
             this->targetHeapUtilization == rhs.targetHeapUtilization &&
             this->minHeapBytes == rhs.minHeapBytes &&
-            this->maxHeapBytes == rhs.maxHeapBytes;
+            this->maxHeapBytes == rhs.maxHeapBytes &&
+            this->weakTargetHeapCoefficient == rhs.weakTargetHeapCoefficient &&
+            this->assistsEnabled == rhs.assistsEnabled;
     }
 
     bool operator!=(const GCSchedulerConfig& rhs) const noexcept {
