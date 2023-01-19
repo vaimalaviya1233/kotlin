@@ -16,14 +16,31 @@ namespace kotlin::gcScheduler::internal {
 
 class HeapGrowthController {
 public:
-    explicit HeapGrowthController(GCSchedulerConfig config) noexcept : config_(config), allocationBytesLeft_(config_.targetHeapBytes) {}
+    enum class AllocationBoundary {
+        kNone,
+        kWeak,
+        kStrong,
+    };
+
+    explicit HeapGrowthController(GCSchedulerConfig config) noexcept : config_(config), allocationBytesLeft_(config_.targetHeapBytes), strongAllocationBoundaryBytes_(config.weakTargetHeapBytes() - config.targetHeapBytes) {}
 
     // Called by the mutators.
-    // Returns true if needs GC.
-    bool onAllocated(size_t allocatedBytes) noexcept {
-        RuntimeAssert(allocatedBytes < static_cast<size_t>(std::numeric_limits<ssize_t>::max()) + 1, "allocatedBytes is too big %zu", allocatedBytes);
-        auto remaining = allocationBytesLeft_.fetch_sub(static_cast<ssize_t>(allocatedBytes));
-        return remaining < 0;
+    int64_t onAllocated(uint64_t allocatedBytes) noexcept {
+        // Expecting that allocatedBytes is way less than max uint64_t.
+        // True for 32 bit and current 64 bit platforms.
+        return allocationBytesLeft_.fetch_sub(allocatedBytes);
+    }
+
+    AllocationBoundary computeBoundary(int64_t remaining) const noexcept {
+        if (remaining >= 0) {
+            return AllocationBoundary::kNone;
+        }
+
+        if (remaining >= strongAllocationBoundaryBytes_) {
+            return AllocationBoundary::kWeak;
+        }
+
+        return AllocationBoundary::kStrong;
     }
 
     // Called by the GC thread.
@@ -39,6 +56,8 @@ public:
             targetHeapBytes = std::min(std::max(targetHeapBytes, minHeapBytes), maxHeapBytes);
             config_.targetHeapBytes = static_cast<int64_t>(targetHeapBytes);
         }
+        // TODO: Is this desynchronization bad?
+        strongAllocationBoundaryBytes_ = config_.weakTargetHeapBytes() - config_.targetHeapBytes;
         allocationBytesLeft_ += config_.targetHeapBytes;
     }
 
@@ -53,8 +72,10 @@ public:
 
 private:
     GCSchedulerConfig config_;
+
     // Updated by both the mutators and the GC thread.
-    std::atomic<ssize_t> allocationBytesLeft_ = 0;
+    std::atomic<int64_t> allocationBytesLeft_ = 0;
+    std::atomic<int64_t> strongAllocationBoundaryBytes_;
 };
 
 }

@@ -45,8 +45,8 @@ public:
     void scheduleAndWaitFullGCWithFinalizers() noexcept;
 
     // Called by different mutator threads via allocator.
-    void onAllocation(size_t allocatedBytes) noexcept;
-    void onOOM(size_t size) noexcept;
+    void onAllocation(uint64_t allocatedBytes) noexcept;
+    void onOOM(uint64_t size) noexcept;
 
     // Called by different mutator threads.
     void onSafePoint() noexcept;

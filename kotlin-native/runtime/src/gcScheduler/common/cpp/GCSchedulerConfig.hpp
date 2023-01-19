@@ -32,6 +32,10 @@ struct GCSchedulerConfig {
 
     std::chrono::microseconds regularGcInterval() const { return std::chrono::microseconds(regularGcIntervalMicroseconds); }
 
+    int64_t weakTargetHeapBytes() const {
+        return static_cast<int64_t>(static_cast<double>(targetHeapBytes) * weakTargetHeapCoefficient);
+    }
+
     bool operator==(const GCSchedulerConfig& rhs) const noexcept {
         // TODO: Consider using memcpy. But careful around padding bytes.
         return

@@ -33,11 +33,10 @@ public:
         }
 
     void onAllocation(size_t allocatedBytes) noexcept  {
-        if (heapGrowthController_.onAllocated(allocatedBytes)) {
-            ThreadStateGuard guard(ThreadState::kNative);
-            RuntimeLogDebug({kTagGC}, "Scheduling GC by thread %d", konan::currentThreadId());
-            gcThread_.schedule();
-        }
+        auto remaining = heapGrowthController_.onAllocated(allocatedBytes);
+        if (remaining >= 0)
+            return;
+        onAllocationSlowPath(remaining);
     }
 
     void schedule() noexcept  {
@@ -57,8 +56,8 @@ public:
         gcThread_.waitFinalized(scheduled_epoch);
     }
 
-    void onOOM(size_t size) noexcept  {
-        RuntimeLogDebug({kTagGC}, "Attempt to GC on OOM at size=%zu", size);
+    void onOOM(uint64_t size) noexcept  {
+        RuntimeLogDebug({kTagGC}, "Attempt to GC on OOM at size=%" PRIu64, size);
         scheduleAndWaitFullGC();
     }
 
@@ -96,6 +95,19 @@ private:
         if (needsGC) {
             RuntimeLogDebug({kTagGC}, "Scheduling GC by timer");
             gcThread_.schedule();
+        }
+    }
+
+    void onAllocationSlowPath(int64_t remaining) noexcept {
+        switch (heapGrowthController_.computeBoundary(remaining)) {
+            case internal::HeapGrowthController::AllocationBoundary::kNone:
+                RuntimeAssert(false, "Handled by the caller");
+                return;
+            case internal::HeapGrowthController::AllocationBoundary::kWeak:
+            case internal::HeapGrowthController::AllocationBoundary::kStrong:
+                RuntimeLogDebug({kTagGC}, "Scheduling GC by thread %d", konan::currentThreadId());
+                schedule();
+                return;
         }
     }
 

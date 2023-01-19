@@ -27,6 +27,6 @@ void gcScheduler::GCScheduler::scheduleAndWaitFullGCWithFinalizers() noexcept {
     impl_->scheduleAndWaitFullGCWithFinalizers();
 }
 
-void gcScheduler::GCScheduler::onAllocation(size_t allocatedBytes) noexcept {}
-void gcScheduler::GCScheduler::onOOM(size_t size) noexcept {}
+void gcScheduler::GCScheduler::onAllocation(uint64_t allocatedBytes) noexcept {}
+void gcScheduler::GCScheduler::onOOM(uint64_t size) noexcept {}
 void gcScheduler::GCScheduler::onSafePoint() noexcept {}

@@ -25,11 +25,11 @@ void gcScheduler::GCScheduler::scheduleAndWaitFullGCWithFinalizers() noexcept {
     impl_->impl().scheduleAndWaitFullGCWithFinalizers();
 }
 
-void gcScheduler::GCScheduler::onAllocation(size_t allocatedBytes) noexcept {
+void gcScheduler::GCScheduler::onAllocation(uint64_t allocatedBytes) noexcept {
     impl_->impl().onAllocation(allocatedBytes);
 }
 
-void gcScheduler::GCScheduler::onOOM(size_t size) noexcept {
+void gcScheduler::GCScheduler::onOOM(uint64_t size) noexcept {
     impl_->impl().onOOM(size);
 }
 

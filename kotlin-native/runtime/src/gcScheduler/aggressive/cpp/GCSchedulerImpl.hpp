@@ -20,9 +20,10 @@ public:
     }
 
     // Called by mutator threads.
-    void onAllocation(size_t allocatedBytes) noexcept {
+    void onAllocation(uint64_t allocatedBytes) noexcept {
         bool needsGC = false;
-        if (heapGrowthController_.onAllocated(allocatedBytes)) {
+        // TODO: strong barrier
+        if (heapGrowthController_.onAllocated(allocatedBytes) < 0) {
             needsGC = true;
         } else if (safePointTracker_.registerCurrentSafePoint(1)) {
             needsGC = true;
@@ -50,8 +51,8 @@ public:
         gcThread_.waitFinalized(scheduled_epoch);
     }
 
-    void onOOM(size_t size) noexcept {
-        RuntimeLogDebug({kTagGC}, "Attempt to GC on OOM at size=%zu", size);
+    void onOOM(uint64_t size) noexcept {
+        RuntimeLogDebug({kTagGC}, "Attempt to GC on OOM at size=%" PRIu64, size);
         scheduleAndWaitFullGC();
     }
 
