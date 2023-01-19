@@ -23,20 +23,31 @@ namespace kotlin::gcScheduler {
 template <typename Clock>
 class GCSchedulerAdaptive {
 public:
-    GCSchedulerAdaptive(GCScheduler& owner, GCSchedulerConfig initialConfig, gc::GC& gc) noexcept :
+    GCSchedulerAdaptive(
+            GCScheduler& owner,
+            internal::HeapGrowthController& heapGrowthController,
+            GCSchedulerConfig initialConfig,
+            gc::GC& gc) noexcept :
         owner_(owner),
         appStateTracking_(mm::GlobalData::Instance().appStateTracking()),
-        heapGrowthController_(initialConfig),
+        heapGrowthController_(heapGrowthController),
         regularIntervalPacer_(initialConfig),
         gcThread_(gc, *this),
         timer_("GC Timer thread", initialConfig.regularGcInterval(), &GCSchedulerAdaptive::timerRoutine, this) {
         }
 
-    void onAllocation(size_t allocatedBytes) noexcept  {
-        auto remaining = heapGrowthController_.onAllocated(allocatedBytes);
-        if (remaining >= 0)
-            return;
-        onAllocationSlowPath(remaining);
+    // This is a slow path.
+    NO_INLINE void onAllocation(int64_t remaining) noexcept  {
+        switch (heapGrowthController_.computeBoundary(remaining)) {
+            case internal::HeapGrowthController::AllocationBoundary::kNone:
+                RuntimeAssert(false, "Handled by the caller");
+                return;
+            case internal::HeapGrowthController::AllocationBoundary::kWeak:
+            case internal::HeapGrowthController::AllocationBoundary::kStrong:
+                RuntimeLogDebug({kTagGC}, "Scheduling GC by thread %d", konan::currentThreadId());
+                schedule();
+                return;
+        }
     }
 
     void schedule() noexcept  {
@@ -98,22 +109,9 @@ private:
         }
     }
 
-    void onAllocationSlowPath(int64_t remaining) noexcept {
-        switch (heapGrowthController_.computeBoundary(remaining)) {
-            case internal::HeapGrowthController::AllocationBoundary::kNone:
-                RuntimeAssert(false, "Handled by the caller");
-                return;
-            case internal::HeapGrowthController::AllocationBoundary::kWeak:
-            case internal::HeapGrowthController::AllocationBoundary::kStrong:
-                RuntimeLogDebug({kTagGC}, "Scheduling GC by thread %d", konan::currentThreadId());
-                schedule();
-                return;
-        }
-    }
-
     GCScheduler& owner_;
     mm::AppStateTracking& appStateTracking_;
-    internal::HeapGrowthController heapGrowthController_;
+    internal::HeapGrowthController& heapGrowthController_;
     Mutex<MutexThreadStateHandling::kSwitchIfRegistered> regularIntervalPacerMutex_;
     internal::RegularIntervalPacer<Clock> regularIntervalPacer_;
     internal::GCThread<GCSchedulerAdaptive> gcThread_;

@@ -9,7 +9,7 @@
 
 using namespace kotlin;
 
-gcScheduler::GCScheduler::GCScheduler(gc::GC& gc) noexcept : impl_(std_support::make_unique<Impl>(gc)) {
+gcScheduler::GCScheduler::GCScheduler(gc::GC& gc) noexcept : heapGrowthController_(config_), impl_(std_support::make_unique<Impl>(gc)) {
     RuntimeLogDebug({kTagGC}, "Initialized manual GC scheduler");
 }
 

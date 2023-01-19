@@ -12,7 +12,7 @@ namespace kotlin::gcScheduler {
 
 class GCScheduler::Impl {
 public:
-    Impl(GCScheduler& owner, GCSchedulerConfig& config, gc::GC& gc) noexcept : impl_(owner, config, gc) {}
+    Impl(GCScheduler& owner, internal::HeapGrowthController& heapGrowthController, GCSchedulerConfig& config, gc::GC& gc) noexcept : impl_(owner, heapGrowthController, config, gc) {}
 
     GCSchedulerAdaptive<steady_clock>& impl() { return impl_; }
 

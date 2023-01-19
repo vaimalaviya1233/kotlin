@@ -6,6 +6,7 @@
 #pragma once
 
 #include "GCSchedulerConfig.hpp"
+#include "HeapGrowthController.hpp"
 #include "Mutex.hpp"
 #include "Utils.hpp"
 #include "std_support/Memory.hpp"
@@ -54,7 +55,7 @@ public:
 private:
     Mutex<MutexThreadStateHandling::kSwitchIfRegistered> configMutex_;
     GCSchedulerConfig config_;
-    std::optional<GCSchedulerConfig> pendingConfig_;
+    internal::HeapGrowthController heapGrowthController_; // Make onAllocation fastpath work without indirections.
     std_support::unique_ptr<Impl> impl_;
 };
 
