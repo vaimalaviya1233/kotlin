@@ -29,6 +29,8 @@ import org.jetbrains.kotlin.name.Name
  * field initializers.
  */
 class FieldInitializersLowering(val context: WasmBackendContext) : FileLoweringPass {
+    private val stringPoolFqName = context.kotlinWasmInternalPackageFqn.child(Name.identifier("stringPool"))
+
     override fun lower(irFile: IrFile) {
         val builder = context.createIrBuilder(context.fieldInitFunction.symbol)
         val startFunctionBody = context.fieldInitFunction.body as IrBlockBody
@@ -53,7 +55,11 @@ class FieldInitializersLowering(val context: WasmBackendContext) : FileLoweringP
                 }
 
                 val initializerStatement = builder.at(initValue).irSetField(null, declaration, initValue)
-                startFunctionBody.statements.add(initializerStatement)
+
+                when (declaration.fqNameWhenAvailable) {
+                    stringPoolFqName -> startFunctionBody.statements.add(0, initializerStatement)
+                    else -> startFunctionBody.statements.add(initializerStatement)
+                }
 
                 // Replace initializer with default one
                 declaration.initializer = null

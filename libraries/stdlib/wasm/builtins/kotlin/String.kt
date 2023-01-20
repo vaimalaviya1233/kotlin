@@ -83,3 +83,15 @@ internal inline fun String.forEachCodePoint(body: (Int) -> Unit) {
         codePoint = wasm_stringview_iter_next(iter)
     }
 }
+
+internal fun stringLiteral(poolId: Int, startAddress: Int, length: Int): String {
+    val cached = stringPool[poolId]
+    if (cached !== null) {
+        return cached
+    }
+
+    val chars = array_new_data0<WasmCharArray>(startAddress, length)
+    val newString = chars.createString()
+    stringPool[poolId] = newString
+    return newString
+}

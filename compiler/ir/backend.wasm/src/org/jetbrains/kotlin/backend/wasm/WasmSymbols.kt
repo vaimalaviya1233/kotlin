@@ -132,7 +132,7 @@ class WasmSymbols(
         context.irBuiltIns.floatType to getInternalFunction("consumeFloatIntoVoid"),
         context.irBuiltIns.doubleType to getInternalFunction("consumeDoubleIntoVoid")
     )
-    
+
     fun findVoidConsumer(type: IrType): IrSimpleFunctionSymbol =
         consumePrimitiveIntoVoid[type] ?: consumeAnyIntoVoid
 
@@ -191,6 +191,9 @@ class WasmSymbols(
 
     val boxIntrinsic: IrSimpleFunctionSymbol = getInternalFunction("boxIntrinsic")
     val unboxIntrinsic: IrSimpleFunctionSymbol = getInternalFunction("unboxIntrinsic")
+
+    val stringGetLiteral = getFunction("stringLiteral", builtInsPackage)
+    val stringGetPoolSize = getInternalFunction("stringGetPoolSize")
 
     val testFun = maybeGetFunction("test", kotlinTestPackage)
     val suiteFun = maybeGetFunction("suite", kotlinTestPackage)
@@ -358,7 +361,7 @@ class WasmSymbols(
     private fun getInternalFunction(name: String) = getFunction(name, wasmInternalPackage)
 
     private fun getIrClass(fqName: FqName): IrClassSymbol = symbolTable.referenceClass(getClass(fqName))
-    fun getInternalClass(name: String): IrClassSymbol = getIrClass(FqName("kotlin.wasm.internal.$name"))
+    private fun getInternalClass(name: String): IrClassSymbol = getIrClass(FqName("kotlin.wasm.internal.$name"))
     fun getKFunctionType(type: IrType, list: List<IrType>): IrType {
         return irBuiltIns.functionN(list.size).typeWith(list + type)
     }
