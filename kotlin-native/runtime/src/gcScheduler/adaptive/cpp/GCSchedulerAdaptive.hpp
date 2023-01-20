@@ -41,24 +41,32 @@ public:
 
     void schedule() noexcept  {
         ThreadStateGuard guard(ThreadState::kNative);
-        gcThread_.schedule();
+        RuntimeLogDebug({kTagGC}, "Scheduling forced GC by thread %d", konan::currentThreadId());
+        gcThread_.state().schedule();
     }
 
     void scheduleAndWaitFullGC() noexcept  {
         ThreadStateGuard guard(ThreadState::kNative);
-        auto scheduled_epoch = gcThread_.schedule();
-        gcThread_.waitFinished(scheduled_epoch);
+        RuntimeLogDebug({kTagGC}, "Scheduling forced GC by thread %d and waiting for its completion", konan::currentThreadId());
+        auto& state = gcThread_.state();
+        auto scheduled_epoch = state.schedule();
+        state.waitEpochFinished(scheduled_epoch);
     }
 
     void scheduleAndWaitFullGCWithFinalizers() noexcept  {
         ThreadStateGuard guard(ThreadState::kNative);
-        auto scheduled_epoch = gcThread_.schedule();
-        gcThread_.waitFinalized(scheduled_epoch);
+        RuntimeLogDebug({kTagGC}, "Scheduling forced GC by thread %d and waiting for its completion together with finalizers", konan::currentThreadId());
+        auto& state = gcThread_.state();
+        auto scheduled_epoch = state.schedule();
+        state.waitEpochFinalized(scheduled_epoch);
     }
 
     void onOOM(uint64_t size) noexcept  {
-        RuntimeLogDebug({kTagGC}, "Attempt to GC on OOM at size=%" PRIu64, size);
-        scheduleAndWaitFullGC();
+        ThreadStateGuard guard(ThreadState::kNative);
+        RuntimeLogDebug({kTagGC}, "Forcing GC by OOM of size=%" PRIu64 " by thread %d", size, konan::currentThreadId());
+        auto& state = gcThread_.state();
+        auto scheduled_epoch = state.schedule();
+        state.waitEpochFinished(scheduled_epoch);
     }
 
     // Called on the GC thread during the pause.
@@ -94,7 +102,7 @@ private:
         }
         if (needsGC) {
             RuntimeLogDebug({kTagGC}, "Scheduling GC by timer");
-            gcThread_.schedule();
+            gcThread_.state().schedule();
         }
     }
 
@@ -104,11 +112,26 @@ private:
                 RuntimeAssert(false, "Handled by the caller");
                 return;
             case internal::HeapGrowthController::AllocationBoundary::kWeak:
+                onAllocationWeakBoundary();
+                return;
             case internal::HeapGrowthController::AllocationBoundary::kStrong:
-                RuntimeLogDebug({kTagGC}, "Scheduling GC by thread %d", konan::currentThreadId());
-                schedule();
+                onAllocationStrongBoundary();
                 return;
         }
+    }
+
+    void onAllocationWeakBoundary() noexcept {
+        ThreadStateGuard guard(ThreadState::kNative);
+        RuntimeLogDebug({kTagGC}, "Scheduling GC by allocation threshold by thread %d", konan::currentThreadId());
+        gcThread_.state().ensureActive();
+    }
+
+    void onAllocationStrongBoundary() noexcept {
+        ThreadStateGuard guard(ThreadState::kNative);
+        RuntimeLogDebug({kTagGC}, "Scheduling GC by severe allocation threshold by thread %d", konan::currentThreadId());
+        auto& state = gcThread_.state();
+        auto scheduled_epoch = state.ensureActive();
+        state.waitEpochFinished(scheduled_epoch);
     }
 
     GCScheduler& owner_;

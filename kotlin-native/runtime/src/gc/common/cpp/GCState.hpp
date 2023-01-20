@@ -35,6 +35,20 @@ public:
         return *scheduledEpoch;
     }
 
+    int64_t ensureActive() {
+        std::unique_lock lock(mutex_);
+        if (*startedEpoch > *finishedEpoch) {
+            // Have an in-progress GC.
+            return *startedEpoch;
+        }
+        if (*scheduledEpoch > *startedEpoch) {
+            // Have a scheduled GC.
+            return *scheduledEpoch;
+        }
+        scheduledEpoch.set(lock, *startedEpoch + 1);
+        return *scheduledEpoch;
+    }
+
     void shutdown() {
         std::unique_lock lock(mutex_);
         shutdownFlag_ = true;

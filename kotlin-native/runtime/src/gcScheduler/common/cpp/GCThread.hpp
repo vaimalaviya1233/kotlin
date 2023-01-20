@@ -27,16 +27,8 @@ public:
         state_.shutdown();
     }
 
-    int64_t schedule() noexcept {
-        return state_.schedule();
-    }
-
-    void waitFinished(int64_t epoch) noexcept {
-        state_.waitEpochFinished(epoch);
-    }
-
-    void waitFinalized(int64_t epoch) noexcept {
-        state_.waitEpochFinalized(epoch);
+    gc::GCStateHolder& state() noexcept {
+        return state_;
     }
 
 private:

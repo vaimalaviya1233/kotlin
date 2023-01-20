@@ -36,19 +36,24 @@ public:
 
     void schedule() noexcept  {
         ThreadStateGuard guard(ThreadState::kNative);
-        gcThread_.schedule();
+        RuntimeLogDebug({kTagGC}, "Scheduling forced GC by thread %d", konan::currentThreadId());
+        gcThread_.state().schedule();
     }
 
     void scheduleAndWaitFullGC() noexcept  {
         ThreadStateGuard guard(ThreadState::kNative);
-        auto scheduled_epoch = gcThread_.schedule();
-        gcThread_.waitFinished(scheduled_epoch);
+        RuntimeLogDebug({kTagGC}, "Scheduling forced GC by thread %d and waiting for its completion", konan::currentThreadId());
+        auto& state = gcThread_.state();
+        auto scheduled_epoch = state.schedule();
+        state.waitEpochFinished(scheduled_epoch);
     }
 
-    void scheduleAndWaitFullGCWithFinalizers() noexcept {
+    void scheduleAndWaitFullGCWithFinalizers() noexcept  {
         ThreadStateGuard guard(ThreadState::kNative);
-        auto scheduled_epoch = gcThread_.schedule();
-        gcThread_.waitFinalized(scheduled_epoch);
+        RuntimeLogDebug({kTagGC}, "Scheduling forced GC by thread %d and waiting for its completion together with finalizers", konan::currentThreadId());
+        auto& state = gcThread_.state();
+        auto scheduled_epoch = state.schedule();
+        state.waitEpochFinalized(scheduled_epoch);
     }
 
     void onOOM(uint64_t size) noexcept {
