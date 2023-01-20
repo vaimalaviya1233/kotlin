@@ -31,22 +31,19 @@ public:
         std::unique_lock lock(mutex_);
         if (*scheduledEpoch <= *startedEpoch) {
             scheduledEpoch.set(lock, *startedEpoch + 1);
+            if (isActive_ == 0) {
+                isActive_ = *scheduledEpoch;
+            }
         }
         return *scheduledEpoch;
     }
 
     int64_t ensureActive() {
-        std::unique_lock lock(mutex_);
-        if (*startedEpoch > *finishedEpoch) {
-            // Have an in-progress GC.
-            return *startedEpoch;
+        auto active = isActive_.load();
+        if (active != 0) {
+            return active;
         }
-        if (*scheduledEpoch > *startedEpoch) {
-            // Have a scheduled GC.
-            return *scheduledEpoch;
-        }
-        scheduledEpoch.set(lock, *startedEpoch + 1);
-        return *scheduledEpoch;
+        return ensureActiveSlowPath();
     }
 
     void shutdown() {
@@ -64,7 +61,15 @@ public:
     }
 
     void finish(int64_t epoch) {
-        finishedEpoch.set(epoch);
+        {
+            std::unique_lock lock(mutex_);
+            if (*scheduledEpoch > *startedEpoch) {
+                isActive_ = *scheduledEpoch;
+            } else {
+                isActive_ = 0;
+            }
+            finishedEpoch.set(lock, epoch);
+        }
         delegate_.onFinishedEpoch(epoch);
     }
 
@@ -88,6 +93,23 @@ public:
     }
 
 private:
+    int64_t ensureActiveSlowPath() {
+        std::unique_lock lock(mutex_);
+        if (*startedEpoch > *finishedEpoch) {
+            // Have an in-progress GC.
+            return *startedEpoch;
+        }
+        if (*scheduledEpoch > *startedEpoch) {
+            // Have a scheduled GC.
+            return *scheduledEpoch;
+        }
+        scheduledEpoch.set(lock, *startedEpoch + 1);
+        if (isActive_ == 0) {
+            isActive_ = *scheduledEpoch;
+        }
+        return *scheduledEpoch;
+    }
+
     template <typename T>
     struct ValueWithCondVar : kotlin::Pinned {
         explicit ValueWithCondVar(T initializer, std::mutex& mutex) noexcept : value_(initializer), mutex_(mutex) {};
@@ -124,6 +146,7 @@ private:
 
     Delegate& delegate_;
 
+    std::atomic<int64_t> isActive_;
     std::mutex mutex_;
     // Use a separate conditional variable for each counter to mitigate a winpthreads bug (see KT-50948 for details).
     ValueWithCondVar<int64_t> startedEpoch{0, mutex_};
