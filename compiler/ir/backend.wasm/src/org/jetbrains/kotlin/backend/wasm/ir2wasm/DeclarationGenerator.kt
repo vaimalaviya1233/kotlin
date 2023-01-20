@@ -397,15 +397,17 @@ class DeclarationGenerator(
         val packageName = if (fqnShouldBeEmitted) classMetadata.klass.kotlinFqName.parentOrNull()?.asString() ?: "" else ""
         val simpleName = classMetadata.klass.kotlinFqName.shortName().asString()
 
-        val packageNameAddress = context.referenceStringLiteralAddress(packageName)
-        val simpleNameAddress = context.referenceStringLiteralAddress(simpleName)
+        val (packageNameAddress, packageNamePoolId) = context.referenceStringLiteralAddressAndId(packageName)
+        val (simpleNameAddress, simpleNamePoolId) = context.referenceStringLiteralAddressAndId(simpleName)
 
         val typeInfo = ConstantDataStruct(
             name = "TypeInfo",
             elements = listOf(
                 ConstantDataIntField("TypePackageNameLength", packageName.length),
+                ConstantDataIntField("TypePackageNameId", packageNamePoolId),
                 ConstantDataIntField("TypePackageNamePtr", packageNameAddress),
                 ConstantDataIntField("TypeNameLength", simpleName.length),
+                ConstantDataIntField("TypeNameId", simpleNamePoolId),
                 ConstantDataIntField("TypeNamePtr", simpleNameAddress)
             )
         )
@@ -524,9 +526,14 @@ fun generateConstExpression(
         is IrConstKind.Float -> body.buildConstF32(kind.valueOf(expression), location)
         is IrConstKind.Double -> body.buildConstF64(kind.valueOf(expression), location)
         is IrConstKind.String -> {
-            BodyGenerator.generateAnyParameters(context, body, context.backendContext.irBuiltIns.stringClass, location)
-            body.buildConstStringSymbol(context.referenceConstStringLiteral(kind.valueOf(expression)), location)
-            body.buildStructNew(context.referenceGcType(context.backendContext.irBuiltIns.stringClass), location)
+            val stringValue = kind.valueOf(expression)
+            val (literalAddress, literalPoolId) = context.referenceStringLiteralAddressAndId(stringValue)
+            body.commentGroupStart { "const string: \"$stringValue\"" }
+            body.buildConstI32Symbol(literalPoolId, location)
+            body.buildConstI32Symbol(literalAddress, location)
+            body.buildConstI32(stringValue.length, location)
+            body.buildCall(context.referenceFunction(context.backendContext.wasmSymbols.stringGetLiteral), location)
+            body.commentGroupEnd()
         }
         else -> error("Unknown constant kind")
     }

@@ -109,3 +109,11 @@ internal fun consumeFloatIntoVoid(a: Float): Void =
 @WasmOp(WasmOp.DROP)
 internal fun consumeDoubleIntoVoid(a: Double): Void =
     implementedAsIntrinsic
+
+@ExcludedFromCodegen
+internal fun stringGetPoolSize(): Int =
+    implementedAsIntrinsic
+
+// This initializer is a special case in FieldInitializersLowering
+@EagerInitialization
+internal val stringPool: Array<String?> = arrayOfNulls(stringGetPoolSize())
