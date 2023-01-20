@@ -22,7 +22,7 @@ public:
         kStrong,
     };
 
-    explicit HeapGrowthController(GCSchedulerConfig config) noexcept : config_(config), allocationBytesLeft_(config_.targetHeapBytes), strongAllocationBoundaryBytes_(config.weakTargetHeapBytes() - config.targetHeapBytes) {}
+    explicit HeapGrowthController(GCSchedulerConfig config) noexcept : config_(config), allocationBytesLeft_(config_.weakTargetHeapBytes()), strongAllocationBoundaryBytes_(config.weakTargetHeapBytes() - config.targetHeapBytes) {}
 
     // Called by the mutators.
     int64_t onAllocated(uint64_t allocatedBytes) noexcept {
@@ -56,9 +56,10 @@ public:
             targetHeapBytes = std::min(std::max(targetHeapBytes, minHeapBytes), maxHeapBytes);
             config_.targetHeapBytes = static_cast<int64_t>(targetHeapBytes);
         }
+        auto weakTargetHeapBytes = config_.weakTargetHeapBytes();
         // TODO: Is this desynchronization bad?
-        strongAllocationBoundaryBytes_ = config_.weakTargetHeapBytes() - config_.targetHeapBytes;
-        allocationBytesLeft_ += config_.targetHeapBytes;
+        strongAllocationBoundaryBytes_ = weakTargetHeapBytes - config_.targetHeapBytes;
+        allocationBytesLeft_ += weakTargetHeapBytes;
     }
 
     // Called during the pause by the GC thread.
