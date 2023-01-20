@@ -638,10 +638,14 @@ public:
         size_t size() const noexcept { return consumer_.size(); }
 
         // TODO: Consider running it in the destructor instead.
-        void Finalize() noexcept {
+        size_t Finalize() noexcept {
+            size_t totalSize = 0;
             for (auto node : Iterable(*this)) {
-                RunFinalizers(node->GetObjHeader());
+                auto* objHeader = node->GetObjHeader();
+                RunFinalizers(objHeader);
+                totalSize += GetAllocatedHeapSize(objHeader);
             }
+            return totalSize;
         }
 
         void MergeWith(FinalizerQueue &&other) {
@@ -663,8 +667,10 @@ public:
         Iterator begin() noexcept { return Iterator(iter_.begin()); }
         Iterator end() noexcept { return Iterator(iter_.end()); }
 
-        void EraseAndAdvance(Iterator& iterator) noexcept {
-            iter_.EraseAndAdvance(iterator.iterator_, GetAllocatedHeapSize(iterator->GetObjHeader()));
+        size_t EraseAndAdvance(Iterator& iterator) noexcept {
+            size_t size = GetAllocatedHeapSize(iterator->GetObjHeader());
+            iter_.EraseAndAdvance(iterator.iterator_, size);
+            return size;
         }
 
         void MoveAndAdvance(FinalizerQueue& queue, Iterator& iterator) noexcept {

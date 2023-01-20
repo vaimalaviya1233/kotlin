@@ -48,6 +48,8 @@ public:
     void onAllocation(uint64_t allocatedBytes) noexcept;
     void onOOM(uint64_t size) noexcept;
 
+    void onDeallocation(uint64_t allocatedBytes) noexcept;
+
     // Called by different mutator threads.
     void onSafePoint() noexcept;
 

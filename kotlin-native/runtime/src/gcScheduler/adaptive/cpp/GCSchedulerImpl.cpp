@@ -29,6 +29,10 @@ void gcScheduler::GCScheduler::onAllocation(uint64_t allocatedBytes) noexcept {
     impl_->impl().onAllocation(allocatedBytes);
 }
 
+void gcScheduler::GCScheduler::onDeallocation(uint64_t allocatedBytes) noexcept {
+    impl_->impl().onDeallocation(allocatedBytes);
+}
+
 void gcScheduler::GCScheduler::onOOM(uint64_t size) noexcept {
     impl_->impl().onOOM(size);
 }

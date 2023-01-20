@@ -39,6 +39,10 @@ public:
         onAllocationSlowPath(remaining);
     }
 
+    void onDeallocation(size_t allocatedBytes) noexcept {
+        heapGrowthController_.onDeallocated(allocatedBytes);
+    }
+
     void schedule() noexcept  {
         ThreadStateGuard guard(ThreadState::kNative);
         RuntimeLogDebug({kTagGC}, "Scheduling forced GC by thread %d", konan::currentThreadId());

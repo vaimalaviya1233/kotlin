@@ -10,6 +10,7 @@
 #include <functional>
 #include <mutex>
 
+#include "GlobalData.hpp"
 #include "KAssert.h"
 #include "Memory.h"
 #include "Runtime.h"
@@ -95,7 +96,8 @@ private:
             lock.unlock();
             if (queue.size() > 0) {
                 ThreadStateGuard guard(ThreadState::kRunnable);
-                queue.Finalize();
+                auto size = queue.Finalize();
+                mm::GlobalData::Instance().gcScheduler().onDeallocation(size);
             }
             epochDoneCallback_(finalizersEpoch);
         }

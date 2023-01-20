@@ -22,13 +22,15 @@ public:
         kStrong,
     };
 
-    explicit HeapGrowthController(GCSchedulerConfig config) noexcept : config_(config), allocationBytesLeft_(config_.weakTargetHeapBytes()), strongAllocationBoundaryBytes_(config.weakTargetHeapBytes() - config.targetHeapBytes) {}
+    explicit HeapGrowthController(GCSchedulerConfig config) noexcept : config_(config), pendingConfig_(config), allocationBytesLeft_(config_.weakTargetHeapBytes()), strongAllocationBoundaryBytes_(config.weakTargetHeapBytes() - config.targetHeapBytes) {}
 
     // Called by the mutators.
     int64_t onAllocated(uint64_t allocatedBytes) noexcept {
-        // Expecting that allocatedBytes is way less than max uint64_t.
-        // True for 32 bit and current 64 bit platforms.
         return allocationBytesLeft_.fetch_sub(allocatedBytes);
+    }
+
+    void onDeallocated(uint64_t allocatedBytes) noexcept {
+        allocationBytesLeft_.fetch_add(allocatedBytes);
     }
 
     AllocationBoundary computeBoundary(int64_t remaining) const noexcept {
@@ -44,9 +46,12 @@ public:
     }
 
     // Called by the GC thread.
-    void onGCDone(size_t aliveSetBytes) noexcept {
+    void onGCDone(size_t /* aliveSetBytes */) noexcept {
+        auto previousBoundary = config_.weakTargetHeapBytes();
+        config_ = pendingConfig_;
+        int64_t allocatedBytes = previousBoundary - allocationBytesLeft_.load();
         if (config_.autoTune) {
-            double targetHeapBytes = static_cast<double>(aliveSetBytes) / config_.targetHeapUtilization;
+            double targetHeapBytes = static_cast<double>(allocatedBytes) / config_.targetHeapUtilization;
             if (!std::isfinite(targetHeapBytes)) {
                 // This shouldn't happen in practice: targetHeapUtilization is in (0, 1]. But in case it does, don't touch anything.
                 return;
@@ -56,15 +61,15 @@ public:
             targetHeapBytes = std::min(std::max(targetHeapBytes, minHeapBytes), maxHeapBytes);
             config_.targetHeapBytes = static_cast<int64_t>(targetHeapBytes);
         }
-        auto weakTargetHeapBytes = config_.weakTargetHeapBytes();
+        auto nextBoundary = config_.weakTargetHeapBytes();
         // TODO: Is this desynchronization bad?
-        strongAllocationBoundaryBytes_ = weakTargetHeapBytes - config_.targetHeapBytes;
-        allocationBytesLeft_ += weakTargetHeapBytes;
+        strongAllocationBoundaryBytes_ = nextBoundary - config_.targetHeapBytes;
+        allocationBytesLeft_ += nextBoundary - previousBoundary;
     }
 
     // Called during the pause by the GC thread.
     void setConfig(GCSchedulerConfig config) noexcept {
-        config_ = config;
+        pendingConfig_ = config;
     }
 
     const GCSchedulerConfig& config() const noexcept {
@@ -73,6 +78,7 @@ public:
 
 private:
     GCSchedulerConfig config_;
+    GCSchedulerConfig pendingConfig_;
 
     // Updated by both the mutators and the GC thread.
     std::atomic<int64_t> allocationBytesLeft_ = 0;
