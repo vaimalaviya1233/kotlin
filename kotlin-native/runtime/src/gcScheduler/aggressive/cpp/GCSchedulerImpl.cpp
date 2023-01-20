@@ -7,7 +7,7 @@
 
 using namespace kotlin;
 
-gcScheduler::GCScheduler::GCScheduler(gc::GC& gc) noexcept : heapGrowthController_(config_), impl_(std_support::make_unique<Impl>(*this, heapGrowthController_, config_, gc)) {
+gcScheduler::GCScheduler::GCScheduler(gc::GC& gc) noexcept : impl_(std_support::make_unique<Impl>(*this, config_, gc)) {
     RuntimeLogDebug({kTagGC}, "Initialized aggressive GC scheduler");
 }
 

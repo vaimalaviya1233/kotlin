@@ -15,8 +15,8 @@ namespace kotlin::gcScheduler {
 
 class GCScheduler::Impl {
 public:
-    Impl(GCScheduler& owner, internal::HeapGrowthController& heapGrowthController, GCSchedulerConfig initialConfig, gc::GC& gc) noexcept :
-        owner_(owner), heapGrowthController_(heapGrowthController), gcThread_(gc, *this)  {
+    Impl(GCScheduler& owner, GCSchedulerConfig initialConfig, gc::GC& gc) noexcept :
+        owner_(owner), heapGrowthController_(initialConfig), gcThread_(gc, *this)  {
     }
 
     // Called by mutator threads.
@@ -84,7 +84,7 @@ public:
 
 private:
     GCScheduler& owner_;
-    internal::HeapGrowthController& heapGrowthController_;
+    internal::HeapGrowthController heapGrowthController_;
     internal::SafePointTracker<> safePointTracker_;
     internal::GCThread<Impl> gcThread_;
 };
