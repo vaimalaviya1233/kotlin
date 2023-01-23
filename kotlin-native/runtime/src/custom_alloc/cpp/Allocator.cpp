@@ -16,8 +16,8 @@ void* allocateInObjectPool(size_t size) noexcept {
     return nullptr;
 }
 
-void freeInObjectPool(void* ptr) noexcept {
-    CustomAllocWarning("static freeInObjectPool(%p) not supported", ptr);
+void freeInObjectPool(void* ptr, size_t size) noexcept {
+    CustomAllocWarning("static freeInObjectPool(%p, %zu) not supported", ptr, size);
 }
 
 void initObjectPool() noexcept {}

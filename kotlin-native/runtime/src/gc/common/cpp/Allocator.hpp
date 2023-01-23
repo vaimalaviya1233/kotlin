@@ -21,7 +21,7 @@ namespace gc {
 class Allocator {
 public:
     void* Alloc(size_t size) noexcept { return allocateInObjectPool(size); }
-    static void Free(void* instance) noexcept { freeInObjectPool(instance); }
+    static void Free(void* instance, size_t size) noexcept { freeInObjectPool(instance, size); }
 };
 
 template <typename BaseAllocator>
@@ -30,17 +30,15 @@ public:
     explicit AllocatorWithGC(BaseAllocator base) noexcept : base_(std::move(base)) {}
 
     void* Alloc(size_t size) noexcept {
-        auto& scheduler = mm::GlobalData::Instance().gcScheduler();
-        scheduler.onAllocation(size);
         if (void* ptr = base_.Alloc(size)) {
             return ptr;
         }
         // Tell GC that we failed to allocate, and try one more time.
-        scheduler.onOOM(size);
+        mm::GlobalData::Instance().gcScheduler().onOOM(size);
         return base_.Alloc(size);
     }
 
-    static void Free(void* instance) noexcept { BaseAllocator::Free(instance); }
+    static void Free(void* instance, size_t size) noexcept { BaseAllocator::Free(instance, size); }
 
 private:
     BaseAllocator base_;

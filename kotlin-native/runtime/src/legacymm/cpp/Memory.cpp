@@ -1123,7 +1123,7 @@ void processFinalizerQueue(MemoryState* state) {
     state->containers->erase(container);
 #endif
     CONTAINER_DESTROY_EVENT(state, container)
-    freeInObjectPool(container);
+    freeInObjectPool(container, 0);
     atomicAdd(&allocCount, -1);
   }
   RuntimeAssert(state->finalizerQueueSize == 0, "Queue must be empty here");
@@ -1164,7 +1164,7 @@ void scheduleDestroyContainer(MemoryState* state, ContainerHeader* container) {
     processFinalizerQueue(state);
   }
 #else
-  freeInObjectPool(container);
+  freeInObjectPool(container, 0);
   atomicAdd(&allocCount, -1);
   CONTAINER_DESTROY_EVENT(state, container);
 #endif
@@ -3142,7 +3142,7 @@ void ArenaContainer::Deinit() {
   while (chunk != nullptr) {
     auto toRemove = chunk;
     chunk = chunk->next;
-    freeInObjectPool(toRemove);
+    freeInObjectPool(toRemove, 0);
   }
 }
 
@@ -3738,6 +3738,14 @@ RUNTIME_NOTHROW ALWAYS_INLINE void Kotlin_processFieldInMark(void* state, ObjHea
 }
 
 RUNTIME_NOTHROW ALWAYS_INLINE void Kotlin_processEmptyObjectInMark(void* state, ObjHeader* object) {
+    // no-op, used by the new MM only.
+}
+
+RUNTIME_NOTHROW ALWAYS_INLINE void Kotlin_onAllocation(size_t size) {
+    // no-op, used by the new MM only.
+}
+
+RUNTIME_NOTHROW ALWAYS_INLINE void Kotlin_onDeallocation(size_t size) {
     // no-op, used by the new MM only.
 }
 

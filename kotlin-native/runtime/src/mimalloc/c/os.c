@@ -54,6 +54,9 @@ terms of the MIT license. A copy of the license can be found in the file
 #endif
 #endif
 
+__attribute__((nothrow)) void Kotlin_onAllocation(size_t size);
+__attribute__((nothrow)) void Kotlin_onDeallocation(size_t size);
+
 /* -----------------------------------------------------------
   Initialization.
   On windows initializes support for aligned allocation and
@@ -241,7 +244,10 @@ static bool mi_os_mem_free(void* addr, size_t size, bool was_committed, mi_stats
 #else
   err = (munmap(addr, size) == -1);
 #endif
-  if (was_committed) _mi_stat_decrease(&stats->committed, size);
+  if (was_committed) {
+    _mi_stat_decrease(&stats->committed, size);
+    Kotlin_onDeallocation(size);
+  }
   _mi_stat_decrease(&stats->reserved, size);
   if (err) {
     _mi_warning_message("munmap failed: %s, addr 0x%8li, size %lu\n", strerror(errno), (size_t)addr, size);
@@ -546,7 +552,10 @@ static void* mi_os_mem_alloc(size_t size, size_t try_alignment, bool commit, boo
   mi_stat_counter_increase(stats->mmap_calls, 1);
   if (p != NULL) {
     _mi_stat_increase(&stats->reserved, size);
-    if (commit) { _mi_stat_increase(&stats->committed, size); }
+    if (commit) {
+        _mi_stat_increase(&stats->committed, size);
+        Kotlin_onAllocation(size);
+    }
   }
   return p;
 }
@@ -715,10 +724,12 @@ static bool mi_os_commitx(void* addr, size_t size, bool commit, bool conservativ
   int err = 0;
   if (commit) {
     _mi_stat_increase(&stats->committed, size);  // use size for precise commit vs. decommit
+    Kotlin_onAllocation(size);
     _mi_stat_counter_increase(&stats->commit_calls, 1);
   }
   else {
     _mi_stat_decrease(&stats->committed, size);
+    Kotlin_onDeallocation(size);
   }
 
   #if defined(_WIN32)
@@ -1087,6 +1098,8 @@ void* _mi_os_alloc_huge_os_pages(size_t pages, int numa_node, mi_msecs_t max_mse
     // success, record it
     _mi_stat_increase(&_mi_stats_main.committed, MI_HUGE_OS_PAGE_SIZE);
     _mi_stat_increase(&_mi_stats_main.reserved, MI_HUGE_OS_PAGE_SIZE);
+    Kotlin_onAllocation(MI_HUGE_OS_PAGE_SIZE);
+
 
     // check for timeout
     if (max_msecs > 0) {

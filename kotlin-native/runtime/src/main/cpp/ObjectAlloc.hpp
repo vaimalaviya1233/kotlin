@@ -8,11 +8,17 @@
 #include <cstddef>
 #include <type_traits>
 
+#include "Common.h"
+
+// Defined by different GCs.
+RUNTIME_NOTHROW extern "C" void Kotlin_onAllocation(size_t size);
+RUNTIME_NOTHROW extern "C" void Kotlin_onDeallocation(size_t size);
+
 namespace kotlin {
 
 void initObjectPool() noexcept;
 void* allocateInObjectPool(size_t size) noexcept;
-void freeInObjectPool(void* ptr) noexcept;
+void freeInObjectPool(void* ptr, size_t size) noexcept;
 // Instruct the allocator to free unused resources.
 void compactObjectPoolInCurrentThread() noexcept;
 // Platform dependent. Schedule `compactObjectPoolInCurrentThread` on the main thread.
@@ -36,7 +42,7 @@ struct ObjectPoolAllocator {
 
     T* allocate(std::size_t n) noexcept { return static_cast<T*>(allocateInObjectPool(n * sizeof(T))); }
 
-    void deallocate(T* p, std::size_t n) noexcept { freeInObjectPool(p); }
+    void deallocate(T* p, std::size_t n) noexcept { freeInObjectPool(p, n * sizeof(T)); }
 };
 
 template <typename T, typename U>

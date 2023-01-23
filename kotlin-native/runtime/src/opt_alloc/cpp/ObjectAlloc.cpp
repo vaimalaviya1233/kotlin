@@ -44,7 +44,7 @@ void* kotlin::allocateInObjectPool(size_t size) noexcept {
     return mi_calloc_aligned(1, size, kObjectAlignment);
 }
 
-void kotlin::freeInObjectPool(void* ptr) noexcept {
+void kotlin::freeInObjectPool(void* ptr, size_t size) noexcept {
     mi_free(ptr);
 }
 

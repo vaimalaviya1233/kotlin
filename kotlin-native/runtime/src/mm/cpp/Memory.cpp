@@ -613,3 +613,11 @@ RUNTIME_NOTHROW ALWAYS_INLINE extern "C" void Kotlin_processEmptyObjectInMark(vo
     // Empty object. Nothing to do.
     // TODO: Try to generate it in the code generator.
 }
+
+RUNTIME_NOTHROW ALWAYS_INLINE extern "C" void Kotlin_onAllocation(size_t size) {
+    mm::GlobalData::Instance().gcScheduler().onAllocation(size);
+}
+
+RUNTIME_NOTHROW ALWAYS_INLINE extern "C" void Kotlin_onDeallocation(size_t size) {
+    mm::GlobalData::Instance().gcScheduler().onDeallocation(size);
+}
