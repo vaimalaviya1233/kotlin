@@ -144,8 +144,7 @@ typename Traits::ObjectFactory::FinalizerQueue Sweep(GCHandle handle, typename T
         if (HasFinalizers(objHeader)) {
             objectFactoryIter.MoveAndAdvance(finalizerQueue, it);
         } else {
-            auto size = objectFactoryIter.EraseAndAdvance(it);
-            mm::GlobalData::Instance().gcScheduler().onDeallocation(size);
+            objectFactoryIter.EraseAndAdvance(it);
         }
     }
 

@@ -33,6 +33,7 @@ public:
         }
 
     void onAllocation(size_t allocatedBytes) noexcept  {
+        RuntimeLogDebug({kTagGC}, "onAllocation %zu", allocatedBytes);
         auto remaining = heapGrowthController_.onAllocated(allocatedBytes);
         if (remaining >= 0)
             return;
@@ -40,6 +41,7 @@ public:
     }
 
     void onDeallocation(size_t allocatedBytes) noexcept {
+        RuntimeLogDebug({kTagGC}, "onDeallocation %zu", allocatedBytes);
         heapGrowthController_.onDeallocated(allocatedBytes);
     }
 

@@ -96,8 +96,7 @@ private:
             lock.unlock();
             if (queue.size() > 0) {
                 ThreadStateGuard guard(ThreadState::kRunnable);
-                auto size = queue.Finalize();
-                mm::GlobalData::Instance().gcScheduler().onDeallocation(size);
+                queue.Finalize();
             }
             epochDoneCallback_(finalizersEpoch);
         }
