@@ -37,8 +37,8 @@ of 256MiB in practice.
 
 // os.c
 void* _mi_os_alloc_aligned(size_t size, size_t alignment, bool commit, bool* large, mi_stats_t* stats);
-void  _mi_os_free_ex(void* p, size_t size, bool was_committed, mi_stats_t* stats);
-void  _mi_os_free(void* p, size_t size, mi_stats_t* stats);
+void  _mi_os_free_ex(void* p, size_t size, bool was_committed, mi_stats_t* stats, bool is_internal);
+void  _mi_os_free(void* p, size_t size, mi_stats_t* stats, bool is_internal);
 
 void* _mi_os_alloc_huge_os_pages(size_t pages, int numa_node, mi_msecs_t max_secs, size_t* pages_reserved, size_t* psize);
 void  _mi_os_free_huge_pages(void* p, size_t size, mi_stats_t* stats);
@@ -223,7 +223,7 @@ void _mi_arena_free(void* p, size_t size, size_t memid, bool all_committed, mi_s
   if (size==0) return;
   if (memid == MI_MEMID_OS) {
     // was a direct OS allocation, pass through
-    _mi_os_free_ex(p, size, all_committed, stats);
+    _mi_os_free_ex(p, size, all_committed, stats, false);
   }
   else {
     // allocated in an arena
@@ -291,7 +291,7 @@ bool mi_manage_os_memory(void* start, size_t size, bool is_committed, bool is_la
   const size_t fields = _mi_divide_up(bcount, MI_BITMAP_FIELD_BITS);
   const size_t bitmaps = (is_committed ? 2 : 3);
   const size_t asize  = sizeof(mi_arena_t) + (bitmaps*fields*sizeof(mi_bitmap_field_t));
-  mi_arena_t* arena   = (mi_arena_t*)_mi_os_alloc(asize, &_mi_stats_main); // TODO: can we avoid allocating from the OS?
+  mi_arena_t* arena   = (mi_arena_t*)_mi_os_alloc(asize, &_mi_stats_main, false); // TODO: can we avoid allocating from the OS?
   if (arena == NULL) return false;
 
   arena->block_count = bcount;
@@ -326,7 +326,7 @@ int mi_reserve_os_memory(size_t size, bool commit, bool allow_large) mi_attr_noe
   void* start = _mi_os_alloc_aligned(size, MI_SEGMENT_ALIGN, commit, &large, &_mi_stats_main);
   if (start==NULL) return ENOMEM;
   if (!mi_manage_os_memory(start, size, (large || commit), large, true, -1)) {
-    _mi_os_free_ex(start, size, commit, &_mi_stats_main);
+    _mi_os_free_ex(start, size, commit, &_mi_stats_main, false);
     _mi_verbose_message("failed to reserve %zu k memory\n", _mi_divide_up(size,1024));
     return ENOMEM;
   }
