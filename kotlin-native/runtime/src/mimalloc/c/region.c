@@ -39,6 +39,9 @@ Possible issues:
 
 #include "bitmap.h"
 
+__attribute__((nothrow)) void Kotlin_onAllocation(size_t size);
+__attribute__((nothrow)) void Kotlin_onDeallocation(size_t size);
+
 // Internal raw OS interface
 size_t  _mi_os_large_page_size();
 bool    _mi_os_protect(void* addr, size_t size);
@@ -379,6 +382,7 @@ void* _mi_mem_alloc_aligned(size_t size, size_t alignment, bool* commit, bool* l
 #if (MI_DEBUG>=2)
     if (*commit) { ((uint8_t*)p)[0] = 0; } // ensure the memory is committed
 #endif
+  Kotlin_onAllocation(size);
   }
   return p;
 }
@@ -395,6 +399,7 @@ void _mi_mem_free(void* p, size_t size, size_t id, bool full_commit, bool any_re
   if (p==NULL) return;
   if (size==0) return;
   size = _mi_align_up(size, _mi_os_page_size());
+  Kotlin_onDeallocation(size);
 
   size_t arena_memid = 0;
   mi_bitmap_index_t bit_idx;

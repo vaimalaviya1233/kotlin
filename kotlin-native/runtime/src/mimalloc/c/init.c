@@ -176,10 +176,10 @@ static bool _mi_heap_init(void) {
   }
   else {
     // use `_mi_os_alloc` to allocate directly from the OS
-    mi_thread_data_t* td = (mi_thread_data_t*)_mi_os_alloc(sizeof(mi_thread_data_t), &_mi_stats_main, true); // Todo: more efficient allocation?
+    mi_thread_data_t* td = (mi_thread_data_t*)_mi_os_alloc(sizeof(mi_thread_data_t), &_mi_stats_main); // Todo: more efficient allocation?
     if (td == NULL) {
       // if this fails, try once more. (issue #257)
-      td = (mi_thread_data_t*)_mi_os_alloc(sizeof(mi_thread_data_t), &_mi_stats_main, true);
+      td = (mi_thread_data_t*)_mi_os_alloc(sizeof(mi_thread_data_t), &_mi_stats_main);
       if (td == NULL) {
         // really out of memory
         _mi_error_message(ENOMEM, "unable to allocate thread local heap metadata (%zu bytes)\n", sizeof(mi_thread_data_t));
@@ -241,7 +241,7 @@ static bool _mi_heap_done(mi_heap_t* heap) {
   // free if not the main thread
   if (heap != &_mi_heap_main) {
     mi_assert_internal(heap->tld->segments.count == 0 || heap->thread_id != _mi_thread_id());
-    _mi_os_free(heap, sizeof(mi_thread_data_t), &_mi_stats_main, true);
+    _mi_os_free(heap, sizeof(mi_thread_data_t), &_mi_stats_main);
   }
 #if 0  
   // never free the main thread even in debug mode; if a dll is linked statically with mimalloc,
