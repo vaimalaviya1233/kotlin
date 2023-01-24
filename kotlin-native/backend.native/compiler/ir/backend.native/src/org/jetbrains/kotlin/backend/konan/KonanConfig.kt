@@ -247,6 +247,9 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
     private val shouldCoverLibraries = !configuration.getList(KonanConfigKeys.LIBRARIES_TO_COVER).isNullOrEmpty()
 
     private val defaultAllocationMode get() = when {
+        memoryModel == MemoryModel.EXPERIMENTAL && gc == GC.CONCURRENT_MARK_AND_SWEEP && sanitizer == null -> {
+            AllocationMode.CUSTOM
+        }
         memoryModel == MemoryModel.EXPERIMENTAL && target.supportsMimallocAllocator() && sanitizer == null -> {
             AllocationMode.MIMALLOC
         }
