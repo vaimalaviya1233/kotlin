@@ -10,8 +10,6 @@ import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirModuleResolveCompone
 import org.jetbrains.kotlin.fir.builder.RawFirBuilder
 import org.jetbrains.kotlin.fir.builder.BodyBuildingMode
 import org.jetbrains.kotlin.fir.declarations.FirFile
-import org.jetbrains.kotlin.fir.scopes.FirScopeProvider
-import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirPhaseRunner
 import org.jetbrains.kotlin.psi.KtFile
 
 /**
@@ -25,7 +23,7 @@ internal class LLFirFileBuilder(
         RawFirBuilder(
             moduleComponents.session,
             moduleComponents.scopeProvider,
-            bodyBuildingMode = BodyBuildingMode.LAZY_BODIES
+            bodyBuildingMode = if (ktFile.isScript()) BodyBuildingMode.NORMAL else BodyBuildingMode.LAZY_BODIES
         ).buildFirFile(ktFile)
     }
 }
