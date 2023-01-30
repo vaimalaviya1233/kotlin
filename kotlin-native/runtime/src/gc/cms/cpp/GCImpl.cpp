@@ -88,15 +88,29 @@ gc::GC::~GC() = default;
 
 // static
 size_t gc::GC::GetAllocatedHeapSize(ObjHeader* object) noexcept {
+#ifdef CUSTOM_ALLOCATOR
+    return alloc::CustomAllocator::GetAllocatedHeapSize(object);
+#else
     return mm::ObjectFactory<GCImpl>::GetAllocatedHeapSize(object);
+#endif
 }
 
 
 size_t gc::GC::GetHeapObjectsCountUnsafe() const noexcept {
+#ifdef CUSTOM_ALLOCATOR
+    // TODO: Should probably remove object counts for performance reasons.
+    return 0;
+#else
     return impl_->objectFactory().GetObjectsCountUnsafe();
+#endif
 }
 size_t gc::GC::GetTotalHeapObjectsSizeUnsafe() const noexcept {
+#ifdef CUSTOM_ALLOCATOR
+    // TODO: Track current heap size with custom allocator. Currently only used for logging.
+    return 0;
+#else
     return impl_->objectFactory().GetTotalObjectsSizeUnsafe();
+#endif
 }
 size_t gc::GC::GetExtraObjectsCountUnsafe() const noexcept {
     return mm::GlobalData::Instance().extraObjectDataFactory().GetSizeUnsafe();
@@ -111,7 +125,9 @@ gc::GCSchedulerConfig& gc::GC::gcSchedulerConfig() noexcept {
 
 void gc::GC::ClearForTests() noexcept {
     impl_->gc().StopFinalizerThreadIfRunning();
+#ifndef CUSTOM_ALLOCATOR
     impl_->objectFactory().ClearForTests();
+#endif
     GCHandle::ClearForTests();
 }
 

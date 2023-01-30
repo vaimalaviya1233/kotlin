@@ -40,7 +40,8 @@ void Heap::PrepareForGC() noexcept {
     usedExtraObjectPages_.TransferAllFrom(std::move(extraObjectPages_));
 }
 
-void Heap::Sweep() noexcept {
+void Heap::Sweep(gc::GCHandle gcHandle) noexcept {
+    auto sweepHandle = gcHandle.sweep();
     CustomAllocDebug("Heap::Sweep()");
     for (int blockSize = 0; blockSize <= SMALL_PAGE_MAX_BLOCK_SIZE; ++blockSize) {
         smallPages_[blockSize].Sweep();
@@ -50,6 +51,7 @@ void Heap::Sweep() noexcept {
 }
 
 AtomicStack<ExtraObjectCell> Heap::SweepExtraObjects(gc::GCHandle gcHandle) noexcept {
+    auto sweepHandle = gcHandle.sweepExtraObjects();
     CustomAllocDebug("Heap::SweepExtraObjects()");
     AtomicStack<ExtraObjectCell> finalizerQueue;
     ExtraObjectPage* page;
