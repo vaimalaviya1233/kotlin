@@ -31,7 +31,7 @@ public:
     // Tries to allocate in current page, returns null if no free block in page
     uint8_t* TryAllocate() noexcept;
 
-    bool Sweep(gc::GCHandle::GCSweepScope* handle) noexcept;
+    bool Sweep(gc::GCHandle::GCSweepScope& handle) noexcept;
 
 private:
     friend class AtomicStack<SmallPage>;

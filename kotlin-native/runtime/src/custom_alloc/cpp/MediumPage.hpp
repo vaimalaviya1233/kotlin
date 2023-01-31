@@ -24,7 +24,7 @@ public:
     // Tries to allocate in current page, returns null if no free block in page is big enough
     uint8_t* TryAllocate(uint32_t blockSize) noexcept;
 
-    bool Sweep(gc::GCHandle::GCSweepScope* handle) noexcept;
+    bool Sweep(gc::GCHandle::GCSweepScope& handle) noexcept;
 
     // Testing method
     bool CheckInvariants() noexcept;

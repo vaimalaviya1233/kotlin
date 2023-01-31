@@ -24,13 +24,13 @@ public:
     }
 
     void Sweep(gc::GCHandle::GCSweepScope& handle) noexcept {
-        while (SweepSingle(unswept_, ready_, &handle)) {}
+        while (SweepSingle(unswept_, ready_, handle)) {}
     }
 
     void SweepAndFree(gc::GCHandle::GCSweepScope& handle) noexcept {
         T* page;
         while ((page = unswept_.Pop())) {
-            if (page->Sweep(&handle)) {
+            if (page->Sweep(handle)) {
                 ready_.Push(page);
             } else {
                 page->Destroy();
@@ -40,9 +40,11 @@ public:
 
     T* GetPage(uint32_t cellCount) noexcept {
         T* page;
+#if 0
         if ((page = SweepSingle(unswept_, used_, nullptr))) {
             return page;
         }
+#endif
         if ((page = ready_.Pop())) {
             used_.Push(page);
             return page;
@@ -69,7 +71,7 @@ public:
     }
 
 private:
-    T* SweepSingle(AtomicStack<T>& from, AtomicStack<T>& to, gc::GCHandle::GCSweepScope* handle) noexcept {
+    T* SweepSingle(AtomicStack<T>& from, AtomicStack<T>& to, gc::GCHandle::GCSweepScope& handle) noexcept {
         T* page;
         while ((page = from.Pop())) {
             if (page->Sweep(handle)) {

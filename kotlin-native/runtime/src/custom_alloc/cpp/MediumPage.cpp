@@ -39,21 +39,17 @@ uint8_t* MediumPage::TryAllocate(uint32_t blockSize) noexcept {
     return curBlock_->TryAllocate(cellsNeeded);
 }
 
-bool MediumPage::Sweep(gc::GCHandle::GCSweepScope* handle) noexcept {
+bool MediumPage::Sweep(gc::GCHandle::GCSweepScope& handle) noexcept {
     CustomAllocDebug("MediumPage@%p::Sweep()", this);
     Cell* end = cells_ + MEDIUM_PAGE_CELL_COUNT;
     bool alive = false;
     for (Cell* block = cells_ + 1; block != end; block = block->Next()) {
         if (block->isAllocated_) {
             if (TryResetMark(block->data_)) {
-                if (handle) {
-                    handle->keepObject();
-                }
+                handle.keepObject();
                 alive = true;
             } else {
-                if (handle) {
-                    handle->sweepObject();
-                }
+                handle.sweepObject();
                 block->Deallocate();
             }
         }
