@@ -94,9 +94,9 @@ private:
     void threadRootSetCollected(mm::ThreadData& threadData, uint64_t threadLocalReferences, uint64_t stackReferences);
     void globalRootSetCollected(uint64_t globalReferences, uint64_t stableReferences);
     void heapUsageBefore(MemoryUsage usage);
-    void heapUsageAfter(MemoryUsage usage);
+    void heapUsageAfter(MemoryUsage usage, uint64_t sweepTimeUs);
     void extraObjectsUsageBefore(MemoryUsage usage);
-    void extraObjectsUsageAfter(MemoryUsage usage);
+    void extraObjectsUsageAfter(MemoryUsage usage, uint64_t sweepTimeUs);
     void marked(MemoryUsage usage);
 
 public:

@@ -43,6 +43,7 @@ public:
             double maxHeapBytes = static_cast<double>(config_.maxHeapBytes.load());
             targetHeapBytes = std::min(std::max(targetHeapBytes, minHeapBytes), maxHeapBytes);
             config_.targetHeapBytes = static_cast<int64_t>(targetHeapBytes);
+            RuntimeLogInfo({kTagGC}, "Setting next heap boundary at %" PRId64, static_cast<int64_t>(targetHeapBytes));
         }
     }
 
@@ -50,7 +51,11 @@ public:
     bool NeedsGC() const noexcept {
         uint64_t currentHeapBytes = allocatedBytes_.load() + lastAliveSetBytes_.load();
         uint64_t targetHeapBytes = config_.targetHeapBytes;
-        return currentHeapBytes >= targetHeapBytes;
+        auto result = currentHeapBytes >= targetHeapBytes;
+        if (result) {
+            RuntimeLogInfo({kTagGC}, "Scheduling GC by reaching heap boundary %" PRIu64, currentHeapBytes);
+        }
+        return result;
     }
 
 private:
