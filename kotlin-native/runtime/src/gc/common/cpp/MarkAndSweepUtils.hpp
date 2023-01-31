@@ -137,13 +137,16 @@ typename Traits::ObjectFactory::FinalizerQueue Sweep(GCHandle handle, typename T
 
     for (auto it = objectFactoryIter.begin(); it != objectFactoryIter.end();) {
         if (Traits::TryResetMark(*it)) {
+            sweepHandle.keepObject();
             ++it;
             continue;
         }
         auto* objHeader = it->GetObjHeader();
         if (HasFinalizers(objHeader)) {
+            sweepHandle.keepObject();
             objectFactoryIter.MoveAndAdvance(finalizerQueue, it);
         } else {
+            sweepHandle.sweepObject();
             objectFactoryIter.EraseAndAdvance(it);
         }
     }

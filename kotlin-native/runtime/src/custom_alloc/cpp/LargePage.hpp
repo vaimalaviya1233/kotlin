@@ -24,7 +24,7 @@ public:
 
     uint8_t* TryAllocate() noexcept;
 
-    bool Sweep() noexcept;
+    bool Sweep(gc::GCHandle::GCSweepScope* handle) noexcept;
 
 private:
     friend class AtomicStack<LargePage>;

@@ -46,7 +46,7 @@ uint8_t* SmallPage::TryAllocate() noexcept {
     return freeBlock->data;
 }
 
-bool SmallPage::Sweep() noexcept {
+bool SmallPage::Sweep(gc::GCHandle::GCSweepScope* handle) noexcept {
     CustomAllocInfo("SmallPage(%p)::Sweep()", this);
     // `end` is after the last legal allocation of a block, but does not
     // necessarily match an actual block starting point.
@@ -62,7 +62,13 @@ bool SmallPage::Sweep() noexcept {
         // If the current cell was marked, it's alive, and the whole page is alive.
         if (TryResetMark(cell)) {
             alive = true;
+            if (handle) {
+                handle->keepObject();
+            }
             continue;
+        }
+        if (handle) {
+            handle->sweepObject();
         }
         CustomAllocInfo("SmallPage(%p)::Sweep: reclaim %p", this, cell);
         // Free the current block and insert it into the free list.

@@ -9,6 +9,7 @@
 #include <atomic>
 
 #include "AtomicStack.hpp"
+#include "GCStatistics.hpp"
 
 namespace kotlin::alloc {
 
@@ -22,14 +23,14 @@ public:
         while ((page = empty_.Pop())) page->Destroy();
     }
 
-    void Sweep() noexcept {
-        while (SweepSingle(unswept_, ready_)) {}
+    void Sweep(gc::GCHandle::GCSweepScope& handle) noexcept {
+        while (SweepSingle(unswept_, ready_, &handle)) {}
     }
 
-    void SweepAndFree() noexcept {
+    void SweepAndFree(gc::GCHandle::GCSweepScope& handle) noexcept {
         T* page;
         while ((page = unswept_.Pop())) {
-            if (page->Sweep()) {
+            if (page->Sweep(&handle)) {
                 ready_.Push(page);
             } else {
                 page->Destroy();
@@ -39,7 +40,7 @@ public:
 
     T* GetPage(uint32_t cellCount) noexcept {
         T* page;
-        if ((page = SweepSingle(unswept_, used_))) {
+        if ((page = SweepSingle(unswept_, used_, nullptr))) {
             return page;
         }
         if ((page = ready_.Pop())) {
@@ -68,10 +69,10 @@ public:
     }
 
 private:
-    T* SweepSingle(AtomicStack<T>& from, AtomicStack<T>& to) noexcept {
+    T* SweepSingle(AtomicStack<T>& from, AtomicStack<T>& to, gc::GCHandle::GCSweepScope* handle) noexcept {
         T* page;
         while ((page = from.Pop())) {
-            if (page->Sweep()) {
+            if (page->Sweep(handle)) {
                 to.Push(page);
                 return page;
             }

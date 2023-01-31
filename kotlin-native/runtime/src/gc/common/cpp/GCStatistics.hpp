@@ -33,10 +33,15 @@ public:
     class GCSweepScope : GCStageScopeUsTimer, Pinned {
         GCHandle& handle_;
         MemoryUsage getUsage();
+        uint64_t keptObjects_ = 0;
+        uint64_t sweptObjects_ = 0;
 
     public:
         explicit GCSweepScope(GCHandle& handle);
         ~GCSweepScope();
+
+        void keepObject() noexcept { keptObjects_ += 1; }
+        void sweepObject() noexcept { sweptObjects_ += 1; }
     };
 
     class GCSweepExtraObjectsScope : GCStageScopeUsTimer, Pinned {
@@ -94,7 +99,7 @@ private:
     void threadRootSetCollected(mm::ThreadData& threadData, uint64_t threadLocalReferences, uint64_t stackReferences);
     void globalRootSetCollected(uint64_t globalReferences, uint64_t stableReferences);
     void heapUsageBefore(MemoryUsage usage);
-    void heapUsageAfter(MemoryUsage usage, uint64_t sweepTimeUs);
+    void heapUsageAfter(MemoryUsage usage, uint64_t sweepTimeUs, uint64_t keptObjects, uint64_t sweptObjects);
     void extraObjectsUsageBefore(MemoryUsage usage);
     void extraObjectsUsageAfter(MemoryUsage usage, uint64_t sweepTimeUs);
     void marked(MemoryUsage usage);

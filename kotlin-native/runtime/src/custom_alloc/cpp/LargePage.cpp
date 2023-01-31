@@ -35,12 +35,18 @@ uint8_t* LargePage::TryAllocate() noexcept {
     return Data();
 }
 
-bool LargePage::Sweep() noexcept {
+bool LargePage::Sweep(gc::GCHandle::GCSweepScope* handle) noexcept {
     CustomAllocDebug("LargePage@%p::Sweep()", this);
     if (!TryResetMark(Data())) {
+        if (handle) {
+            handle->sweepObject();
+        }
         isAllocated_ = false;
         return false;
     }
+        if (handle) {
+            handle->keepObject();
+        }
     return true;
 }
 
