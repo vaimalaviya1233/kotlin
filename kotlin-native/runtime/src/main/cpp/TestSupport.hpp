@@ -23,7 +23,10 @@ constexpr int kDefaultThreadCount = 10;
 constexpr int kDefaultThreadCount = 100;
 #endif
 
-inline MemoryState* InitMemoryForTests() { return InitMemory(false); }
+inline MemoryState* InitMemoryForTests() {
+    test_support::markRuntimeInitialized();
+    return InitMemory(false);
+}
 void DeinitMemoryForTests(MemoryState* memoryState);
 
 // Scopely initializes the memory subsystem of the current thread for tests.
@@ -39,6 +42,7 @@ public:
         // Ensure that memory deinit is performed in the native state.
         SwitchThreadState(memoryState(), ThreadState::kNative);
         DeinitMemoryForTests(memoryState());
+        test_support::markRuntimeUninitialized();
     }
 
     MemoryState* memoryState() { return memoryState_; }

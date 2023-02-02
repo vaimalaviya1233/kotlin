@@ -34,6 +34,16 @@
   #define CODEGEN_INLINE_POLICY ALWAYS_INLINE
 #endif
 
+// NOTE: Must match `MemoryModel` in `Platform.kt`
+enum class MemoryModel {
+    kStrict = 0,
+    kRelaxed = 1,
+    kExperimental = 2,
+};
+
+// Controls the current memory model, is compile-time constant.
+extern "C" const MemoryModel CurrentMemoryModel;
+
 typedef enum {
   // Must match to permTag() in Kotlin.
   OBJECT_TAG_PERMANENT_CONTAINER = 1 << 0,
@@ -120,7 +130,16 @@ struct ObjHeader {
     return hasPointerBits(typeInfoOrMetaRelaxed(), OBJECT_TAG_PERMANENT_CONTAINER);
   }
 
-  inline bool heap() const { return getPointerBits(typeInfoOrMetaRelaxed(), OBJECT_TAG_MASK) == 0; }
+  inline bool heap() const {
+    auto bits = getPointerBits(typeInfoOrMetaRelaxed(), OBJECT_TAG_MASK);
+    if (CurrentMemoryModel == MemoryModel::kExperimental) {
+      return bits == 0;
+    } else {
+      constexpr auto permanentTag = OBJECT_TAG_PERMANENT_CONTAINER;
+      constexpr auto localTag = OBJECT_TAG_PERMANENT_CONTAINER | OBJECT_TAG_NONTRIVIAL_CONTAINER;
+      return (bits & permanentTag) != permanentTag && (bits & localTag) != localTag;
+    }
+  }
 
   static MetaObjHeader* createMetaObject(ObjHeader* object);
   static void destroyMetaObject(ObjHeader* object);
@@ -152,6 +171,7 @@ ALWAYS_INLINE inline bool isNullOrMarker(const ObjHeader* obj) noexcept {
 class ForeignRefManager;
 struct FrameOverlay;
 typedef ForeignRefManager* ForeignRefContext;
+class BackRefFromAssociatedObject;
 
 #ifdef __cplusplus
 extern "C" {
@@ -222,16 +242,6 @@ void InitAndRegisterGlobal(ObjHeader** location, const ObjHeader* initialValue) 
 //  - exception handlers knowns slot locations for every function, and can update references
 //    in intermediate frames when throwing
 //
-
-// NOTE: Must match `MemoryModel` in `Platform.kt`
-enum class MemoryModel {
-    kStrict = 0,
-    kRelaxed = 1,
-    kExperimental = 2,
-};
-
-// Controls the current memory model, is compile-time constant.
-extern const MemoryModel CurrentMemoryModel;
 
 // Sets stack location.
 void SetStackRef(ObjHeader** location, const ObjHeader* object) RUNTIME_NOTHROW;
@@ -346,10 +356,15 @@ OBJ_GETTER(TryRef, ObjHeader* object) RUNTIME_NOTHROW;
 
 ForeignRefContext InitLocalForeignRef(ObjHeader* object);
 
-ForeignRefContext InitForeignRef(ObjHeader* object);
-void DeinitForeignRef(ObjHeader* object, ForeignRefContext context);
+ForeignRefContext InitForeignRefLegacyMM(ObjHeader* object);
+void DeinitForeignRefLegacyMM(ObjHeader* object, ForeignRefContext context);
+
+ForeignRefContext InitForeignRef(BackRefFromAssociatedObject* backRef, bool commit) RUNTIME_NOTHROW;
+void DeinitForeignRef(ForeignRefContext context) RUNTIME_NOTHROW;
 
 bool IsForeignRefAccessible(ObjHeader* object, ForeignRefContext context);
+
+void ForeignRefPromote(ForeignRefContext context) RUNTIME_NOTHROW;
 
 // Should be used when reference is read from a possibly shared variable,
 // and there's nothing else keeping the object alive.

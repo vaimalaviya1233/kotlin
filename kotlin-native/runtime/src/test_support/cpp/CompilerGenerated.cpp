@@ -238,7 +238,7 @@ void Kotlin_Internal_GC_GCInfoBuilder_setPauseEndTime(KRef thiz, KLong value) {
 void Kotlin_Internal_GC_GCInfoBuilder_setPostGcCleanupTime(KRef thiz, KLong value) {
     throw std::runtime_error("Not implemented for tests");
 }
-void Kotlin_Internal_GC_GCInfoBuilder_setRootSet(KRef thiz, KLong threadLocalReferences, KLong stackReferences, KLong globalReferences, KLong stableReferences) {
+void Kotlin_Internal_GC_GCInfoBuilder_setRootSet(KRef thiz, KLong threadLocalReferences, KLong stackReferences, KLong globalReferences, KLong stableReferences, KLong foreignRerefences) {
     throw std::runtime_error("Not implemented for tests");
 }
 void Kotlin_Internal_GC_GCInfoBuilder_setMemoryUsageBefore(KRef thiz, KNativePtr name, KLong objectsCount, KLong totalObjectsSize) {
@@ -247,7 +247,9 @@ void Kotlin_Internal_GC_GCInfoBuilder_setMemoryUsageBefore(KRef thiz, KNativePtr
 void Kotlin_Internal_GC_GCInfoBuilder_setMemoryUsageAfter(KRef thiz, KNativePtr name, KLong objectsCount, KLong totalObjectsSize) {
     throw std::runtime_error("Not implemented for tests");
 }
-
+void Kotlin_Internal_GC_GCInfoBuilder_setForeignObjectsCount(KRef thiz, KLong count) {
+    throw std::runtime_error("Not implemented for tests");
+}
 
 extern const KBoolean BOOLEAN_RANGE_FROM = false;
 extern const KBoolean BOOLEAN_RANGE_TO = true;

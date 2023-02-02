@@ -134,6 +134,7 @@ bool gc::SameThreadMarkAndSweep::PerformFullGC() noexcept {
         finalizerQueue = gc::Sweep<SweepTraits>(gcHandle, objectFactory_);
 
         kotlin::compactObjectPoolInMainThread();
+        sweepForeignRefs(gcHandle, mm::GlobalData::Instance().foreignRefRegistry());
 
         gSafepointFlag = SafepointFlag::kNone;
         mm::ResumeThreads();

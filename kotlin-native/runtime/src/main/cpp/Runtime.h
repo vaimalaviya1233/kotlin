@@ -43,4 +43,12 @@ bool Kotlin_forceCheckedShutdown();
 #ifdef __cplusplus
 } // extern "C"
 #endif
+
+namespace kotlin::test_support {
+
+void markRuntimeInitialized() noexcept;
+void markRuntimeUninitialized() noexcept;
+
+}
+
 #endif // RUNTIME_RUNTIME_H

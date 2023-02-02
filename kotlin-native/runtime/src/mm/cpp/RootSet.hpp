@@ -6,6 +6,7 @@
 #ifndef RUNTIME_MM_ROOT_SET_H
 #define RUNTIME_MM_ROOT_SET_H
 
+#include "ForeignRefRegistry.hpp"
 #include "GlobalsRegistry.hpp"
 #include "ShadowStack.hpp"
 #include "StableRefRegistry.hpp"
@@ -18,6 +19,7 @@ namespace mm {
 
 class ThreadData;
 
+// TODO: Extremely useless class. Remove.
 class ThreadRootSet {
 public:
     enum class Source {
@@ -78,15 +80,17 @@ private:
     ThreadLocalStorage& tls_;
 };
 
+// TODO: Extremely useless class. Remove.
 class GlobalRootSet {
 public:
     enum class Source {
         kGlobal,
         kStableRef,
+        kForeignRef,
     };
 
     struct Value {
-        ObjHeader*& object;
+        ObjHeader* object;
         Source source;
 
         bool operator==(const Value& rhs) const noexcept { return object == rhs.object && source == rhs.source; }
@@ -114,6 +118,7 @@ public:
         enum class Phase {
             kGlobals,
             kStableRefs,
+            kForeignRefs,
             kDone,
         };
 
@@ -124,11 +129,12 @@ public:
         union {
             GlobalsRegistry::Iterator globalsIterator_;
             StableRefRegistry::Iterator stableRefsIterator_;
+            ForeignRefRegistry::RootsIterator foreignRefsIterator_;
         };
     };
 
-    GlobalRootSet(GlobalsRegistry& globalsRegistry, StableRefRegistry& stableRefRegistry) noexcept :
-        globalsIterable_(globalsRegistry.LockForIter()), stableRefsIterable_(stableRefRegistry.LockForIter()) {}
+    GlobalRootSet(GlobalsRegistry& globalsRegistry, StableRefRegistry& stableRefRegistry, ForeignRefRegistry& foreignRefRegistry) noexcept :
+        globalsIterable_(globalsRegistry.LockForIter()), stableRefsIterable_(stableRefRegistry.LockForIter()), foreignRefsIterable_(foreignRefRegistry.roots()) {}
     GlobalRootSet() noexcept;
 
     Iterator begin() noexcept { return Iterator(Iterator::begin, *this); }
@@ -139,6 +145,7 @@ private:
     //       fine, because this is the only place where these two locks are taken simultaneously.
     GlobalsRegistry::Iterable globalsIterable_;
     StableRefRegistry::Iterable stableRefsIterable_;
+    ForeignRefRegistry::RootsIterable foreignRefsIterable_;
 };
 
 } // namespace mm

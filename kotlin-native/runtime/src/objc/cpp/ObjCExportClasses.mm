@@ -77,7 +77,7 @@ static void injectToRuntime();
   }
   ObjHolder holder;
   AllocInstanceWithAssociatedObject(typeInfo, result, holder.slot());
-  result->refHolder.initAndAddRef(holder.obj());
+  result->refHolder.initAndAddRef(holder.obj(), true);
   RuntimeAssert(!holder.obj()->permanent(), "dynamically allocated object is permanent");
   result->permanent = false;
   return result;
@@ -88,10 +88,13 @@ static void injectToRuntime();
 
   KotlinBase* candidate = [super allocWithZone:nil];
   // TODO: should we call NSObject.init ?
-  candidate->refHolder.initAndAddRef(obj);
-  candidate->permanent = obj->permanent();
 
-  if (!obj->permanent()) { // TODO: permanent objects should probably be supported as custom types.
+  if (obj->permanent()) { // TODO: permanent objects should probably be supported as custom types.
+    candidate->permanent = true;
+    candidate->refHolder.initRefForPermanent(obj);
+  } else {
+    candidate->permanent = false;
+    candidate->refHolder.initAndAddRef(obj, false);
     if (!isShareable(obj)) {
       SetAssociatedObject(obj, candidate);
     } else {
@@ -105,6 +108,7 @@ static void injectToRuntime();
         return objc_retain(old);
       }
     }
+    candidate->refHolder.commit();
   }
 
   return candidate;

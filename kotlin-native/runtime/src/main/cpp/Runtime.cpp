@@ -514,3 +514,13 @@ void CallInitThreadLocal(int volatile* globalState, int* localState, void (*init
 }
 
 }  // extern "C"
+
+void test_support::markRuntimeInitialized() noexcept {
+    RuntimeAssert(runtimeState == nullptr, "Attempting to mark runtimeState %p as initialized", runtimeState);
+    runtimeState = reinterpret_cast<RuntimeState*>(1);
+}
+
+void test_support::markRuntimeUninitialized() noexcept {
+    RuntimeAssert(runtimeState == reinterpret_cast<RuntimeState*>(1), "Attempting to unmark runtimeState %p as initialized", runtimeState);
+    runtimeState = nullptr;
+}

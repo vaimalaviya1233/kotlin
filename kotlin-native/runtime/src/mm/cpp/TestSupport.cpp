@@ -47,11 +47,13 @@ extern "C" void Kotlin_TestSupport_AssertClearGlobalState() {
     auto globals = mm::GlobalsRegistry::Instance().LockForIter();
     auto extraObjects = mm::GlobalData::Instance().extraObjectDataFactory().LockForIter();
     auto stableRefs = mm::StableRefRegistry::Instance().LockForIter();
+    auto foreignRefs = mm::ForeignRefRegistry::instance().lockForIter();
     auto threads = mm::ThreadRegistry::Instance().LockForIter();
 
     EXPECT_THAT(collectCopy(globals), testing::UnorderedElementsAre());
     EXPECT_THAT(collectPointers(extraObjects), testing::UnorderedElementsAre());
     EXPECT_THAT(collectCopy(stableRefs), testing::UnorderedElementsAre());
+    EXPECT_THAT(collectPointers(foreignRefs), testing::UnorderedElementsAre());
     EXPECT_THAT(collectPointers(threads), testing::UnorderedElementsAre());
     gc::AssertClear(mm::GlobalData::Instance().gc());
 }

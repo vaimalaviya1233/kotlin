@@ -46,7 +46,8 @@ public class RootSetStatistics(
         val threadLocalReferences: Long,
         val stackReferences: Long,
         val globalReferences: Long,
-        val stableReferences: Long
+        val stableReferences: Long,
+        val foreignReferences: Long,
 )
 
 /**
@@ -80,6 +81,7 @@ public class GCInfo(
         val rootSet: RootSetStatistics,
         val memoryUsageBefore: Map<String, MemoryUsage>,
         val memoryUsageAfter: Map<String, MemoryUsage>,
+        val foreignReferences: Long,
 ) {
     internal companion object {
         val lastGCInfo: GCInfo?
@@ -101,6 +103,7 @@ private class GCInfoBuilder() {
     var rootSet: RootSetStatistics? = null
     var memoryUsageBefore = mutableMapOf<String, MemoryUsage>()
     var memoryUsageAfter = mutableMapOf<String, MemoryUsage>()
+    var foreignReferences: Long? = null
 
     @ExportForCppRuntime("Kotlin_Internal_GC_GCInfoBuilder_setEpoch")
     private fun setEpoch(value: Long) {
@@ -133,8 +136,8 @@ private class GCInfoBuilder() {
     }
 
     @ExportForCppRuntime("Kotlin_Internal_GC_GCInfoBuilder_setRootSet")
-    private fun setRootSet(threadLocalReferences: Long, stackReferences: Long, globalReferences: Long, stableReferences: Long) {
-        rootSet = RootSetStatistics(threadLocalReferences, stackReferences, globalReferences, stableReferences)
+    private fun setRootSet(threadLocalReferences: Long, stackReferences: Long, globalReferences: Long, stableReferences: Long, foreignReferences: Long) {
+        rootSet = RootSetStatistics(threadLocalReferences, stackReferences, globalReferences, stableReferences, foreignReferences)
     }
 
     @ExportForCppRuntime("Kotlin_Internal_GC_GCInfoBuilder_setMemoryUsageBefore")
@@ -151,6 +154,11 @@ private class GCInfoBuilder() {
         memoryUsageAfter[nameString] = memoryUsage
     }
 
+    @ExportForCppRuntime("Kotlin_Internal_GC_GCInfoBuilder_setForeignObjectsCount")
+    private fun setForeignObjectsCount(value: Long) {
+        foreignReferences = value
+    }
+
     fun build(): GCInfo? {
         return GCInfo(
                 epoch ?: return null,
@@ -161,7 +169,8 @@ private class GCInfoBuilder() {
                 postGcCleanupTimeNs,
                 rootSet ?: return null,
                 memoryUsageBefore.toMap(),
-                memoryUsageAfter.toMap()
+                memoryUsageAfter.toMap(),
+                foreignReferences ?: return null,
         )
     }
 
