@@ -6103,6 +6103,14 @@ if (isAppleTarget(project)) {
             }
         }
     }
+
+    frameworkTest("testKt56233Framework") {
+        enabled = !project.globalTestArgs.contains('-opt')
+        framework("Kt56233") {
+            sources = ['framework/kt56233']
+        }
+        swiftSources = ['framework/kt56233']
+    }
 }
 
 /**
