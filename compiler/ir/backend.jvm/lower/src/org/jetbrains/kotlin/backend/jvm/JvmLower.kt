@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.backend.jvm.ir.constantValue
 import org.jetbrains.kotlin.backend.jvm.ir.shouldContainSuspendMarkers
 import org.jetbrains.kotlin.backend.jvm.lower.*
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
+import org.jetbrains.kotlin.config.JVMConfigurationKeys
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.DescriptorVisibility
 import org.jetbrains.kotlin.ir.IrElement
@@ -28,6 +29,7 @@ import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
 import org.jetbrains.kotlin.ir.visitors.acceptVoid
 import org.jetbrains.kotlin.load.java.JavaDescriptorVisibilities
 import org.jetbrains.kotlin.name.NameUtils
+import org.jetbrains.kotlin.resolve.jvm.diagnostics.JvmBackendErrors
 
 private var patchParentPhases = 0
 
@@ -275,6 +277,25 @@ private val kotlinNothingValueExceptionPhase = makeIrFilePhase<CommonBackendCont
     { context -> KotlinNothingValueExceptionLowering(context) { it is IrFunction && !it.shouldContainSuspendMarkers() } },
     name = "KotlinNothingValueException",
     description = "Throw proper exception for calls returning value of type 'kotlin.Nothing'"
+)
+
+val constEvaluationPhase = makeIrModulePhase<JvmBackendContext>(
+    {
+        ConstEvaluationLowering(
+            it,
+            it.configuration.getBoolean(JVMConfigurationKeys.IGNORE_CONST_OPTIMIZATION_ERRORS),
+            { irFile, element, warning ->
+                it.ktDiagnosticReporter.at(element, irFile)
+                    .report(JvmBackendErrors.EXCEPTION_IN_CONST_EXPRESSION, warning.description)
+            },
+            { irFile, element, error ->
+                it.ktDiagnosticReporter.at(element, irFile)
+                    .report(JvmBackendErrors.EXCEPTION_IN_CONST_VAL_INITIALIZER, error.description)
+            }
+        )
+    },
+    name = "ConstEvaluationLowering",
+    description = "Evaluate functions that are marked as `IntrinsicConstEvaluation`"
 )
 
 private val jvmFilePhases = listOf(
