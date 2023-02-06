@@ -15,7 +15,6 @@ import org.jetbrains.kotlin.backend.jvm.ir.constantValue
 import org.jetbrains.kotlin.backend.jvm.ir.shouldContainSuspendMarkers
 import org.jetbrains.kotlin.backend.jvm.lower.*
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
-import org.jetbrains.kotlin.config.JVMConfigurationKeys
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.DescriptorVisibility
 import org.jetbrains.kotlin.ir.IrElement
@@ -283,12 +282,11 @@ val constEvaluationPhase = makeIrModulePhase<JvmBackendContext>(
     {
         ConstEvaluationLowering(
             it,
-            it.configuration.getBoolean(JVMConfigurationKeys.IGNORE_CONST_OPTIMIZATION_ERRORS),
-            { irFile, element, warning ->
+            onWarning = { irFile, element, warning ->
                 it.ktDiagnosticReporter.at(element, irFile)
                     .report(JvmBackendErrors.EXCEPTION_IN_CONST_EXPRESSION, warning.description)
             },
-            { irFile, element, error ->
+            onError = { irFile, element, error ->
                 it.ktDiagnosticReporter.at(element, irFile)
                     .report(JvmBackendErrors.EXCEPTION_IN_CONST_VAL_INITIALIZER, error.description)
             }
