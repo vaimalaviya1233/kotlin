@@ -99,7 +99,7 @@ GCInfo* statByEpoch(uint64_t epoch) {
 
 MemoryUsage currentHeapUsage() noexcept {
     return MemoryUsage {
-        mm::GlobalData::Instance().gc().GetTotalHeapObjectsSizeUnsafe(),
+        mm::GlobalData::Instance().gc().GetTotalHeapObjectsSizeBytes(),
     };
 }
 
