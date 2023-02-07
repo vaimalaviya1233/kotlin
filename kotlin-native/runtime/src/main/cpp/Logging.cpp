@@ -141,12 +141,12 @@ std_support::span<char> FormatThread(std_support::span<char> buffer, int threadI
     return FormatToSpan(buffer, "[tid#%d]", threadId);
 }
 
-struct LogContext {
-    std_support::unique_ptr<logging::internal::LogFilter> logFilter;
-    std_support::unique_ptr<logging::internal::Logger> logger;
+struct DefaultLogContext {
+    ::LogFilter logFilter;
+    StderrLogger logger;
     kotlin::steady_clock::time_point initialTimestamp;
 
-    explicit LogContext(std::string_view tagsFilter) noexcept : logFilter(logging::internal::CreateLogFilter(tagsFilter)), logger(logging::internal::CreateStderrLogger()), initialTimestamp(kotlin::steady_clock::now()) {}
+    explicit DefaultLogContext(std::string_view tagsFilter) noexcept : logFilter(tagsFilter), initialTimestamp(kotlin::steady_clock::now()) {}
 };
 
 } // namespace
@@ -203,10 +203,10 @@ void logging::Log(Level level, std::initializer_list<const char*> tags, const ch
 }
 
 void logging::VLog(Level level, std::initializer_list<const char*> tags, const char* format, std::va_list args) noexcept {
-    [[clang::no_destroy]] static LogContext ctx(compiler::runtimeLogs());
+    [[clang::no_destroy]] static DefaultLogContext ctx(compiler::runtimeLogs());
     RuntimeAssert(tags.size() > 0, "Cannot Log without tags");
     std_support::span<const char* const> tagsSpan(std::data(tags), std::size(tags));
     auto threadId = konan::currentThreadId();
     auto timestamp = kotlin::steady_clock::now();
-    internal::Log(*ctx.logFilter, *ctx.logger, level, tagsSpan, threadId, timestamp - ctx.initialTimestamp, format, args);
+    internal::Log(ctx.logFilter, ctx.logger, level, tagsSpan, threadId, timestamp - ctx.initialTimestamp, format, args);
 }
