@@ -122,7 +122,7 @@ GCHandle GCHandle::create(uint64_t epoch) {
     if (current.epoch) {
         last = current;
         current = {};
-        RuntimeLogWarning({kTagGC}, "Starting new GC epoch, while previous is not finished\n");
+        GCLogWarning(epoch, "Starting new GC epoch, while previous is not finished");
     }
     current.epoch = static_cast<KLong>(epoch);
     current.startTime = static_cast<KLong>(konan::getTimeNanos());
@@ -171,7 +171,7 @@ void GCHandle::finished() {
 }
 void GCHandle::suspensionRequested() {
     std::lock_guard guard(lock);
-    GCLogDebug(epoch_, "Requested thread suspension by thread %d", konan::currentThreadId());
+    GCLogDebug(epoch_, "Requested thread suspension");
     if (auto* stat = statByEpoch(epoch_)) {
         stat->pauseStartTime = static_cast<KLong>(konan::getTimeNanos());
     }
@@ -205,9 +205,10 @@ void GCHandle::finalizersDone() {
             auto time = (*stat->finalizersDoneTime - *stat->endTime) / 1000;
             GCLogInfo(epoch_, "Finalization is done in %" PRId64 " microseconds after epoch end.", time);
             return;
+        } else {
+            GCLogInfo(epoch_, "Finalization is done.");
         }
     }
-    GCLogInfo(epoch_, "Finalization is done.");
 }
 void GCHandle::finalizersScheduled(uint64_t finalizersCount) {
     GCLogInfo(epoch_, "Finalization is scheduled for %" PRIu64 " objects.", finalizersCount);
@@ -368,8 +369,8 @@ GCHandle::GCMarkScope::GCMarkScope(kotlin::gc::GCHandle& handle) : handle_(handl
 GCHandle::GCMarkScope::~GCMarkScope() {
     handle_.marked(MemoryUsage{objectsCount, totalObjectSizeBytes});
     GCLogInfo(handle_.getEpoch(),
-               "Marked %" PRIu64 " objects in %" PRIu64 " microseconds in thread %d",
-               objectsCount, getStageTime(), konan::currentThreadId());
+               "Marked %" PRIu64 " objects in %" PRIu64 " microseconds.",
+               objectsCount, getStageTime());
 }
 
 } // namespace kotlin::gc
