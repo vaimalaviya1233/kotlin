@@ -44,10 +44,10 @@ void Heap::Sweep(gc::GCHandle gcHandle) noexcept {
     auto sweepHandle = gcHandle.sweep();
     CustomAllocDebug("Heap::Sweep()");
     for (int blockSize = 0; blockSize <= SMALL_PAGE_MAX_BLOCK_SIZE; ++blockSize) {
-        smallPages_[blockSize].Sweep();
+        smallPages_[blockSize].Sweep(sweepHandle);
     }
-    mediumPages_.Sweep();
-    largePages_.SweepAndFree();
+    mediumPages_.Sweep(sweepHandle);
+    largePages_.SweepAndFree(sweepHandle);
 }
 
 AtomicStack<ExtraObjectCell> Heap::SweepExtraObjects(gc::GCHandle gcHandle) noexcept {
@@ -56,7 +56,7 @@ AtomicStack<ExtraObjectCell> Heap::SweepExtraObjects(gc::GCHandle gcHandle) noex
     AtomicStack<ExtraObjectCell> finalizerQueue;
     ExtraObjectPage* page;
     while ((page = usedExtraObjectPages_.Pop())) {
-        if (!page->Sweep(finalizerQueue)) {
+        if (!page->Sweep(sweepHandle, finalizerQueue)) {
             CustomAllocInfo("SweepExtraObjects free(%p)", page);
             free(page);
         } else {

@@ -10,6 +10,7 @@
 #include <cstdint>
 
 #include "AtomicStack.hpp"
+#include "GCStatistics.hpp"
 #include "MediumPage.hpp"
 
 namespace kotlin::alloc {
@@ -24,7 +25,7 @@ public:
 
     uint8_t* TryAllocate() noexcept;
 
-    bool Sweep() noexcept;
+    bool Sweep(gc::GCHandle::GCSweepScope& sweepHandle) noexcept;
 
 private:
     friend class AtomicStack<LargePage>;

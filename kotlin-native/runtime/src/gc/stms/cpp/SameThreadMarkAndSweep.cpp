@@ -129,7 +129,7 @@ bool gc::SameThreadMarkAndSweep::PerformFullGC() noexcept {
 
         gc::Mark<internal::MarkTraits>(gcHandle, markQueue_);
         auto markStats = gcHandle.getMarked();
-        scheduler.gcData().UpdateAliveSetBytes(markStats.totalObjectsSize);
+        scheduler.gcData().UpdateAliveSetBytes(markStats.markedSizeBytes);
         gc::SweepExtraObjects<SweepTraits>(gcHandle, extraObjectsDataFactory);
         finalizerQueue = gc::Sweep<SweepTraits>(gcHandle, objectFactory_);
 

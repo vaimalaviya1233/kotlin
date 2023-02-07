@@ -178,7 +178,7 @@ bool gc::ConcurrentMarkAndSweep::PerformFullGC(int64_t epoch) noexcept {
 
     mm::WaitForThreadsSuspension();
     auto markStats = gcHandle.getMarked();
-    scheduler.gcData().UpdateAliveSetBytes(markStats.totalObjectsSize);
+    scheduler.gcData().UpdateAliveSetBytes(markStats.markedSizeBytes);
 
 #ifndef CUSTOM_ALLOCATOR
     mm::ExtraObjectDataFactory& extraObjectDataFactory = mm::GlobalData::Instance().extraObjectDataFactory();
