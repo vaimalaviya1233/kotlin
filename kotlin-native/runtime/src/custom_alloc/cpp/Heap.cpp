@@ -58,7 +58,7 @@ AtomicStack<ExtraObjectCell> Heap::SweepExtraObjects(gc::GCHandle gcHandle) noex
     while ((page = usedExtraObjectPages_.Pop())) {
         if (!page->Sweep(sweepHandle, finalizerQueue)) {
             CustomAllocInfo("SweepExtraObjects free(%p)", page);
-            free(page);
+            page->Destroy();
         } else {
             extraObjectPages_.Push(page);
         }

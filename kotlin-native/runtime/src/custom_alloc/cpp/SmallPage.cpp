@@ -23,7 +23,7 @@ SmallPage* SmallPage::Create(uint32_t blockSize) noexcept {
 }
 
 void SmallPage::Destroy() noexcept {
-    std_support::free(this);
+    Free(this, SMALL_PAGE_SIZE);
 }
 
 SmallPage::SmallPage(uint32_t blockSize) noexcept : blockSize_(blockSize) {

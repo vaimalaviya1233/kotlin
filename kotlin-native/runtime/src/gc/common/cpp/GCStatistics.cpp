@@ -197,7 +197,7 @@ void GCHandle::finished() {
         if (stat->memoryUsageBefore.heap) {
             GCLogInfo(
                     epoch_,
-                    "Managed memory usage: before %" PRIu64 " bytes, after %" PRIu64 " bytes",
+                    "Heap memory usage: before %" PRIu64 " bytes, after %" PRIu64 " bytes",
                     stat->memoryUsageBefore.heap->sizeBytes,
                     stat->memoryUsageAfter.heap->sizeBytes);
         }

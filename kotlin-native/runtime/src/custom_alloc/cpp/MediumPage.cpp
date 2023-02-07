@@ -21,7 +21,7 @@ MediumPage* MediumPage::Create(uint32_t cellCount) noexcept {
 }
 
 void MediumPage::Destroy() noexcept {
-    std_support::free(this);
+    Free(this, MEDIUM_PAGE_SIZE);
 }
 
 MediumPage::MediumPage(uint32_t cellCount) noexcept : curBlock_(cells_) {
