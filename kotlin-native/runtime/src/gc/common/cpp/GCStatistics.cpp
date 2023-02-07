@@ -194,12 +194,19 @@ void GCHandle::finished() {
                     "Sweep: swept %" PRIu64 " objects, kept %" PRIu64 " objects",
                     stat->sweepStats->sweptCount, stat->sweepStats->keptCount);
         }
-        if (stat->memoryUsageBefore.heap) {
+        if (stat->memoryUsageBefore.heap && stat->memoryUsageAfter.heap) {
             GCLogInfo(
                     epoch_,
                     "Heap memory usage: before %" PRIu64 " bytes, after %" PRIu64 " bytes",
                     stat->memoryUsageBefore.heap->sizeBytes,
                     stat->memoryUsageAfter.heap->sizeBytes);
+        }
+        if (stat->pauseStartTime && stat->pauseEndTime) {
+            auto time = (*stat->pauseEndTime - *stat->pauseStartTime) / 1000;
+            GCLogInfo(
+                    epoch_,
+                    "Mutators pause time: %" PRIu64 " microseconds.",
+                    time);
         }
         if (stat->startTime) {
             auto time = (*current.endTime - *current.startTime) / 1000;
