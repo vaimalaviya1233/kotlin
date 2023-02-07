@@ -9,9 +9,16 @@
 #include "Logging.hpp"
 #include "Porting.h"
 
+#if 0
 #define CustomAllocInfo(format, ...) RuntimeLogInfo({"alloc"}, "t%u " format, konan::currentThreadId(), ##__VA_ARGS__)
 #define CustomAllocDebug(format, ...) RuntimeLogDebug({"alloc"}, "t%u " format, konan::currentThreadId(), ##__VA_ARGS__)
 #define CustomAllocWarning(format, ...) RuntimeLogWarning({"alloc"}, "t%u " format, konan::currentThreadId(), ##__VA_ARGS__)
 #define CustomAllocError(format, ...) RuntimeLogError({"alloc"}, "t%u " format, konan::currentThreadId(), ##__VA_ARGS__)
+#else
+#define CustomAllocInfo(format, ...)
+#define CustomAllocDebug(format, ...)
+#define CustomAllocWarning(format, ...)
+#define CustomAllocError(format, ...)
+#endif
 
 #endif
