@@ -20,10 +20,12 @@ LargePage* LargePage::Create(uint64_t cellCount) noexcept {
     uint64_t size = sizeof(LargePage) + cellCount * sizeof(uint64_t);
     auto* page = new (SafeAlloc(size)) LargePage();
     page->size_ = size;
+    konan::consoleErrorf("LargePage::Create %p %" PRIu64 "\n", page, cellCount);
     return page;
 }
 
 void LargePage::Destroy() noexcept {
+    konan::consoleErrorf("Large::Destroy %p\n", this);
     Free(this, size_);
 }
 

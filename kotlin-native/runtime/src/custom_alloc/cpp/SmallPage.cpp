@@ -19,10 +19,13 @@ namespace kotlin::alloc {
 SmallPage* SmallPage::Create(uint32_t blockSize) noexcept {
     CustomAllocInfo("SmallPage::Create(%u)", blockSize);
     RuntimeAssert(blockSize <= SMALL_PAGE_MAX_BLOCK_SIZE, "blockSize too large for small page");
-    return new (SafeAlloc(SMALL_PAGE_SIZE)) SmallPage(blockSize);
+    auto* result = new (SafeAlloc(SMALL_PAGE_SIZE)) SmallPage(blockSize);
+    konan::consoleErrorf("SmallPage::Create %p %u\n", result, blockSize);
+    return result;
 }
 
 void SmallPage::Destroy() noexcept {
+    konan::consoleErrorf("SmallPage::Destroy %p\n", this);
     Free(this, SMALL_PAGE_SIZE);
 }
 
