@@ -11,6 +11,8 @@ import org.jetbrains.kotlin.ir.declarations.IrExternalPackageFragment
 import org.jetbrains.kotlin.ir.symbols.*
 import org.jetbrains.kotlin.ir.util.fqNameWhenAvailable
 import org.jetbrains.kotlin.ir.util.getPackageFragment
+import org.jetbrains.kotlin.utils.addToStdlib.getOrPut
+import org.jetbrains.kotlin.utils.addToStdlib.partitionIsInstance
 import org.jetbrains.kotlin.wasm.ir.*
 import org.jetbrains.kotlin.wasm.ir.source.location.SourceLocation
 
@@ -50,7 +52,7 @@ class WasmCompiledModuleFragment(val irBuiltIns: IrBuiltIns) {
         ),
         emptyList()
     )
-    val tag = WasmTag(tagFuncType)
+    val tag = WasmTag(WasmSymbol(tagFuncType))
 
     val typeInfo = ReferencableAndDefinable<IrClassSymbol, ConstantDataElement>()
 
@@ -99,6 +101,7 @@ class WasmCompiledModuleFragment(val irBuiltIns: IrBuiltIns) {
         val wasmToIr = mutableMapOf<Wasm, Ir>()
     }
 
+
     fun linkWasmCompiledFragments(): WasmModule {
         bind(functions.unbound, functions.defined)
         bind(globalFields.unbound, globalFields.defined)
@@ -118,6 +121,8 @@ class WasmCompiledModuleFragment(val irBuiltIns: IrBuiltIns) {
                 error("Can't link symbol ${irSymbolDebugDump(irSymbol)}")
             wasmSymbol.bind(canonicalFunctionTypes.getValue(functionTypes.defined.getValue(irSymbol)))
         }
+
+        tag.type.bind(canonicalFunctionTypes.getOrPut(tag.type.owner) { tag.type.owner })
 
         val klassIds = mutableMapOf<IrClassSymbol, Int>()
         var currentDataSectionAddress = 0
@@ -163,7 +168,8 @@ class WasmCompiledModuleFragment(val irBuiltIns: IrBuiltIns) {
         typeInfo.buildData(data, address = { klassIds.getValue(it) })
 
         val masterInitFunctionType = WasmFunctionType(emptyList(), emptyList())
-        val masterInitFunction = WasmFunction.Defined("__init", WasmSymbol(masterInitFunctionType))
+        val canonicalMasterInitFunctionType = canonicalFunctionTypes.getOrPut(masterInitFunctionType) { masterInitFunctionType }
+        val masterInitFunction = WasmFunction.Defined("__init", WasmSymbol(canonicalMasterInitFunctionType))
         with(WasmIrExpressionBuilder(masterInitFunction.instructions)) {
             initFunctions.sortedBy { it.priority }.forEach {
                 buildCall(WasmSymbol(it.function), SourceLocation.NoLocation("Generated service code"))
@@ -179,44 +185,35 @@ class WasmCompiledModuleFragment(val irBuiltIns: IrBuiltIns) {
         // Export name "memory" is a WASI ABI convention.
         exports += WasmExport.Memory("memory", memory)
 
-        val importedFunctions = functions.elements.filterIsInstance<WasmFunction.Imported>()
-
-        fun wasmTypeDeclarationOrderKey(declaration: WasmTypeDeclaration): Int {
-            return when (declaration) {
-                is WasmArrayDeclaration -> 0
-                is WasmFunctionType -> 0
-                is WasmStructDeclaration ->
-                    // Subtype depth
-                    declaration.superType?.let { wasmTypeDeclarationOrderKey(it.owner) + 1 } ?: 0
-            }
-        }
-
-        val recGroupTypes = mutableListOf<WasmTypeDeclaration>()
-        recGroupTypes.addAll(vTableGcTypes.elements)
-        recGroupTypes.addAll(this.gcTypes.elements)
-        recGroupTypes.addAll(classITableGcType.elements.distinct())
-        recGroupTypes.sortBy(::wasmTypeDeclarationOrderKey)
-
         val globals = mutableListOf<WasmGlobal>()
         globals.addAll(globalFields.elements)
         globals.addAll(globalVTables.elements)
-        globals.addAll(globalClassITables.elements.distinct())
+        globals.addAll(globalClassITables.elements)
 
-        val allFunctionTypes = canonicalFunctionTypes.values.toList() + tagFuncType + masterInitFunctionType
+        val recGroupTypes = sequence {
+            yieldAll(vTableGcTypes.elements)
+            yieldAll(gcTypes.elements)
+            yieldAll(classITableGcType.elements)
+            yieldAll(canonicalFunctionTypes.values)
+        }
 
-        // Partition out function types that can't be recursive,
-        // we don't need to put them into a rec group
-        // so that they can be matched with function types from other Wasm modules.
-        val (potentiallyRecursiveFunctionTypes, nonRecursiveFunctionTypes) =
-            allFunctionTypes.partition { it.referencesTypeDeclarations() }
-        recGroupTypes.addAll(potentiallyRecursiveFunctionTypes)
+        val definedFunctions = mutableListOf<WasmFunction.Defined>()
+        val importedFunctions = mutableListOf<WasmFunction.Imported>()
+        functions.elements.forEach {
+            when (it) {
+                is WasmFunction.Defined -> definedFunctions.add(it)
+                is WasmFunction.Imported -> importedFunctions.add(it)
+            }
+        }
+        definedFunctions.add(masterInitFunction)
+
+        val recursiveGroups = createRecursiveTypeGroups(recGroupTypes)
 
         val module = WasmModule(
-            functionTypes = nonRecursiveFunctionTypes,
-            recGroupTypes = recGroupTypes,
+            recGroupTypes = recursiveGroups,
             importsInOrder = importedFunctions,
             importedFunctions = importedFunctions,
-            definedFunctions = functions.elements.filterIsInstance<WasmFunction.Defined>() + masterInitFunction,
+            definedFunctions = definedFunctions,
             tables = emptyList(),
             memories = listOf(memory),
             globals = globals,

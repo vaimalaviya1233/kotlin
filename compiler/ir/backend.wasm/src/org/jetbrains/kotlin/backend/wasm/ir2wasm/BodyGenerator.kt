@@ -486,12 +486,23 @@ class BodyGenerator(
         }
     }
 
+    private fun getTypeInheritancePositionOffset(irType: IrType): UInt {
+        var typeIndex = -1
+        var currentType: IrClass? = irType.getRuntimeClass(irBuiltIns)
+        while (currentType != null) {
+            typeIndex++
+            currentType = currentType.getSuperClass(irBuiltIns)
+        }
+        check(typeIndex >= 0) { "Invalid type for cast check" }
+        return (32 + typeIndex * 4).toUInt()
+    }
+
     private fun generateRefTest(fromType: IrType, toType: IrType, location: SourceLocation) {
         if (!isDownCastAlwaysSuccessInRuntime(fromType, toType)) {
-            body.buildRefTestStatic(
-                toType = context.referenceGcType(toType.getRuntimeClass(irBuiltIns).symbol),
-                location
-            )
+            body.buildStructGet(context.referenceGcType(irBuiltIns.anyClass), WasmSymbol(2), location)
+            body.buildInstr(WasmOp.I32_LOAD, location, WasmImmediate.MemArg(0u, getTypeInheritancePositionOffset(toType)))
+            body.buildConstI32Symbol(context.referenceClassId(toType.getRuntimeClass(irBuiltIns).symbol), location)
+            body.buildInstr(WasmOp.I32_EQ, location)
         } else {
             body.buildDrop(location)
             body.buildConstI32(1, location)
