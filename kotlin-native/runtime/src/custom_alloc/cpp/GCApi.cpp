@@ -7,6 +7,7 @@
 
 #include <atomic>
 #include <limits>
+#include <sys/mman.h>
 
 #include "ConcurrentMarkAndSweep.hpp"
 #include "CustomLogging.hpp"
@@ -86,9 +87,13 @@ bool SweepExtraObject(ExtraObjectCell* extraObjectCell, AtomicStack<ExtraObjectC
 }
 
 void* SafeAlloc(uint64_t size) noexcept {
-    void* memory;
-    if (size > std::numeric_limits<size_t>::max() || !(memory = std_support::malloc(size))) {
+    if (size > std::numeric_limits<size_t>::max()) {
         konan::consoleErrorf("Out of memory trying to allocate %" PRIu64 "bytes. Aborting.\n", size);
+        konan::abort();
+    }
+    void* memory = mmap(nullptr, size, PROT_WRITE | PROT_READ, MAP_ANONYMOUS | MAP_PRIVATE | MAP_NORESERVE, -1, 0);
+    if (memory == MAP_FAILED) {
+        konan::consoleErrorf("Out of memory trying to allocate %" PRIu64 "bytes: %s. Aborting.\n", size, strerror(errno));
         konan::abort();
     }
     allocatedBytesCounter.fetch_add(static_cast<size_t>(size), std::memory_order_relaxed);
@@ -96,7 +101,8 @@ void* SafeAlloc(uint64_t size) noexcept {
 }
 
 void Free(void* ptr, size_t size) noexcept {
-    std_support::free(ptr);
+    auto result = munmap(ptr, size);
+    RuntimeAssert(result == 0, "Failed to munmap: %s", strerror(errno));
     allocatedBytesCounter.fetch_sub(static_cast<size_t>(size), std::memory_order_relaxed);
 }
 
