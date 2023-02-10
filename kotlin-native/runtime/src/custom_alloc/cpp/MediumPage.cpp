@@ -18,12 +18,12 @@ MediumPage* MediumPage::Create(uint32_t cellCount) noexcept {
     CustomAllocInfo("MediumPage::Create(%u)", cellCount);
     RuntimeAssert(cellCount < MEDIUM_PAGE_CELL_COUNT, "cellCount is too large for medium page");
     auto* result = new (SafeAlloc(MEDIUM_PAGE_SIZE)) MediumPage(cellCount);
-    konan::consoleErrorf("MediumPage::Create %p %u\n", result, cellCount);
+    // konan::consoleErrorf("MediumPage::Create %p %u\n", result, cellCount);
     return result;
 }
 
 void MediumPage::Destroy() noexcept {
-    konan::consoleErrorf("Medium::Destroy %p\n", this);
+    // konan::consoleErrorf("Medium::Destroy %p\n", this);
     Free(this, MEDIUM_PAGE_SIZE);
 }
 
