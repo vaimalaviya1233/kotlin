@@ -499,10 +499,18 @@ class BodyGenerator(
 
     private fun generateRefTest(fromType: IrType, toType: IrType, location: SourceLocation) {
         if (!isDownCastAlwaysSuccessInRuntime(fromType, toType)) {
-            body.buildStructGet(context.referenceGcType(irBuiltIns.anyClass), WasmSymbol(2), location)
-            body.buildInstr(WasmOp.I32_LOAD, location, WasmImmediate.MemArg(0u, getTypeInheritancePositionOffset(toType)))
-            body.buildConstI32Symbol(context.referenceClassId(toType.getRuntimeClass(irBuiltIns).symbol), location)
-            body.buildInstr(WasmOp.I32_EQ, location)
+            val parameterLocal = functionContext.referenceLocal(SyntheticLocalType.TYPECHECK_PARAMETER)
+            body.buildSetLocal(parameterLocal, location)
+            body.buildBlock("isSubtype", WasmI32) { outerLabel ->
+                body.buildConstI32(0, location)
+                body.buildGetLocal(parameterLocal, location)
+                body.buildBrInstr(WasmOp.BR_ON_NULL, outerLabel, location)
+                body.buildStructGet(context.referenceGcType(irBuiltIns.anyClass), WasmSymbol(2), location)
+                body.buildInstr(WasmOp.I32_LOAD, location, WasmImmediate.MemArg(0u, getTypeInheritancePositionOffset(toType)))
+                body.buildConstI32Symbol(context.referenceClassId(toType.getRuntimeClass(irBuiltIns).symbol), location)
+                body.buildInstr(WasmOp.I32_EQ, location)
+                body.buildBr(outerLabel, location)
+            }
         } else {
             body.buildDrop(location)
             body.buildConstI32(1, location)
@@ -550,7 +558,7 @@ class BodyGenerator(
                 assert(irInterface.isInterface)
                 if (irInterface.symbol in hierarchyDisjointUnions) {
                     val classITable = context.referenceClassITableGcType(irInterface.symbol)
-                    val parameterLocal = functionContext.referenceLocal(SyntheticLocalType.IS_INTERFACE_PARAMETER)
+                    val parameterLocal = functionContext.referenceLocal(SyntheticLocalType.TYPECHECK_PARAMETER)
                     body.buildSetLocal(parameterLocal, location)
                     body.buildBlock("isInterface", WasmI32) { outerLabel ->
                         body.buildBlock("isInterface", WasmRefNullType(WasmHeapType.Simple.Data)) { innerLabel ->
