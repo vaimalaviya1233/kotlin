@@ -21439,6 +21439,12 @@ public class FirOldFrontendDiagnosticsTestGenerated extends AbstractFirDiagnosti
             }
 
             @Test
+            @TestMetadata("expectAndActualInSameModule.kt")
+            public void testExpectAndActualInSameModule() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/multiplatform/expectAndActualInSameModule.kt");
+            }
+
+            @Test
             @TestMetadata("expectDataObject.kt")
             public void testExpectDataObject() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/multiplatform/expectDataObject.kt");
@@ -21976,6 +21982,24 @@ public class FirOldFrontendDiagnosticsTestGenerated extends AbstractFirDiagnosti
                     @Test
                     public void testAllFilesPresentInMultiplatformCompositeAnalysis() throws Exception {
                         KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/multiplatform/hmpp/multiplatformCompositeAnalysis"), Pattern.compile("^(.*)\\.kts?$"), Pattern.compile("^(.+)\\.(fir|ll)\\.kts?$"), true);
+                    }
+
+                    @Test
+                    @TestMetadata("expectAndActualInTheSameCommonModule.kt")
+                    public void testExpectAndActualInTheSameCommonModule() throws Exception {
+                        runTest("compiler/testData/diagnostics/tests/multiplatform/hmpp/multiplatformCompositeAnalysis/expectAndActualInTheSameCommonModule.kt");
+                    }
+
+                    @Test
+                    @TestMetadata("expectAndActualInTheSameIntermediateModule.kt")
+                    public void testExpectAndActualInTheSameIntermediateModule() throws Exception {
+                        runTest("compiler/testData/diagnostics/tests/multiplatform/hmpp/multiplatformCompositeAnalysis/expectAndActualInTheSameIntermediateModule.kt");
+                    }
+
+                    @Test
+                    @TestMetadata("expectAndActualInTheSamePlatformModule.kt")
+                    public void testExpectAndActualInTheSamePlatformModule() throws Exception {
+                        runTest("compiler/testData/diagnostics/tests/multiplatform/hmpp/multiplatformCompositeAnalysis/expectAndActualInTheSamePlatformModule.kt");
                     }
 
                     @Test
