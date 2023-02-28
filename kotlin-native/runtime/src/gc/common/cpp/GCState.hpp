@@ -10,6 +10,9 @@
 #include <atomic>
 #include <optional>
 
+#include "KAssert.h"
+#include "Utils.hpp"
+
 class GCStateHolder {
 public:
     int64_t schedule() {

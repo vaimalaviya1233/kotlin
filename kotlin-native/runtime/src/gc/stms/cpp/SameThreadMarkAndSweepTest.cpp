@@ -220,7 +220,7 @@ public:
     ~SameThreadMarkAndSweepTest() {
         mm::GlobalsRegistry::Instance().ClearForTests();
         mm::GlobalData::Instance().extraObjectDataFactory().ClearForTests();
-        mm::GlobalData::Instance().gc().impl().objectFactory().ClearForTests();
+        mm::GlobalData::Instance().gc().ClearForTests();
     }
 
     testing::MockFunction<void(ObjHeader*)>& finalizerHook() { return finalizerHooks_.finalizerHook(); }
@@ -338,7 +338,7 @@ TEST_F(SameThreadMarkAndSweepTest, FreeObjectsWithFinalizers) {
 
         EXPECT_CALL(finalizerHook(), Call(object1.header()));
         EXPECT_CALL(finalizerHook(), Call(object2.header()));
-        threadData.gc().ScheduleAndWaitFullGC();
+        threadData.gc().ScheduleAndWaitFullGCWithFinalizers();
 
         EXPECT_THAT(Alive(threadData), testing::UnorderedElementsAre());
     });
@@ -357,7 +357,7 @@ TEST_F(SameThreadMarkAndSweepTest, FreeObjectWithFreeWeak) {
         ASSERT_THAT(IsMarked(weak1.header()), false);
         ASSERT_THAT(weak1->referred, object1.header());
 
-        threadData.gc().ScheduleAndWaitFullGC();
+        threadData.gc().ScheduleAndWaitFullGCWithFinalizers();
 
         EXPECT_THAT(Alive(threadData), testing::UnorderedElementsAre());
     });
@@ -507,7 +507,7 @@ TEST_F(SameThreadMarkAndSweepTest, ObjectsWithCyclesAndFinalizers) {
 
         EXPECT_CALL(finalizerHook(), Call(object5.header()));
         EXPECT_CALL(finalizerHook(), Call(object6.header()));
-        threadData.gc().ScheduleAndWaitFullGC();
+        threadData.gc().ScheduleAndWaitFullGCWithFinalizers();
 
         EXPECT_THAT(
                 Alive(threadData),
@@ -789,13 +789,25 @@ TEST_F(SameThreadMarkAndSweepTest, MultipleMutatorsAllCollect) {
 
     std_support::vector<std::future<void>> gcFutures(kDefaultThreadCount);
 
-    // TODO: Maybe check that only one GC is performed.
     for (int i = 0; i < kDefaultThreadCount; ++i) {
-        gcFutures[i] = mutators[i].Execute([](mm::ThreadData& threadData, Mutator& mutator) { threadData.gc().ScheduleAndWaitFullGC(); });
+        gcFutures[i] = mutators[i].Execute([](mm::ThreadData& threadData, Mutator& mutator) {
+            threadData.gc().ScheduleAndWaitFullGC();
+            // If GC starts before all thread executed line above, two gc will be run
+            // So we are temporary switch threads to native state and then return them back after all GC runs are done
+            SwitchThreadState(mm::GetMemoryState(), kotlin::ThreadState::kNative);
+        });
     }
 
     for (auto& future : gcFutures) {
         future.wait();
+    }
+
+    for (int i = 0; i < kDefaultThreadCount; ++i) {
+        mutators[i]
+        .Execute([](mm::ThreadData& threadData, Mutator& mutator) {
+                    SwitchThreadState(mm::GetMemoryState(), kotlin::ThreadState::kRunnable);
+                })
+        .wait();
     }
 
     std_support::vector<ObjHeader*> expectedAlive;
