@@ -106,19 +106,9 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
         }
     }
     val destroyRuntimeMode: DestroyRuntimeMode get() = configuration.get(KonanConfigKeys.DESTROY_RUNTIME_MODE)!!
-    private val defaultGC get() = if (target.supportsThreads()) GC.CONCURRENT_MARK_AND_SWEEP else GC.SAME_THREAD_MARK_AND_SWEEP
+    private val defaultGC get() = GC.PARALLEL_MARK_CONCURRENT_SWEEP
     val gc: GC by lazy {
-        val configGc = configuration.get(KonanConfigKeys.GARBAGE_COLLECTOR)
-        val (gcFallbackReason, realGc) = when {
-            configGc == GC.CONCURRENT_MARK_AND_SWEEP && !target.supportsThreads() ->
-                "Concurrent mark and sweep gc is not supported for this target. Fallback to Same thread mark and sweep is done" to GC.SAME_THREAD_MARK_AND_SWEEP
-            configGc == null -> null to defaultGC
-            else -> null to configGc
-        }
-        if (gcFallbackReason != null) {
-            configuration.report(CompilerMessageSeverity.STRONG_WARNING, gcFallbackReason)
-        }
-        realGc
+        configuration.get(BinaryOptions.gc) ?: defaultGC
     }
     val runtimeAssertsMode: RuntimeAssertsMode get() = configuration.get(BinaryOptions.runtimeAssertionsMode) ?: RuntimeAssertsMode.IGNORE
     val workerExceptionHandling: WorkerExceptionHandling get() = configuration.get(KonanConfigKeys.WORKER_EXCEPTION_HANDLING) ?: when (memoryModel) {
@@ -271,7 +261,7 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
                 }
             }
             AllocationMode.CUSTOM -> {
-                if (gc == GC.CONCURRENT_MARK_AND_SWEEP) {
+                if (gc == GC.PARALLEL_MARK_CONCURRENT_SWEEP) {
                     AllocationMode.CUSTOM
                 } else {
                     configuration.report(CompilerMessageSeverity.STRONG_WARNING,
@@ -296,19 +286,19 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
             MemoryModel.EXPERIMENTAL -> {
                 add("common_gc.bc")
                 if (allocationMode == AllocationMode.CUSTOM) {
-                    add("experimental_memory_manager_custom.bc")
-                    add("concurrent_ms_gc_custom.bc")
+                    add("mm_custom.bc")
+                    add("cms_gc_custom.bc")
                 } else {
-                    add("experimental_memory_manager.bc")
+                    add("mm.bc")
                     when (gc) {
-                        GC.SAME_THREAD_MARK_AND_SWEEP -> {
-                            add("same_thread_ms_gc.bc")
-                        }
                         GC.NOOP -> {
                             add("noop_gc.bc")
                         }
-                        GC.CONCURRENT_MARK_AND_SWEEP -> {
-                            add("concurrent_ms_gc.bc")
+                        GC.STOP_THE_WORLD_MARK_AND_SWEEP -> {
+                            add("stwms_gc.bc")
+                        }
+                        GC.PARALLEL_MARK_CONCURRENT_SWEEP -> {
+                            add("cms_gc.bc")
                         }
                     }
                 }

@@ -120,7 +120,7 @@ gc::ConcurrentMarkAndSweep::ConcurrentMarkAndSweep(
         }
     });
     markingBehavior_ = kotlin::compiler::gcMarkSingleThreaded() ? MarkingBehavior::kDoNotMark : MarkingBehavior::kMarkOwnStack;
-    RuntimeLogDebug({kTagGC}, "Concurrent Mark & Sweep GC initialized");
+    RuntimeLogInfo({kTagGC}, "Parallel Mark & Concurrent Sweep GC initialized");
 }
 
 gc::ConcurrentMarkAndSweep::~ConcurrentMarkAndSweep() {

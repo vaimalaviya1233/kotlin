@@ -3,8 +3,7 @@
  * that can be found in the LICENSE file.
  */
 
-#ifndef RUNTIME_GC_STMS_SAME_THREAD_MARK_AND_SWEEP_H
-#define RUNTIME_GC_STMS_SAME_THREAD_MARK_AND_SWEEP_H
+#pragma once
 
 #include <cstddef>
 
@@ -26,7 +25,7 @@ class ThreadData;
 namespace gc {
 
 // Stop-the-world mark&sweep. The GC runs in a separate thread, finalizers run in another thread of their own.
-class SameThreadMarkAndSweep : private Pinned {
+class StopTheWorldMarkAndSweep : private Pinned {
 public:
     class ObjectData {
     public:
@@ -66,10 +65,10 @@ public:
 
     class ThreadData : private Pinned {
     public:
-        using ObjectData = SameThreadMarkAndSweep::ObjectData;
+        using ObjectData = StopTheWorldMarkAndSweep::ObjectData;
         using Allocator = AllocatorWithGC<Allocator, ThreadData>;
 
-        ThreadData(SameThreadMarkAndSweep& gc, mm::ThreadData& threadData, GCSchedulerThreadData& gcScheduler) noexcept :
+        ThreadData(StopTheWorldMarkAndSweep& gc, mm::ThreadData& threadData, GCSchedulerThreadData& gcScheduler) noexcept :
             gc_(gc), gcScheduler_(gcScheduler) {}
         ~ThreadData() = default;
 
@@ -85,17 +84,17 @@ public:
 
     private:
 
-        SameThreadMarkAndSweep& gc_;
+        StopTheWorldMarkAndSweep& gc_;
         GCSchedulerThreadData& gcScheduler_;
     };
 
     using Allocator = ThreadData::Allocator;
 
-    using FinalizerQueue = mm::ObjectFactory<SameThreadMarkAndSweep>::FinalizerQueue;
-    using FinalizerQueueTraits = mm::ObjectFactory<SameThreadMarkAndSweep>::FinalizerQueueTraits;
+    using FinalizerQueue = mm::ObjectFactory<StopTheWorldMarkAndSweep>::FinalizerQueue;
+    using FinalizerQueueTraits = mm::ObjectFactory<StopTheWorldMarkAndSweep>::FinalizerQueueTraits;
 
-    SameThreadMarkAndSweep(mm::ObjectFactory<SameThreadMarkAndSweep>& objectFactory, GCScheduler& gcScheduler) noexcept;
-    ~SameThreadMarkAndSweep();
+    StopTheWorldMarkAndSweep(mm::ObjectFactory<StopTheWorldMarkAndSweep>& objectFactory, GCScheduler& gcScheduler) noexcept;
+    ~StopTheWorldMarkAndSweep();
 
     void StartFinalizerThreadIfNeeded() noexcept;
     void StopFinalizerThreadIfRunning() noexcept;
@@ -104,7 +103,7 @@ public:
 private:
     void PerformFullGC(int64_t epoch) noexcept;
 
-    mm::ObjectFactory<SameThreadMarkAndSweep>& objectFactory_;
+    mm::ObjectFactory<StopTheWorldMarkAndSweep>& objectFactory_;
     GCScheduler& gcScheduler_;
 
     GCStateHolder state_;
@@ -117,25 +116,25 @@ private:
 namespace internal {
 
 struct MarkTraits {
-    using MarkQueue = gc::SameThreadMarkAndSweep::MarkQueue;
+    using MarkQueue = gc::StopTheWorldMarkAndSweep::MarkQueue;
 
     static void clear(MarkQueue& queue) noexcept { queue.clear(); }
 
     static ObjHeader* tryDequeue(MarkQueue& queue) noexcept {
         if (auto* top = queue.try_pop_front()) {
-            auto node = mm::ObjectFactory<gc::SameThreadMarkAndSweep>::NodeRef::From(*top);
+            auto node = mm::ObjectFactory<gc::StopTheWorldMarkAndSweep>::NodeRef::From(*top);
             return node->GetObjHeader();
         }
         return nullptr;
     }
 
     static bool tryEnqueue(MarkQueue& queue, ObjHeader* object) noexcept {
-        auto& objectData = mm::ObjectFactory<gc::SameThreadMarkAndSweep>::NodeRef::From(object).ObjectData();
+        auto& objectData = mm::ObjectFactory<gc::StopTheWorldMarkAndSweep>::NodeRef::From(object).ObjectData();
         return queue.try_push_front(objectData);
     }
 
     static bool tryMark(ObjHeader* object) noexcept {
-        auto& objectData = mm::ObjectFactory<gc::SameThreadMarkAndSweep>::NodeRef::From(object).ObjectData();
+        auto& objectData = mm::ObjectFactory<gc::StopTheWorldMarkAndSweep>::NodeRef::From(object).ObjectData();
         return objectData.tryMark();
     }
 
@@ -150,5 +149,3 @@ struct MarkTraits {
 
 } // namespace gc
 } // namespace kotlin
-
-#endif // RUNTIME_GC_STMS_SAME_THREAD_MARK_AND_SWEEP_H

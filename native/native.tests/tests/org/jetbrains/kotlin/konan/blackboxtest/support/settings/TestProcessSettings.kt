@@ -152,7 +152,11 @@ internal enum class Sanitizer(val compilerFlag: String?) {
  */
 internal enum class GCType(val compilerFlag: String?) {
     UNSPECIFIED(null),
-    NOOP("-Xgc=noop"),
+    NOOP("-Xbinary=gc=noop"),
+    STWMS("-Xbinary=gc=stwms"),
+    PMCS("-Xbinary=gc=pmcs"),
+
+    // TODO: Remove these deprecated GC options.
     STMS("-Xgc=stms"),
     CMS("-Xgc=cms");
 

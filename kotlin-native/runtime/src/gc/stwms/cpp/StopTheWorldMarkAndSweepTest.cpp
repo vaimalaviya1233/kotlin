@@ -3,7 +3,7 @@
  * that can be found in the LICENSE file.
  */
 
-#include "SameThreadMarkAndSweep.hpp"
+#include "StopTheWorldMarkAndSweep.hpp"
 
 #include <condition_variable>
 #include <future>
@@ -27,7 +27,7 @@
 
 using namespace kotlin;
 
-// These tests can only work if `GC` is `SameThreadMarkAndSweep`.
+// These tests can only work if `GC` is `StopTheWorldMarkAndSweep`.
 
 namespace {
 
@@ -201,7 +201,7 @@ std_support::vector<ObjHeader*> Alive(mm::ThreadData& threadData) {
 }
 
 bool IsMarked(ObjHeader* objHeader) {
-    auto nodeRef = mm::ObjectFactory<gc::SameThreadMarkAndSweep>::NodeRef::From(objHeader);
+    auto nodeRef = mm::ObjectFactory<gc::StopTheWorldMarkAndSweep>::NodeRef::From(objHeader);
     return nodeRef.ObjectData().marked();
 }
 
@@ -215,9 +215,9 @@ WeakCounter& InstallWeakCounter(mm::ThreadData& threadData, ObjHeader* objHeader
     return weakCounter;
 }
 
-class SameThreadMarkAndSweepTest : public testing::Test {
+class StopTheWorldMarkAndSweepTest : public testing::Test {
 public:
-    ~SameThreadMarkAndSweepTest() {
+    ~StopTheWorldMarkAndSweepTest() {
         mm::GlobalsRegistry::Instance().ClearForTests();
         mm::GlobalData::Instance().extraObjectDataFactory().ClearForTests();
         mm::GlobalData::Instance().gc().ClearForTests();
@@ -231,7 +231,7 @@ private:
 
 } // namespace
 
-TEST_F(SameThreadMarkAndSweepTest, RootSet) {
+TEST_F(StopTheWorldMarkAndSweepTest, RootSet) {
     RunInNewThread([](mm::ThreadData& threadData) {
         GlobalObjectHolder global1{threadData};
         GlobalObjectArrayHolder global2{threadData};
@@ -266,7 +266,7 @@ TEST_F(SameThreadMarkAndSweepTest, RootSet) {
     });
 }
 
-TEST_F(SameThreadMarkAndSweepTest, InterconnectedRootSet) {
+TEST_F(StopTheWorldMarkAndSweepTest, InterconnectedRootSet) {
     RunInNewThread([](mm::ThreadData& threadData) {
         GlobalObjectHolder global1{threadData};
         GlobalObjectArrayHolder global2{threadData};
@@ -312,7 +312,7 @@ TEST_F(SameThreadMarkAndSweepTest, InterconnectedRootSet) {
     });
 }
 
-TEST_F(SameThreadMarkAndSweepTest, FreeObjects) {
+TEST_F(StopTheWorldMarkAndSweepTest, FreeObjects) {
     RunInNewThread([](mm::ThreadData& threadData) {
         auto& object1 = AllocateObject(threadData);
         auto& object2 = AllocateObject(threadData);
@@ -327,7 +327,7 @@ TEST_F(SameThreadMarkAndSweepTest, FreeObjects) {
     });
 }
 
-TEST_F(SameThreadMarkAndSweepTest, FreeObjectsWithFinalizers) {
+TEST_F(StopTheWorldMarkAndSweepTest, FreeObjectsWithFinalizers) {
     RunInNewThread([this](mm::ThreadData& threadData) {
         auto& object1 = AllocateObjectWithFinalizer(threadData);
         auto& object2 = AllocateObjectWithFinalizer(threadData);
@@ -344,7 +344,7 @@ TEST_F(SameThreadMarkAndSweepTest, FreeObjectsWithFinalizers) {
     });
 }
 
-TEST_F(SameThreadMarkAndSweepTest, FreeObjectWithFreeWeak) {
+TEST_F(StopTheWorldMarkAndSweepTest, FreeObjectWithFreeWeak) {
     RunInNewThread([](mm::ThreadData& threadData) {
         auto& object1 = AllocateObject(threadData);
         auto& weak1 = ([&threadData, &object1]() -> WeakCounter& {
@@ -363,7 +363,7 @@ TEST_F(SameThreadMarkAndSweepTest, FreeObjectWithFreeWeak) {
     });
 }
 
-TEST_F(SameThreadMarkAndSweepTest, FreeObjectWithHoldedWeak) {
+TEST_F(StopTheWorldMarkAndSweepTest, FreeObjectWithHoldedWeak) {
     RunInNewThread([](mm::ThreadData& threadData) {
         auto& object1 = AllocateObject(threadData);
         StackObjectHolder stack{threadData};
@@ -382,7 +382,7 @@ TEST_F(SameThreadMarkAndSweepTest, FreeObjectWithHoldedWeak) {
     });
 }
 
-TEST_F(SameThreadMarkAndSweepTest, ObjectReferencedFromRootSet) {
+TEST_F(StopTheWorldMarkAndSweepTest, ObjectReferencedFromRootSet) {
     RunInNewThread([](mm::ThreadData& threadData) {
         GlobalObjectHolder global{threadData};
         StackObjectHolder stack{threadData};
@@ -422,7 +422,7 @@ TEST_F(SameThreadMarkAndSweepTest, ObjectReferencedFromRootSet) {
     });
 }
 
-TEST_F(SameThreadMarkAndSweepTest, ObjectsWithCycles) {
+TEST_F(StopTheWorldMarkAndSweepTest, ObjectsWithCycles) {
     RunInNewThread([](mm::ThreadData& threadData) {
         GlobalObjectHolder global{threadData};
         StackObjectHolder stack{threadData};
@@ -471,7 +471,7 @@ TEST_F(SameThreadMarkAndSweepTest, ObjectsWithCycles) {
     });
 }
 
-TEST_F(SameThreadMarkAndSweepTest, ObjectsWithCyclesAndFinalizers) {
+TEST_F(StopTheWorldMarkAndSweepTest, ObjectsWithCyclesAndFinalizers) {
     RunInNewThread([this](mm::ThreadData& threadData) {
         GlobalObjectHolder global{threadData};
         StackObjectHolder stack{threadData};
@@ -522,7 +522,7 @@ TEST_F(SameThreadMarkAndSweepTest, ObjectsWithCyclesAndFinalizers) {
     });
 }
 
-TEST_F(SameThreadMarkAndSweepTest, ObjectsWithCyclesIntoRootSet) {
+TEST_F(StopTheWorldMarkAndSweepTest, ObjectsWithCyclesIntoRootSet) {
     RunInNewThread([](mm::ThreadData& threadData) {
         GlobalObjectHolder global{threadData};
         StackObjectHolder stack{threadData};
@@ -550,7 +550,7 @@ TEST_F(SameThreadMarkAndSweepTest, ObjectsWithCyclesIntoRootSet) {
     });
 }
 
-TEST_F(SameThreadMarkAndSweepTest, RunGCTwice) {
+TEST_F(StopTheWorldMarkAndSweepTest, RunGCTwice) {
     RunInNewThread([](mm::ThreadData& threadData) {
         GlobalObjectHolder global{threadData};
         StackObjectHolder stack{threadData};
@@ -600,7 +600,7 @@ TEST_F(SameThreadMarkAndSweepTest, RunGCTwice) {
     });
 }
 
-TEST_F(SameThreadMarkAndSweepTest, PermanentObjects) {
+TEST_F(StopTheWorldMarkAndSweepTest, PermanentObjects) {
     RunInNewThread([](mm::ThreadData& threadData) {
         GlobalPermanentObjectHolder global1{threadData};
         GlobalObjectHolder global2{threadData};
@@ -622,7 +622,7 @@ TEST_F(SameThreadMarkAndSweepTest, PermanentObjects) {
     });
 }
 
-TEST_F(SameThreadMarkAndSweepTest, SameObjectInRootSet) {
+TEST_F(StopTheWorldMarkAndSweepTest, SameObjectInRootSet) {
     RunInNewThread([](mm::ThreadData& threadData) {
         GlobalObjectHolder global{threadData};
         StackObjectHolder stack(*global);
@@ -708,7 +708,7 @@ private:
 
 } // namespace
 
-TEST_F(SameThreadMarkAndSweepTest, MultipleMutatorsCollect) {
+TEST_F(StopTheWorldMarkAndSweepTest, MultipleMutatorsCollect) {
     std_support::vector<Mutator> mutators(kDefaultThreadCount);
     std_support::vector<ObjHeader*> globals(kDefaultThreadCount);
     std_support::vector<ObjHeader*> locals(kDefaultThreadCount);
@@ -764,7 +764,7 @@ TEST_F(SameThreadMarkAndSweepTest, MultipleMutatorsCollect) {
     }
 }
 
-TEST_F(SameThreadMarkAndSweepTest, MultipleMutatorsAllCollect) {
+TEST_F(StopTheWorldMarkAndSweepTest, MultipleMutatorsAllCollect) {
     std_support::vector<Mutator> mutators(kDefaultThreadCount);
     std_support::vector<ObjHeader*> globals(kDefaultThreadCount);
     std_support::vector<ObjHeader*> locals(kDefaultThreadCount);
@@ -826,7 +826,7 @@ TEST_F(SameThreadMarkAndSweepTest, MultipleMutatorsAllCollect) {
     }
 }
 
-TEST_F(SameThreadMarkAndSweepTest, MultipleMutatorsAddToRootSetAfterCollectionRequested) {
+TEST_F(StopTheWorldMarkAndSweepTest, MultipleMutatorsAddToRootSetAfterCollectionRequested) {
     std_support::vector<Mutator> mutators(kDefaultThreadCount);
     std_support::vector<ObjHeader*> globals(kDefaultThreadCount);
     std_support::vector<ObjHeader*> locals(kDefaultThreadCount);
@@ -898,7 +898,7 @@ TEST_F(SameThreadMarkAndSweepTest, MultipleMutatorsAddToRootSetAfterCollectionRe
     }
 }
 
-TEST_F(SameThreadMarkAndSweepTest, CrossThreadReference) {
+TEST_F(StopTheWorldMarkAndSweepTest, CrossThreadReference) {
     std_support::vector<Mutator> mutators(kDefaultThreadCount);
     std_support::vector<ObjHeader*> globals(kDefaultThreadCount);
     std_support::vector<ObjHeader*> locals(kDefaultThreadCount);
@@ -964,7 +964,7 @@ TEST_F(SameThreadMarkAndSweepTest, CrossThreadReference) {
     }
 }
 
-TEST_F(SameThreadMarkAndSweepTest, MultipleMutatorsWeaks) {
+TEST_F(StopTheWorldMarkAndSweepTest, MultipleMutatorsWeaks) {
     std_support::vector<Mutator> mutators(kDefaultThreadCount);
     ObjHeader* globalRoot = nullptr;
     WeakCounter* weak = nullptr;
@@ -1016,7 +1016,7 @@ TEST_F(SameThreadMarkAndSweepTest, MultipleMutatorsWeaks) {
     }
 }
 
-TEST_F(SameThreadMarkAndSweepTest, NewThreadsWhileRequestingCollection) {
+TEST_F(StopTheWorldMarkAndSweepTest, NewThreadsWhileRequestingCollection) {
     std_support::vector<Mutator> mutators(kDefaultThreadCount);
     std_support::vector<ObjHeader*> globals(2 * kDefaultThreadCount);
     std_support::vector<ObjHeader*> locals(2 * kDefaultThreadCount);
@@ -1098,7 +1098,7 @@ TEST_F(SameThreadMarkAndSweepTest, NewThreadsWhileRequestingCollection) {
 }
 
 
-TEST_F(SameThreadMarkAndSweepTest, FreeObjectWithFreeWeakReversedOrder) {
+TEST_F(StopTheWorldMarkAndSweepTest, FreeObjectWithFreeWeakReversedOrder) {
     std_support::vector<Mutator> mutators(2);
     std::atomic<test_support::Object<Payload>*> object1 = nullptr;
     std::atomic<WeakCounter*> weak = nullptr;

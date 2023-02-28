@@ -3,7 +3,7 @@
  * that can be found in the LICENSE file.
  */
 
-#include "SameThreadMarkAndSweep.hpp"
+#include "StopTheWorldMarkAndSweep.hpp"
 
 #include <cinttypes>
 
@@ -24,13 +24,13 @@ using namespace kotlin;
 namespace {
 
 struct SweepTraits {
-    using ObjectFactory = mm::ObjectFactory<gc::SameThreadMarkAndSweep>;
+    using ObjectFactory = mm::ObjectFactory<gc::StopTheWorldMarkAndSweep>;
     using ExtraObjectsFactory = mm::ExtraObjectDataFactory;
 
     static bool IsMarkedByExtraObject(mm::ExtraObjectData &object) noexcept {
         auto *baseObject = object.GetBaseObject();
         if (!baseObject->heap()) return true;
-        auto& objectData = mm::ObjectFactory<gc::SameThreadMarkAndSweep>::NodeRef::From(baseObject).ObjectData();
+        auto& objectData = mm::ObjectFactory<gc::StopTheWorldMarkAndSweep>::NodeRef::From(baseObject).ObjectData();
         return objectData.marked();
     }
 
@@ -41,40 +41,40 @@ struct SweepTraits {
 };
 
 struct FinalizeTraits {
-    using ObjectFactory = mm::ObjectFactory<gc::SameThreadMarkAndSweep>;
+    using ObjectFactory = mm::ObjectFactory<gc::StopTheWorldMarkAndSweep>;
 };
 
 } // namespace
 
-void gc::SameThreadMarkAndSweep::ThreadData::SafePointAllocation(size_t size) noexcept {
+void gc::StopTheWorldMarkAndSweep::ThreadData::SafePointAllocation(size_t size) noexcept {
     gcScheduler_.OnSafePointAllocation(size);
     mm::SuspendIfRequested();
 }
 
-void gc::SameThreadMarkAndSweep::ThreadData::Schedule() noexcept {
+void gc::StopTheWorldMarkAndSweep::ThreadData::Schedule() noexcept {
     ThreadStateGuard guard(ThreadState::kNative);
     gc_.state_.schedule();
 }
 
-void gc::SameThreadMarkAndSweep::ThreadData::ScheduleAndWaitFullGC() noexcept {
+void gc::StopTheWorldMarkAndSweep::ThreadData::ScheduleAndWaitFullGC() noexcept {
     ThreadStateGuard guard(ThreadState::kNative);
     auto scheduled_epoch = gc_.state_.schedule();
     gc_.state_.waitEpochFinished(scheduled_epoch);
 }
 
-void gc::SameThreadMarkAndSweep::ThreadData::ScheduleAndWaitFullGCWithFinalizers() noexcept {
+void gc::StopTheWorldMarkAndSweep::ThreadData::ScheduleAndWaitFullGCWithFinalizers() noexcept {
     ThreadStateGuard guard(ThreadState::kNative);
     auto scheduled_epoch = gc_.state_.schedule();
     gc_.state_.waitEpochFinalized(scheduled_epoch);
 }
 
-void gc::SameThreadMarkAndSweep::ThreadData::OnOOM(size_t size) noexcept {
+void gc::StopTheWorldMarkAndSweep::ThreadData::OnOOM(size_t size) noexcept {
     RuntimeLogDebug({kTagGC}, "Attempt to GC on OOM at size=%zu", size);
     ScheduleAndWaitFullGC();
 }
 
-gc::SameThreadMarkAndSweep::SameThreadMarkAndSweep(
-        mm::ObjectFactory<SameThreadMarkAndSweep>& objectFactory, GCScheduler& gcScheduler) noexcept :
+gc::StopTheWorldMarkAndSweep::StopTheWorldMarkAndSweep(
+        mm::ObjectFactory<StopTheWorldMarkAndSweep>& objectFactory, GCScheduler& gcScheduler) noexcept :
     objectFactory_(objectFactory),
     gcScheduler_(gcScheduler),
     finalizerProcessor_([this](int64_t epoch) noexcept {
@@ -97,29 +97,29 @@ gc::SameThreadMarkAndSweep::SameThreadMarkAndSweep(
             }
         }
     });
-    RuntimeLogDebug({kTagGC}, "Same thread Mark & Sweep GC initialized");
+    RuntimeLogInfo({kTagGC}, "Stop-the-world Mark & Sweep GC initialized");
 }
 
-gc::SameThreadMarkAndSweep::~SameThreadMarkAndSweep() {
+gc::StopTheWorldMarkAndSweep::~StopTheWorldMarkAndSweep() {
     state_.shutdown();
 }
 
-void gc::SameThreadMarkAndSweep::StartFinalizerThreadIfNeeded() noexcept {
+void gc::StopTheWorldMarkAndSweep::StartFinalizerThreadIfNeeded() noexcept {
     NativeOrUnregisteredThreadGuard guard(true);
     finalizerProcessor_.StartFinalizerThreadIfNone();
     finalizerProcessor_.WaitFinalizerThreadInitialized();
 }
 
-void gc::SameThreadMarkAndSweep::StopFinalizerThreadIfRunning() noexcept {
+void gc::StopTheWorldMarkAndSweep::StopFinalizerThreadIfRunning() noexcept {
     NativeOrUnregisteredThreadGuard guard(true);
     finalizerProcessor_.StopFinalizerThread();
 }
 
-bool gc::SameThreadMarkAndSweep::FinalizersThreadIsRunning() noexcept {
+bool gc::StopTheWorldMarkAndSweep::FinalizersThreadIsRunning() noexcept {
     return finalizerProcessor_.IsRunning();
 }
 
-void gc::SameThreadMarkAndSweep::PerformFullGC(int64_t epoch) noexcept {
+void gc::StopTheWorldMarkAndSweep::PerformFullGC(int64_t epoch) noexcept {
     auto gcHandle = GCHandle::create(epoch);
     bool didSuspend = mm::RequestThreadsSuspension();
     RuntimeAssert(didSuspend, "Only GC thread can request suspension");

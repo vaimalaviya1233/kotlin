@@ -95,9 +95,8 @@ tasks.withType(KonanCompileNativeBinary.class).configureEach {
 ext.isExperimentalMM = !(project.globalTestArgs.contains("-memory-model") &&
                          project.globalTestArgs.contains("strict")) &&
                          project.testTarget != 'wasm32'
-ext.isNoopGC = project.globalTestArgs.contains("-Xgc=noop")
+ext.isNoopGC = project.globalTestArgs.contains("-Xbinary=gc=noop") || project.globalTestArgs.contains("-Xgc=noop")
 ext.isAggressiveGC = project.globalTestArgs.contains("-Xbinary=gcSchedulerType=aggressive")
-ext.isCmsGC = project.globalTestArgs.contains("-Xgc=cms") || !project.globalTestArgs.any { it.startsWith("-Xgc=") }
 ext.runtimeAssertionsPanic = false
 
 // TODO: It also makes sense to test -g without asserts, and also to test -opt with asserts.
@@ -6317,7 +6316,7 @@ if (HostManager.@Companion.hostIsMac) {
 }
 
 fileCheckTest("filecheck_redundant_safepoints_removal") {
-    enabled = isExperimentalMM && isCmsGC &&
+    enabled = isExperimentalMM && !isNoopGC &&
             project.globalTestArgs.contains("-opt") &&
             !needSmallBinary(project)
     annotatedSource = project.file('filecheck/redundant_safepoints.kt')

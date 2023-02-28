@@ -250,8 +250,7 @@ bitcode {
             }
         }
 
-        module("experimental_memory_manager") {
-            srcRoot.set(layout.projectDirectory.dir("src/mm"))
+        module("mm") {
             headersDirs.from(files("src/gc/common/cpp", "src/main/cpp"))
             sourceSets {
                 main {}
@@ -262,7 +261,7 @@ bitcode {
             onlyIf { target.supportsThreads() }
         }
 
-        module("experimental_memory_manager_custom") {
+        module("mm_custom") {
             srcRoot.set(layout.projectDirectory.dir("src/mm"))
             headersDirs.from(files("src/gc/common/cpp", "src/main/cpp", "src/custom_alloc/cpp"))
             sourceSets {
@@ -270,7 +269,7 @@ bitcode {
                 testFixtures {}
                 test {}
             }
-            
+
             compilerArgs.add("-DCUSTOM_ALLOCATOR")
 
             onlyIf { target.supportsThreads() }
@@ -298,9 +297,9 @@ bitcode {
             onlyIf { target.supportsThreads() }
         }
 
-        module("same_thread_ms_gc") {
-            srcRoot.set(layout.projectDirectory.dir("src/gc/stms"))
-            headersDirs.from(files("src/gc/stms/cpp", "src/gc/common/cpp", "src/mm/cpp", "src/main/cpp"))
+        module("stwms_gc") {
+            srcRoot.set(layout.projectDirectory.dir("src/gc/stwms"))
+            headersDirs.from(files("src/gc/stwms/cpp", "src/gc/common/cpp", "src/mm/cpp", "src/main/cpp"))
             sourceSets {
                 main {}
                 testFixtures {}
@@ -310,7 +309,7 @@ bitcode {
             onlyIf { target.supportsThreads() }
         }
 
-        module("concurrent_ms_gc") {
+        module("cms_gc") {
             srcRoot.set(layout.projectDirectory.dir("src/gc/cms"))
             headersDirs.from(files("src/gc/cms/cpp", "src/gc/common/cpp", "src/mm/cpp", "src/main/cpp"))
             sourceSets {
@@ -322,7 +321,7 @@ bitcode {
             onlyIf { target.supportsThreads() }
         }
 
-        module("concurrent_ms_gc_custom") {
+        module("cms_gc_custom") {
             srcRoot.set(layout.projectDirectory.dir("src/gc/cms"))
             headersDirs.from(files("src/gc/cms/cpp", "src/gc/common/cpp", "src/mm/cpp", "src/main/cpp", "src/custom_alloc/cpp"))
             sourceSets {
@@ -342,7 +341,7 @@ bitcode {
 
         testsGroup("custom_alloc_runtime_tests") {
             testedModules.addAll("custom_alloc")
-            testSupportModules.addAll("main", "experimental_memory_manager", "common_gc", "concurrent_ms_gc", "objc")
+            testSupportModules.addAll("main", "mm_custom", "common_gc", "cms_gc_custom", "objc")
         }
 
         testsGroup("mimalloc_runtime_tests") {
@@ -350,27 +349,27 @@ bitcode {
         }
 
         testsGroup("experimentalMM_mimalloc_runtime_tests") {
-            testedModules.addAll("main", "experimental_memory_manager", "common_gc", "same_thread_ms_gc", "mimalloc", "opt_alloc", "objc")
+            testedModules.addAll("main", "mm", "common_gc", "stwms_gc", "mimalloc", "opt_alloc", "objc")
         }
 
         testsGroup("experimentalMM_std_alloc_runtime_tests") {
-            testedModules.addAll("main", "experimental_memory_manager", "common_gc", "same_thread_ms_gc", "std_alloc", "objc")
+            testedModules.addAll("main", "mm", "common_gc", "stwms_gc", "std_alloc", "objc")
         }
 
         testsGroup("experimentalMM_cms_mimalloc_runtime_tests") {
-            testedModules.addAll("main", "experimental_memory_manager", "common_gc", "concurrent_ms_gc", "mimalloc", "opt_alloc", "objc")
+            testedModules.addAll("main", "mm", "common_gc", "cms_gc", "mimalloc", "opt_alloc", "objc")
         }
 
         testsGroup("experimentalMM_cms_std_alloc_runtime_tests") {
-            testedModules.addAll("main", "experimental_memory_manager", "common_gc", "concurrent_ms_gc", "std_alloc", "objc")
+            testedModules.addAll("main", "mm", "common_gc", "cms_gc", "std_alloc", "objc")
         }
 
         testsGroup("experimentalMM_noop_mimalloc_runtime_tests") {
-            testedModules.addAll("main", "experimental_memory_manager", "common_gc", "noop_gc", "mimalloc", "opt_alloc", "objc")
+            testedModules.addAll("main", "mm", "common_gc", "noop_gc", "mimalloc", "opt_alloc", "objc")
         }
 
         testsGroup("experimentalMM_noop_std_alloc_runtime_tests") {
-            testedModules.addAll("main", "experimental_memory_manager", "common_gc", "noop_gc", "std_alloc", "objc")
+            testedModules.addAll("main", "mm", "common_gc", "noop_gc", "std_alloc", "objc")
         }
     }
 }

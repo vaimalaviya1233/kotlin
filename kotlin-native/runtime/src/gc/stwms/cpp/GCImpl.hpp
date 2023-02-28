@@ -7,12 +7,12 @@
 
 #include "GC.hpp"
 
-#include "SameThreadMarkAndSweep.hpp"
+#include "StopTheWorldMarkAndSweep.hpp"
 
 namespace kotlin {
 namespace gc {
 
-using GCImpl = SameThreadMarkAndSweep;
+using GCImpl = StopTheWorldMarkAndSweep;
 
 class GC::Impl : private Pinned {
 public:

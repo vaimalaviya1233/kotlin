@@ -53,7 +53,7 @@ public:
     };
 
     NoOpGC(mm::ObjectFactory<NoOpGC>&, GCScheduler&) noexcept {
-        RuntimeLogDebug({kTagGC}, "No-op GC initialized");
+        RuntimeLogInfo({kTagGC}, "No-op GC initialized");
     }
     ~NoOpGC() = default;
 
