@@ -149,13 +149,16 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
                 ?: SourceInfoType.CORESYMBOLICATION.takeIf { debug && target.supportsCoreSymbolication() }
                 ?: SourceInfoType.NOOP
 
-    val defaultGCSchedulerType get() = when {
-        !target.supportsThreads() -> GCSchedulerType.ON_SAFE_POINTS
-        else -> GCSchedulerType.WITH_TIMER
+    val defaultGCSchedulerType by lazy {
+        GCSchedulerType.ADAPTIVE
     }
 
     val gcSchedulerType: GCSchedulerType by lazy {
-        configuration.get(BinaryOptions.gcSchedulerType) ?: defaultGCSchedulerType
+        val arg = configuration.get(BinaryOptions.gcSchedulerType) ?: defaultGCSchedulerType
+        arg.deprecatedWithReplacement?.let { replacement ->
+            configuration.report(CompilerMessageSeverity.INFO, "Binary option gcSchedulerType=$arg is deprecated. Use gcSchedulerType=$replacement instead")
+            replacement
+        } ?: arg
     }
 
     val gcMarkSingleThreaded: Boolean

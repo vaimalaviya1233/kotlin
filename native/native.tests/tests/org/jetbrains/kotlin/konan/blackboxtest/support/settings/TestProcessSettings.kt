@@ -165,10 +165,14 @@ internal enum class GCType(val compilerFlag: String?) {
 
 internal enum class GCScheduler(val compilerFlag: String?) {
     UNSPECIFIED(null),
+    MANUAL("-Xbinary=gcSchedulerType=manual"),
+    ADAPTIVE("-Xbinary=gcSchedulerType=adaptive"),
+    AGGRESSIVE("-Xbinary=gcSchedulerType=aggressive"),
+
+    // TODO: Remove these deprecated GC scheduler options.
     DISABLED("-Xbinary=gcSchedulerType=disabled"),
     WITH_TIMER("-Xbinary=gcSchedulerType=with_timer"),
-    ON_SAFE_POINTS("-Xbinary=gcSchedulerType=on_safe_points"),
-    AGGRESSIVE("-Xbinary=gcSchedulerType=aggressive");
+    ON_SAFE_POINTS("-Xbinary=gcSchedulerType=on_safe_points");
 
     override fun toString() = compilerFlag?.let { "($it)" }.orEmpty()
 }

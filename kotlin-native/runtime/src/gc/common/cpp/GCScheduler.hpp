@@ -82,7 +82,6 @@ public:
     void OnSafePointRegular(size_t weight) noexcept {
         // TODO: This is a weird design. Consider replacing switch+virtual functions with pimpl+separate compilation.
         switch (compiler::getGCSchedulerType()) {
-            case compiler::GCSchedulerType::kOnSafepoints:
             case compiler::GCSchedulerType::kAggressive:
                 OnSafePointRegularImpl(weight);
                 return;

@@ -3398,7 +3398,7 @@ standaloneTest("leakMemoryWithTestRunner") {
 
 standaloneTest("gcStats") {
     source = "runtime/memory/gcStats.kt"
-    flags = ['-tr', "-Xbinary=gcSchedulerType=disabled"]
+    flags = ['-tr', "-Xbinary=gcSchedulerType=manual"]
     enabled = isExperimentalMM && !isNoopGC && !isAggressiveGC
 }
 

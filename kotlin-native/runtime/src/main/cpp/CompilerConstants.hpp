@@ -66,10 +66,9 @@ enum class WorkerExceptionHandling : int32_t {
 
 // Must match GCSchedulerType in GCSchedulerType.kt
 enum class GCSchedulerType {
-    kDisabled = 0,
-    kWithTimer = 1,
-    kOnSafepoints = 2,
-    kAggressive = 3,
+    kManual = 0,
+    kAdaptive = 1,
+    kAggressive = 2,
 };
 
 // Must match AppStateTracking in AppStateTracking.kt

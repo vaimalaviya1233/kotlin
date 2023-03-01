@@ -10,12 +10,9 @@
 #include "AppStateTracking.hpp"
 #include "Clock.hpp"
 #include "GlobalData.hpp"
+#include "RepeatedTimer.hpp"
 #include "StackTrace.hpp"
 #include "std_support/UnorderedSet.hpp"
-
-#ifndef KONAN_NO_THREADS
-#include "RepeatedTimer.hpp"
-#endif
 
 namespace kotlin::gc::internal {
 
@@ -118,18 +115,21 @@ private:
     std_support::unordered_set<SafePointID> metSafePoints_;
 };
 
-class GCEmptySchedulerData : public gc::GCSchedulerData {
+class GCSchedulerDataManual : public gc::GCSchedulerData {
+public:
+    GCSchedulerDataManual() noexcept {
+        RuntimeLogInfo({kTagGC}, "Manual GC scheduler initialized");
+    }
+
     void UpdateFromThreadData(gc::GCSchedulerThreadData& threadData) noexcept override {}
     void OnPerformFullGC() noexcept override {}
     void UpdateAliveSetBytes(size_t bytes) noexcept override {}
 };
 
-#ifndef KONAN_NO_THREADS
-
 template <typename Clock>
-class GCSchedulerDataWithTimer : public gc::GCSchedulerData {
+class GCSchedulerDataAdaptive : public gc::GCSchedulerData {
 public:
-    GCSchedulerDataWithTimer(gc::GCSchedulerConfig& config, std::function<void()> scheduleGC) noexcept :
+    GCSchedulerDataAdaptive(gc::GCSchedulerConfig& config, std::function<void()> scheduleGC) noexcept :
         config_(config),
         appStateTracking_(mm::GlobalData::Instance().appStateTracking()),
         heapGrowthController_(config),
@@ -142,7 +142,9 @@ public:
             if (regularIntervalPacer_.NeedsGC()) {
                 scheduleGC_();
             }
-        }) {}
+        }) {
+            RuntimeLogInfo({kTagGC}, "Adaptive GC scheduler initialized");
+        }
 
     void UpdateFromThreadData(gc::GCSchedulerThreadData& threadData) noexcept override {
         heapGrowthController_.OnAllocated(threadData.allocatedBytes());
@@ -168,36 +170,6 @@ private:
     RepeatedTimer<Clock> timer_;
 };
 
-#endif // !KONAN_NO_THREADS
-
-template <typename Clock>
-class GCSchedulerDataOnSafepoints : public gc::GCSchedulerData {
-public:
-    GCSchedulerDataOnSafepoints(gc::GCSchedulerConfig& config, std::function<void()> scheduleGC) noexcept :
-        heapGrowthController_(config), regularIntervalPacer_(config), scheduleGC_(std::move(scheduleGC)) {}
-
-    void UpdateFromThreadData(gc::GCSchedulerThreadData& threadData) noexcept override {
-        heapGrowthController_.OnAllocated(threadData.allocatedBytes());
-        if (heapGrowthController_.NeedsGC()) {
-            scheduleGC_();
-        } else if (regularIntervalPacer_.NeedsGC()) {
-            scheduleGC_();
-        }
-    }
-
-    void OnPerformFullGC() noexcept override {
-        heapGrowthController_.OnPerformFullGC();
-        regularIntervalPacer_.OnPerformFullGC();
-    }
-
-    void UpdateAliveSetBytes(size_t bytes) noexcept override { heapGrowthController_.UpdateAliveSetBytes(bytes); }
-
-private:
-    HeapGrowthController heapGrowthController_;
-    RegularIntervalPacer<Clock> regularIntervalPacer_;
-    std::function<void()> scheduleGC_;
-};
-
 class GCSchedulerDataAggressive : public gc::GCSchedulerData {
 public:
     GCSchedulerDataAggressive(gc::GCSchedulerConfig& config, std::function<void()> scheduleGC) noexcept :
@@ -206,6 +178,7 @@ public:
         // The slowpath will trigger GC if this thread didn't meet this safepoint/allocation site before.
         config.threshold = 1;
         config.allocationThresholdBytes = 1;
+        RuntimeLogInfo({kTagGC}, "Aggressive GC scheduler initialized");
     }
 
     void UpdateFromThreadData(gc::GCSchedulerThreadData& threadData) noexcept override {

@@ -33,9 +33,9 @@ object BinaryOptions : BinaryOptionRegistry() {
 
     val objcExportIgnoreInterfaceMethodCollisions by booleanOption()
 
-    val gc by option<GC> { it.shortcut }
+    val gc by option<GC>(shortcut = { it.shortcut })
 
-    val gcSchedulerType by option<GCSchedulerType>()
+    val gcSchedulerType by option<GCSchedulerType>(hideValue = { it.deprecatedWithReplacement != null })
 
     val gcMarkSingleThreaded by booleanOption()
 
@@ -96,9 +96,9 @@ open class BinaryOptionRegistry {
                 }
             }
 
-    protected inline fun <reified T : Enum<T>> option(noinline shortcut : (T) -> String? = { null }): PropertyDelegateProvider<Any?, ReadOnlyProperty<Any?, CompilerConfigurationKey<T>>> =
+    protected inline fun <reified T : Enum<T>> option(noinline shortcut : (T) -> String? = { null }, noinline hideValue: (T) -> Boolean = { false }): PropertyDelegateProvider<Any?, ReadOnlyProperty<Any?, CompilerConfigurationKey<T>>> =
             PropertyDelegateProvider { _, property ->
-                val option = BinaryOption(property.name, EnumValueParser(enumValues<T>().toList(), shortcut))
+                val option = BinaryOption(property.name, EnumValueParser(enumValues<T>().toList(), shortcut, hideValue))
                 register(option)
                 ReadOnlyProperty { _, _ ->
                     option.compilerConfigurationKey
@@ -123,6 +123,7 @@ private object StringValueParser : BinaryOption.ValueParser<String> {
 internal class EnumValueParser<T : Enum<T>>(
     val values: List<T>,
     val shortcut: (T) -> String?,
+    val hideValue: (T) -> Boolean,
 ) : BinaryOption.ValueParser<T> {
     override fun parse(value: String): T? = values.firstOrNull {
         // TODO: should we really ignore case here?
@@ -130,7 +131,7 @@ internal class EnumValueParser<T : Enum<T>>(
     }
 
     override val validValuesHint: String?
-        get() = values.map {
+        get() = values.filter { !hideValue(it) }.map{
             val fullName = "$it".lowercase()
             shortcut(it)?.let { short ->
                 "$fullName (or: $short)"
