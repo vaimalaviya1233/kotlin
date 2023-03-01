@@ -94,7 +94,7 @@ NO_EXTERNAL_CALLS_CHECK void gc::ConcurrentMarkAndSweep::ThreadData::OnSuspendFo
 }
 
 gc::ConcurrentMarkAndSweep::ConcurrentMarkAndSweep(
-        mm::ObjectFactory<ConcurrentMarkAndSweep>& objectFactory, GCScheduler& gcScheduler) noexcept :
+        mm::ObjectFactory<ConcurrentMarkAndSweep>& objectFactory, gcScheduler::GCScheduler& gcScheduler) noexcept :
 #ifndef CUSTOM_ALLOCATOR
     objectFactory_(objectFactory),
 #endif
@@ -103,12 +103,6 @@ gc::ConcurrentMarkAndSweep::ConcurrentMarkAndSweep(
         GCHandle::getByEpoch(epoch).finalizersDone();
         state_.finalized(epoch);
     }) {
-    gcScheduler_.SetScheduleGC([this]() NO_INLINE {
-        RuntimeLogDebug({kTagGC}, "Scheduling GC by thread %d", konan::currentThreadId());
-        // This call acquires a lock, so we need to ensure that we're in the safe state.
-        NativeOrUnregisteredThreadGuard guard(/* reentrant = */ true);
-        state_.schedule();
-    });
     gcThread_ = ScopedThread(ScopedThread::attributes().name("GC thread"), [this] {
         while (true) {
             auto epoch = state_.waitScheduled();

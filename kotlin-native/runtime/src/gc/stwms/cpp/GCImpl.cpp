@@ -13,25 +13,16 @@
 
 using namespace kotlin;
 
-namespace {
-
-ALWAYS_INLINE void SafePointRegular(gc::GC::ThreadData& threadData, size_t weight) noexcept {
-    threadData.impl().gcScheduler().OnSafePointRegular(weight);
-    mm::SuspendIfRequested();
-}
-
-} // namespace
-
-gc::GC::ThreadData::ThreadData(GC& gc, mm::ThreadData& threadData) noexcept : impl_(std_support::make_unique<Impl>(gc, threadData)) {}
+gc::GC::ThreadData::ThreadData(GC& gc, gcScheduler::GCSchedulerThreadData& gcScheduler, mm::ThreadData& threadData) noexcept : impl_(std_support::make_unique<Impl>(gc, gcScheduler, threadData)) {}
 
 gc::GC::ThreadData::~ThreadData() = default;
 
 ALWAYS_INLINE void gc::GC::ThreadData::SafePointFunctionPrologue() noexcept {
-    SafePointRegular(*this, GCSchedulerThreadData::kFunctionPrologueWeight);
+    mm::SuspendIfRequested();
 }
 
 ALWAYS_INLINE void gc::GC::ThreadData::SafePointLoopBody() noexcept {
-    SafePointRegular(*this, GCSchedulerThreadData::kLoopBodyWeight);
+    mm::SuspendIfRequested();
 }
 
 void gc::GC::ThreadData::Schedule() noexcept {
@@ -62,13 +53,9 @@ ALWAYS_INLINE ArrayHeader* gc::GC::ThreadData::CreateArray(const TypeInfo* typeI
     return impl_->objectFactoryThreadQueue().CreateArray(typeInfo, elements);
 }
 
-void gc::GC::ThreadData::OnStoppedForGC() noexcept {
-    impl_->gcScheduler().OnStoppedForGC();
-}
-
 void gc::GC::ThreadData::OnSuspendForGC() noexcept { }
 
-gc::GC::GC() noexcept : impl_(std_support::make_unique<Impl>()) {}
+gc::GC::GC(gcScheduler::GCScheduler& gcScheduler) noexcept : impl_(std_support::make_unique<Impl>(gcScheduler)) {}
 
 gc::GC::~GC() = default;
 
@@ -88,10 +75,6 @@ size_t gc::GC::GetExtraObjectsCountUnsafe() const noexcept {
 }
 size_t gc::GC::GetTotalExtraObjectsSizeUnsafe() const noexcept {
     return mm::GlobalData::Instance().extraObjectDataFactory().GetTotalObjectsSizeUnsafe();
-}
-
-gc::GCSchedulerConfig& gc::GC::gcSchedulerConfig() noexcept {
-    return impl_->gcScheduler().config();
 }
 
 void gc::GC::ClearForTests() noexcept {
@@ -125,4 +108,8 @@ ALWAYS_INLINE void gc::GC::processArrayInMark(void* state, ArrayHeader* array) n
 // static
 ALWAYS_INLINE void gc::GC::processFieldInMark(void* state, ObjHeader* field) noexcept {
     gc::internal::processFieldInMark<gc::internal::MarkTraits>(state, field);
+}
+
+void gc::GC::Schedule() noexcept {
+    impl_->gc().Schedule();
 }

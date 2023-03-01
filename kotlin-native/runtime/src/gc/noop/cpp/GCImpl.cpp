@@ -12,7 +12,7 @@
 
 using namespace kotlin;
 
-gc::GC::ThreadData::ThreadData(GC& gc, mm::ThreadData& threadData) noexcept : impl_(std_support::make_unique<Impl>(gc, threadData)) {}
+gc::GC::ThreadData::ThreadData(GC& gc, gcScheduler::GCSchedulerThreadData&, mm::ThreadData& threadData) noexcept : impl_(std_support::make_unique<Impl>(gc, threadData)) {}
 
 gc::GC::ThreadData::~ThreadData() = default;
 
@@ -52,13 +52,9 @@ ALWAYS_INLINE ArrayHeader* gc::GC::ThreadData::CreateArray(const TypeInfo* typeI
     return impl_->objectFactoryThreadQueue().CreateArray(typeInfo, elements);
 }
 
-void gc::GC::ThreadData::OnStoppedForGC() noexcept {
-    impl_->gcScheduler().OnStoppedForGC();
-}
-
 void gc::GC::ThreadData::OnSuspendForGC() noexcept { }
 
-gc::GC::GC() noexcept : impl_(std_support::make_unique<Impl>()) {}
+gc::GC::GC(gcScheduler::GCScheduler&) noexcept : impl_(std_support::make_unique<Impl>()) {}
 
 gc::GC::~GC() = default;
 
@@ -78,10 +74,6 @@ size_t gc::GC::GetExtraObjectsCountUnsafe() const noexcept {
 }
 size_t gc::GC::GetTotalExtraObjectsSizeUnsafe() const noexcept {
     return mm::GlobalData::Instance().extraObjectDataFactory().GetTotalObjectsSizeUnsafe();
-}
-
-gc::GCSchedulerConfig& gc::GC::gcSchedulerConfig() noexcept {
-    return impl_->gcScheduler().config();
 }
 
 void gc::GC::ClearForTests() noexcept {
@@ -105,3 +97,5 @@ ALWAYS_INLINE void gc::GC::processArrayInMark(void* state, ArrayHeader* array) n
 
 // static
 ALWAYS_INLINE void gc::GC::processFieldInMark(void* state, ObjHeader* field) noexcept {}
+
+void gc::GC::Schedule() noexcept {}

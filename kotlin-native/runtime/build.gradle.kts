@@ -158,7 +158,7 @@ bitcode {
         }
 
         module("custom_alloc") {
-            headersDirs.from(files("src/main/cpp", "src/mm/cpp", "src/gc/common/cpp", "src/gc/cms/cpp"))
+            headersDirs.from(files("src/main/cpp", "src/mm/cpp", "src/gc/common/cpp", "src/gcScheduler/common/cpp", "src/gc/cms/cpp"))
             sourceSets {
                 main {}
                 test {}
@@ -251,7 +251,7 @@ bitcode {
         }
 
         module("mm") {
-            headersDirs.from(files("src/gc/common/cpp", "src/main/cpp"))
+            headersDirs.from(files("src/gcScheduler/common/cpp", "src/gc/common/cpp", "src/main/cpp"))
             sourceSets {
                 main {}
                 testFixtures {}
@@ -263,7 +263,7 @@ bitcode {
 
         module("mm_custom") {
             srcRoot.set(layout.projectDirectory.dir("src/mm"))
-            headersDirs.from(files("src/gc/common/cpp", "src/main/cpp", "src/custom_alloc/cpp"))
+            headersDirs.from(files("src/gcScheduler/common/cpp", "src/gc/common/cpp", "src/main/cpp", "src/custom_alloc/cpp"))
             sourceSets {
                 main {}
                 testFixtures {}
@@ -277,7 +277,7 @@ bitcode {
 
         module("common_gc") {
             srcRoot.set(layout.projectDirectory.dir("src/gc/common"))
-            headersDirs.from(files("src/mm/cpp", "src/main/cpp"))
+            headersDirs.from(files("src/gcScheduler/common/cpp", "src/mm/cpp", "src/main/cpp"))
             sourceSets {
                 main {}
                 test {}
@@ -288,7 +288,7 @@ bitcode {
 
         module("noop_gc") {
             srcRoot.set(layout.projectDirectory.dir("src/gc/noop"))
-            headersDirs.from(files("src/gc/noop/cpp", "src/gc/common/cpp", "src/mm/cpp", "src/main/cpp"))
+            headersDirs.from(files("src/gcScheduler/common/cpp", "src/gc/common/cpp", "src/mm/cpp", "src/main/cpp"))
             sourceSets {
                 main {}
                 testFixtures {}
@@ -299,7 +299,7 @@ bitcode {
 
         module("stwms_gc") {
             srcRoot.set(layout.projectDirectory.dir("src/gc/stwms"))
-            headersDirs.from(files("src/gc/stwms/cpp", "src/gc/common/cpp", "src/mm/cpp", "src/main/cpp"))
+            headersDirs.from(files("src/gcScheduler/common/cpp", "src/gc/common/cpp", "src/mm/cpp", "src/main/cpp"))
             sourceSets {
                 main {}
                 testFixtures {}
@@ -311,7 +311,7 @@ bitcode {
 
         module("cms_gc") {
             srcRoot.set(layout.projectDirectory.dir("src/gc/cms"))
-            headersDirs.from(files("src/gc/cms/cpp", "src/gc/common/cpp", "src/mm/cpp", "src/main/cpp"))
+            headersDirs.from(files("src/gcScheduler/common/cpp", "src/gc/common/cpp", "src/mm/cpp", "src/main/cpp"))
             sourceSets {
                 main {}
                 testFixtures {}
@@ -323,7 +323,7 @@ bitcode {
 
         module("cms_gc_custom") {
             srcRoot.set(layout.projectDirectory.dir("src/gc/cms"))
-            headersDirs.from(files("src/gc/cms/cpp", "src/gc/common/cpp", "src/mm/cpp", "src/main/cpp", "src/custom_alloc/cpp"))
+            headersDirs.from(files("src/gcScheduler/common/cpp", "src/gc/common/cpp", "src/mm/cpp", "src/main/cpp", "src/custom_alloc/cpp"))
             sourceSets {
                 main {}
                 testFixtures {}
@@ -335,13 +335,57 @@ bitcode {
             onlyIf { target.supportsThreads() }
         }
 
+        module("common_gcScheduler") {
+            srcRoot.set(layout.projectDirectory.dir("src/gcScheduler/common"))
+            headersDirs.from(files("src/gc/common/cpp", "src/mm/cpp", "src/main/cpp"))
+            sourceSets {
+                main {}
+                testFixtures {}
+                test {}
+            }
+
+            onlyIf { target.supportsThreads() }
+        }
+
+        module("manual_gcScheduler") {
+            srcRoot.set(layout.projectDirectory.dir("src/gcScheduler/manual"))
+            headersDirs.from(files("src/gcScheduler/common/cpp", "src/gc/common/cpp", "src/mm/cpp", "src/main/cpp"))
+            sourceSets {
+                main {}
+            }
+
+            onlyIf { target.supportsThreads() }
+        }
+
+        module("adaptive_gcScheduler") {
+            srcRoot.set(layout.projectDirectory.dir("src/gcScheduler/adaptive"))
+            headersDirs.from(files("src/gcScheduler/common/cpp", "src/gc/common/cpp", "src/mm/cpp", "src/main/cpp"))
+            sourceSets {
+                main {}
+                test {}
+            }
+
+            onlyIf { target.supportsThreads() }
+        }
+
+        module("aggressive_gcScheduler") {
+            srcRoot.set(layout.projectDirectory.dir("src/gcScheduler/aggressive"))
+            headersDirs.from(files("src/gcScheduler/common/cpp", "src/gc/common/cpp", "src/mm/cpp", "src/main/cpp"))
+            sourceSets {
+                main {}
+                test {}
+            }
+
+            onlyIf { target.supportsThreads() }
+        }
+
         testsGroup("std_alloc_runtime_tests") {
             testedModules.addAll("main", "legacy_memory_manager", "strict", "std_alloc", "objc")
         }
 
         testsGroup("custom_alloc_runtime_tests") {
             testedModules.addAll("custom_alloc")
-            testSupportModules.addAll("main", "mm_custom", "common_gc", "cms_gc_custom", "objc")
+            testSupportModules.addAll("main", "mm_custom", "common_gc", "common_gcScheduler", "manual_gcScheduler", "cms_gc_custom", "objc")
         }
 
         testsGroup("mimalloc_runtime_tests") {
@@ -349,27 +393,37 @@ bitcode {
         }
 
         testsGroup("experimentalMM_mimalloc_runtime_tests") {
-            testedModules.addAll("main", "mm", "common_gc", "stwms_gc", "mimalloc", "opt_alloc", "objc")
+            testedModules.addAll("main", "mm", "common_gc", "common_gcScheduler", "manual_gcScheduler", "stwms_gc", "mimalloc", "opt_alloc", "objc")
         }
 
         testsGroup("experimentalMM_std_alloc_runtime_tests") {
-            testedModules.addAll("main", "mm", "common_gc", "stwms_gc", "std_alloc", "objc")
+            testedModules.addAll("main", "mm", "common_gc", "common_gcScheduler", "manual_gcScheduler", "stwms_gc", "std_alloc", "objc")
         }
 
         testsGroup("experimentalMM_cms_mimalloc_runtime_tests") {
-            testedModules.addAll("main", "mm", "common_gc", "cms_gc", "mimalloc", "opt_alloc", "objc")
+            testedModules.addAll("main", "mm", "common_gc", "common_gcScheduler", "manual_gcScheduler", "cms_gc", "mimalloc", "opt_alloc", "objc")
         }
 
         testsGroup("experimentalMM_cms_std_alloc_runtime_tests") {
-            testedModules.addAll("main", "mm", "common_gc", "cms_gc", "std_alloc", "objc")
+            testedModules.addAll("main", "mm", "common_gc", "common_gcScheduler", "manual_gcScheduler", "cms_gc", "std_alloc", "objc")
         }
 
         testsGroup("experimentalMM_noop_mimalloc_runtime_tests") {
-            testedModules.addAll("main", "mm", "common_gc", "noop_gc", "mimalloc", "opt_alloc", "objc")
+            testedModules.addAll("main", "mm", "common_gc", "common_gcScheduler", "manual_gcScheduler", "noop_gc", "mimalloc", "opt_alloc", "objc")
         }
 
         testsGroup("experimentalMM_noop_std_alloc_runtime_tests") {
-            testedModules.addAll("main", "mm", "common_gc", "noop_gc", "std_alloc", "objc")
+            testedModules.addAll("main", "mm", "common_gc", "common_gcScheduler", "manual_gcScheduler", "noop_gc", "std_alloc", "objc")
+        }
+
+        testsGroup("aggressive_gcScheduler_runtime_tests") {
+            testedModules.addAll("aggressive_gcScheduler")
+            testSupportModules.addAll("main", "mm", "common_gc", "common_gcScheduler", "noop_gc", "std_alloc", "objc")
+        }
+
+        testsGroup("adaptive_gcScheduler_runtime_tests") {
+            testedModules.addAll("adaptive_gcScheduler")
+            testSupportModules.addAll("main", "mm", "common_gc", "common_gcScheduler", "noop_gc", "std_alloc", "objc")
         }
     }
 }

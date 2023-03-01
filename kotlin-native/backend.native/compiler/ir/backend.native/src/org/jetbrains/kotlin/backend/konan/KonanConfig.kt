@@ -150,7 +150,10 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
                 ?: SourceInfoType.NOOP
 
     val defaultGCSchedulerType by lazy {
-        GCSchedulerType.ADAPTIVE
+        when (gc) {
+            GC.NOOP -> GCSchedulerType.MANUAL
+            else -> GCSchedulerType.ADAPTIVE
+        }
     }
 
     val gcSchedulerType: GCSchedulerType by lazy {
@@ -288,6 +291,21 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
             }
             MemoryModel.EXPERIMENTAL -> {
                 add("common_gc.bc")
+                add("common_gcScheduler.bc")
+                when (gcSchedulerType) {
+                    GCSchedulerType.MANUAL -> {
+                        add("manual_gcScheduler.bc")
+                    }
+                    GCSchedulerType.ADAPTIVE -> {
+                        add("adaptive_gcScheduler.bc")
+                    }
+                    GCSchedulerType.AGGRESSIVE -> {
+                        add("aggressive_gcScheduler.bc")
+                    }
+                    GCSchedulerType.DISABLED, GCSchedulerType.WITH_TIMER, GCSchedulerType.ON_SAFE_POINTS -> {
+                        throw IllegalStateException("Deprecated options must have already been handled")
+                    }
+                }
                 if (allocationMode == AllocationMode.CUSTOM) {
                     add("mm_custom.bc")
                     add("cms_gc_custom.bc")

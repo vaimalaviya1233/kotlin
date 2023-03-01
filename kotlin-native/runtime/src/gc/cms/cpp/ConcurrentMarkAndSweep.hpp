@@ -76,7 +76,7 @@ public:
 
         using Allocator = AllocatorWithGC<Allocator, ThreadData>;
 
-        explicit ThreadData(ConcurrentMarkAndSweep& gc, mm::ThreadData& threadData, GCSchedulerThreadData& gcScheduler) noexcept :
+        explicit ThreadData(ConcurrentMarkAndSweep& gc, mm::ThreadData& threadData, gcScheduler::GCSchedulerThreadData& gcScheduler) noexcept :
             gc_(gc), threadData_(threadData), gcScheduler_(gcScheduler) {}
         ~ThreadData() = default;
 
@@ -96,7 +96,7 @@ public:
         friend ConcurrentMarkAndSweep;
         ConcurrentMarkAndSweep& gc_;
         mm::ThreadData& threadData_;
-        GCSchedulerThreadData& gcScheduler_;
+        gcScheduler::GCSchedulerThreadData& gcScheduler_;
         std::atomic<bool> marking_;
     };
 
@@ -110,7 +110,7 @@ public:
     using FinalizerQueueTraits = alloc::FinalizerQueueTraits;
 #endif
 
-    ConcurrentMarkAndSweep(mm::ObjectFactory<ConcurrentMarkAndSweep>& objectFactory, GCScheduler& scheduler) noexcept;
+    ConcurrentMarkAndSweep(mm::ObjectFactory<ConcurrentMarkAndSweep>& objectFactory, gcScheduler::GCScheduler& scheduler) noexcept;
     ~ConcurrentMarkAndSweep();
 
     void StartFinalizerThreadIfNeeded() noexcept;
@@ -125,6 +125,8 @@ public:
     alloc::Heap& heap() noexcept { return heap_; }
 #endif
 
+    void Schedule() noexcept { state_.schedule(); }
+
 private:
     void PerformFullGC(int64_t epoch) noexcept;
 
@@ -133,7 +135,7 @@ private:
 #else
     alloc::Heap heap_;
 #endif
-    GCScheduler& gcScheduler_;
+    gcScheduler::GCScheduler& gcScheduler_;
 
     GCStateHolder state_;
     ScopedThread gcThread_;

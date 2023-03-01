@@ -21,7 +21,7 @@ namespace kotlin::alloc {
 
 class CustomAllocator {
 public:
-    explicit CustomAllocator(Heap& heap, gc::GCSchedulerThreadData& gcScheduler) noexcept;
+    explicit CustomAllocator(Heap& heap, gcScheduler::GCSchedulerThreadData& gcScheduler) noexcept;
 
     ObjHeader* CreateObject(const TypeInfo* typeInfo) noexcept;
 
@@ -41,7 +41,7 @@ private:
     uint8_t* AllocateInSmallPage(uint32_t cellCount) noexcept;
 
     Heap& heap_;
-    gc::GCSchedulerThreadData& gcScheduler_;
+    gcScheduler::GCSchedulerThreadData& gcScheduler_;
     MediumPage* mediumPage_;
     SmallPage* smallPages_[SMALL_PAGE_MAX_BLOCK_SIZE + 1];
     ExtraObjectPage* extraObjectPage_;
