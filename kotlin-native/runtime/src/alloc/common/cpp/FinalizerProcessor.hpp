@@ -13,12 +13,11 @@
 
 #include "KAssert.h"
 #include "Memory.h"
-#include "ObjectFactory.hpp"
 #include "Runtime.h"
 #include "ScopedThread.hpp"
 #include "Utils.hpp"
 
-namespace kotlin::gc {
+namespace kotlin::alloc {
 
 template <typename FinalizerQueue, typename FinalizerQueueTraits>
 class FinalizerProcessor : private Pinned {
@@ -121,4 +120,4 @@ private:
     std::mutex threadCreatingMutex_;
 };
 
-} // namespace kotlin::gc
+} // namespace kotlin::alloc

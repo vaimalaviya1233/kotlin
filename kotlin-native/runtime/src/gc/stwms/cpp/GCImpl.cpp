@@ -13,6 +13,12 @@
 
 using namespace kotlin;
 
+// static
+const size_t gc::GC::objectDataSize = sizeof(StopTheWorldMarkAndSweep::ObjectData);
+
+// static
+const size_t gc::GC::objectDataAlignment = alignof(StopTheWorldMarkAndSweep::ObjectData);
+
 gc::GC::ThreadData::ThreadData(GC& gc, gcScheduler::GCSchedulerThreadData& gcScheduler, mm::ThreadData& threadData) noexcept :
     impl_(std_support::make_unique<Impl>(gc, gcScheduler, threadData)) {}
 
@@ -38,62 +44,36 @@ void gc::GC::ThreadData::ScheduleAndWaitFullGCWithFinalizers() noexcept {
     impl_->gc().ScheduleAndWaitFullGCWithFinalizers();
 }
 
-void gc::GC::ThreadData::Publish() noexcept {
-    impl_->objectFactoryThreadQueue().Publish();
-}
+void gc::GC::ThreadData::Publish() noexcept {}
 
-void gc::GC::ThreadData::ClearForTests() noexcept {
-    impl_->objectFactoryThreadQueue().ClearForTests();
-}
-
-ALWAYS_INLINE ObjHeader* gc::GC::ThreadData::CreateObject(const TypeInfo* typeInfo) noexcept {
-    return impl_->objectFactoryThreadQueue().CreateObject(typeInfo);
-}
-
-ALWAYS_INLINE ArrayHeader* gc::GC::ThreadData::CreateArray(const TypeInfo* typeInfo, uint32_t elements) noexcept {
-    return impl_->objectFactoryThreadQueue().CreateArray(typeInfo, elements);
-}
+void gc::GC::ThreadData::ClearForTests() noexcept {}
 
 void gc::GC::ThreadData::OnSuspendForGC() noexcept {}
 
-gc::GC::GC(gcScheduler::GCScheduler& gcScheduler) noexcept : impl_(std_support::make_unique<Impl>(gcScheduler)) {}
+gc::GC::GC(gcScheduler::GCScheduler& gcScheduler, alloc::Allocator& allocator) noexcept : impl_(std_support::make_unique<Impl>(gcScheduler, allocator)) {}
 
 gc::GC::~GC() = default;
 
-// static
-size_t gc::GC::GetAllocatedHeapSize(ObjHeader* object) noexcept {
-    return mm::ObjectFactory<GCImpl>::GetAllocatedHeapSize(object);
-}
-
-size_t gc::GC::GetHeapObjectsCountUnsafe() const noexcept {
-    return impl_->objectFactory().GetObjectsCountUnsafe();
-}
-size_t gc::GC::GetTotalHeapObjectsSizeUnsafe() const noexcept {
-    return impl_->objectFactory().GetTotalObjectsSizeUnsafe();
-}
-size_t gc::GC::GetExtraObjectsCountUnsafe() const noexcept {
-    return mm::GlobalData::Instance().extraObjectDataFactory().GetSizeUnsafe();
-}
-size_t gc::GC::GetTotalExtraObjectsSizeUnsafe() const noexcept {
-    return mm::GlobalData::Instance().extraObjectDataFactory().GetTotalObjectsSizeUnsafe();
-}
-
 void gc::GC::ClearForTests() noexcept {
-    impl_->gc().StopFinalizerThreadIfRunning();
-    impl_->objectFactory().ClearForTests();
     GCHandle::ClearForTests();
 }
 
-void gc::GC::StartFinalizerThreadIfNeeded() noexcept {
-    impl_->gc().StartFinalizerThreadIfNeeded();
+// static
+bool gc::GC::isMarked(ObjHeader* object) noexcept {
+    auto& objectData = *static_cast<StopTheWorldMarkAndSweep::ObjectData*>(alloc::Allocator::dataForObject(object));
+    return objectData.marked();
 }
 
-void gc::GC::StopFinalizerThreadIfRunning() noexcept {
-    impl_->gc().StopFinalizerThreadIfRunning();
+// static
+bool gc::GC::tryResetMark(ObjHeader* object) noexcept {
+    auto& objectData = *static_cast<StopTheWorldMarkAndSweep::ObjectData*>(alloc::Allocator::dataForObject(object));
+    return objectData.tryResetMark();
 }
 
-bool gc::GC::FinalizersThreadIsRunning() noexcept {
-    return impl_->gc().FinalizersThreadIsRunning();
+// static
+void gc::GC::keepAlive(ObjHeader* object) noexcept {
+    auto& objectData = *static_cast<StopTheWorldMarkAndSweep::ObjectData*>(alloc::Allocator::dataForObject(object));
+    objectData.tryMark();
 }
 
 // static

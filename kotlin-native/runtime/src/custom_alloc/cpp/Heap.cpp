@@ -16,7 +16,6 @@
 #include "CustomLogging.hpp"
 #include "ExtraObjectPage.hpp"
 #include "ThreadRegistry.hpp"
-#include "GCImpl.hpp"
 
 namespace kotlin::alloc {
 
@@ -28,10 +27,6 @@ Heap::~Heap() noexcept {
 
 void Heap::PrepareForGC() noexcept {
     CustomAllocDebug("Heap::PrepareForGC()");
-    for (auto& thread : kotlin::mm::ThreadRegistry::Instance().LockForIter()) {
-        thread.gc().impl().alloc().PrepareForGC();
-    }
-
     mediumPages_.PrepareForGC();
     largePages_.PrepareForGC();
     for (int blockSize = 0; blockSize <= SMALL_PAGE_MAX_BLOCK_SIZE; ++blockSize) {

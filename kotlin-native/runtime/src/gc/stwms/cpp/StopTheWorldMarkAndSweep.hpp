@@ -8,11 +8,10 @@
 #include <cstddef>
 
 #include "Allocator.hpp"
-#include "FinalizerProcessor.hpp"
 #include "GCScheduler.hpp"
 #include "GCState.hpp"
 #include "IntrusiveList.hpp"
-#include "ObjectFactory.hpp"
+#include "ScopedThread.hpp"
 #include "Types.h"
 #include "Utils.hpp"
 
@@ -64,33 +63,20 @@ public:
     class ThreadData : private Pinned {
     public:
         using ObjectData = StopTheWorldMarkAndSweep::ObjectData;
-        using Allocator = AllocatorWithGC<Allocator, ThreadData>;
 
         ThreadData(StopTheWorldMarkAndSweep& gc, mm::ThreadData& threadData, gcScheduler::GCSchedulerThreadData& gcScheduler) noexcept :
-            gc_(gc), gcScheduler_(gcScheduler) {}
+            gc_(gc) {}
         ~ThreadData() = default;
-
-        void SafePointAllocation(size_t size) noexcept;
 
         void Schedule() noexcept;
         void ScheduleAndWaitFullGC() noexcept;
         void ScheduleAndWaitFullGCWithFinalizers() noexcept;
 
-        void OnOOM(size_t size) noexcept;
-
-        Allocator CreateAllocator() noexcept { return Allocator(gc::Allocator(), *this); }
-
     private:
         StopTheWorldMarkAndSweep& gc_;
-        gcScheduler::GCSchedulerThreadData& gcScheduler_;
     };
 
-    using Allocator = ThreadData::Allocator;
-
-    using FinalizerQueue = mm::ObjectFactory<StopTheWorldMarkAndSweep>::FinalizerQueue;
-    using FinalizerQueueTraits = mm::ObjectFactory<StopTheWorldMarkAndSweep>::FinalizerQueueTraits;
-
-    StopTheWorldMarkAndSweep(mm::ObjectFactory<StopTheWorldMarkAndSweep>& objectFactory, gcScheduler::GCScheduler& gcScheduler) noexcept;
+    StopTheWorldMarkAndSweep(gcScheduler::GCScheduler& gcScheduler, alloc::Allocator& allocator) noexcept;
     ~StopTheWorldMarkAndSweep();
 
     void StartFinalizerThreadIfNeeded() noexcept;
@@ -102,12 +88,11 @@ public:
 private:
     void PerformFullGC(int64_t epoch) noexcept;
 
-    mm::ObjectFactory<StopTheWorldMarkAndSweep>& objectFactory_;
     gcScheduler::GCScheduler& gcScheduler_;
+    alloc::Allocator& allocator_;
 
     GCStateHolder state_;
     ScopedThread gcThread_;
-    FinalizerProcessor<FinalizerQueue, FinalizerQueueTraits> finalizerProcessor_;
 
     MarkQueue markQueue_;
 };
@@ -121,19 +106,18 @@ struct MarkTraits {
 
     static ObjHeader* tryDequeue(MarkQueue& queue) noexcept {
         if (auto* top = queue.try_pop_front()) {
-            auto node = mm::ObjectFactory<gc::StopTheWorldMarkAndSweep>::NodeRef::From(*top);
-            return node->GetObjHeader();
+            return alloc::Allocator::objectForData(top);
         }
         return nullptr;
     }
 
     static bool tryEnqueue(MarkQueue& queue, ObjHeader* object) noexcept {
-        auto& objectData = mm::ObjectFactory<gc::StopTheWorldMarkAndSweep>::NodeRef::From(object).ObjectData();
+        auto& objectData = *static_cast<StopTheWorldMarkAndSweep::ObjectData*>(alloc::Allocator::dataForObject(object));
         return queue.try_push_front(objectData);
     }
 
     static bool tryMark(ObjHeader* object) noexcept {
-        auto& objectData = mm::ObjectFactory<gc::StopTheWorldMarkAndSweep>::NodeRef::From(object).ObjectData();
+        auto& objectData = *static_cast<StopTheWorldMarkAndSweep::ObjectData*>(alloc::Allocator::dataForObject(object));
         return objectData.tryMark();
     }
 

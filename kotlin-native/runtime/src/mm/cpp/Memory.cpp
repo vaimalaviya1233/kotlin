@@ -86,10 +86,8 @@ void ObjHeader::destroyMetaObject(ObjHeader* object) {
     RuntimeAssert(object->has_meta_object(), "Object must have a meta object set");
     auto &extraObject = *mm::ExtraObjectData::Get(object);
     extraObject.Uninstall();
-#ifndef CUSTOM_ALLOCATOR
     auto *threadData = mm::ThreadRegistry::Instance().CurrentThreadData();
-    mm::ExtraObjectDataFactory::Instance().DestroyExtraObjectData(threadData, extraObject);
-#endif
+    threadData->allocator().destroyExtraObjectData2(extraObject);
 }
 
 ALWAYS_INLINE bool isPermanentOrFrozen(const ObjHeader* obj) {
@@ -117,7 +115,7 @@ extern "C" void DeinitMemory(MemoryState* state, bool destroyRuntime) {
         ThreadStateGuard guard(state, ThreadState::kRunnable);
         node->Get()->gc().ScheduleAndWaitFullGCWithFinalizers();
         // TODO: Why not just destruct `GC` object and its thread data counterpart entirely?
-        mm::GlobalData::Instance().gc().StopFinalizerThreadIfRunning();
+        mm::GlobalData::Instance().allocator().StopFinalizerThreadIfRunning();
     }
     if (!konan::isOnThreadExitNotSetOrAlreadyStarted()) {
         // we can clear reference in advance, as Unregister function can't use it anyway
@@ -640,11 +638,11 @@ ALWAYS_INLINE kotlin::CalledFromNativeGuard::CalledFromNativeGuard(bool reentran
 const bool kotlin::kSupportsMultipleMutators = kotlin::gc::kSupportsMultipleMutators;
 
 void kotlin::StartFinalizerThreadIfNeeded() noexcept {
-    mm::GlobalData::Instance().gc().StartFinalizerThreadIfNeeded();
+    mm::GlobalData::Instance().allocator().StartFinalizerThreadIfNeeded();
 }
 
 bool kotlin::FinalizersThreadIsRunning() noexcept {
-    return mm::GlobalData::Instance().gc().FinalizersThreadIsRunning();
+    return mm::GlobalData::Instance().allocator().FinalizersThreadIsRunning();
 }
 
 RUNTIME_NOTHROW ALWAYS_INLINE extern "C" void Kotlin_processObjectInMark(void* state, ObjHeader* object) {

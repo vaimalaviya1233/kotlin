@@ -9,24 +9,16 @@
 #include <cstddef>
 
 #include "Allocator.hpp"
-#include "FinalizerProcessor.hpp"
 #include "GCScheduler.hpp"
 #include "GCState.hpp"
 #include "GCStatistics.hpp"
 #include "IntrusiveList.hpp"
 #include "MarkAndSweepUtils.hpp"
-#include "ObjectFactory.hpp"
 #include "ScopedThread.hpp"
 #include "ThreadData.hpp"
 #include "Types.h"
 #include "Utils.hpp"
 #include "std_support/Memory.hpp"
-
-#ifdef CUSTOM_ALLOCATOR
-#include "CustomAllocator.hpp"
-#include "CustomFinalizerProcessor.hpp"
-#include "Heap.hpp"
-#endif
 
 namespace kotlin {
 namespace gc {
@@ -66,6 +58,9 @@ public:
         std::atomic<ObjectData*> next_ = nullptr;
     };
 
+    static inline constexpr size_t ObjectDataAlignment = alignof(ObjectData);
+    static inline constexpr size_t ObjectDataSize = sizeof(ObjectData);
+
     enum MarkingBehavior { kMarkOwnStack, kDoNotMark };
 
     using MarkQueue = intrusive_forward_list<ObjectData>;
@@ -74,73 +69,42 @@ public:
     public:
         using ObjectData = ConcurrentMarkAndSweep::ObjectData;
 
-        using Allocator = AllocatorWithGC<Allocator, ThreadData>;
-
         explicit ThreadData(
                 ConcurrentMarkAndSweep& gc, mm::ThreadData& threadData, gcScheduler::GCSchedulerThreadData& gcScheduler) noexcept :
-            gc_(gc), threadData_(threadData), gcScheduler_(gcScheduler) {}
+            gc_(gc), threadData_(threadData) {}
         ~ThreadData() = default;
-
-        void SafePointAllocation(size_t size) noexcept;
 
         void Schedule() noexcept;
         void ScheduleAndWaitFullGC() noexcept;
         void ScheduleAndWaitFullGCWithFinalizers() noexcept;
 
-        void OnOOM(size_t size) noexcept;
-
         void OnSuspendForGC() noexcept;
-
-        Allocator CreateAllocator() noexcept { return Allocator(gc::Allocator(), *this); }
 
     private:
         friend ConcurrentMarkAndSweep;
         ConcurrentMarkAndSweep& gc_;
         mm::ThreadData& threadData_;
-        gcScheduler::GCSchedulerThreadData& gcScheduler_;
         std::atomic<bool> marking_;
     };
 
-    using Allocator = ThreadData::Allocator;
-
-#ifndef CUSTOM_ALLOCATOR
-    using FinalizerQueue = mm::ObjectFactory<ConcurrentMarkAndSweep>::FinalizerQueue;
-    using FinalizerQueueTraits = mm::ObjectFactory<ConcurrentMarkAndSweep>::FinalizerQueueTraits;
-#else
-    using FinalizerQueue = alloc::FinalizerQueue;
-    using FinalizerQueueTraits = alloc::FinalizerQueueTraits;
-#endif
-
-    ConcurrentMarkAndSweep(mm::ObjectFactory<ConcurrentMarkAndSweep>& objectFactory, gcScheduler::GCScheduler& scheduler) noexcept;
+    ConcurrentMarkAndSweep(gcScheduler::GCScheduler& scheduler, alloc::Allocator& allocator) noexcept;
     ~ConcurrentMarkAndSweep();
 
-    void StartFinalizerThreadIfNeeded() noexcept;
-    void StopFinalizerThreadIfRunning() noexcept;
-    bool FinalizersThreadIsRunning() noexcept;
     void SetMarkingBehaviorForTests(MarkingBehavior markingBehavior) noexcept;
     void SetMarkingRequested(uint64_t epoch) noexcept;
     void WaitForThreadsReadyToMark() noexcept;
     void CollectRootSetAndStartMarking(GCHandle gcHandle) noexcept;
-
-#ifdef CUSTOM_ALLOCATOR
-    alloc::Heap& heap() noexcept { return heap_; }
-#endif
 
     void Schedule() noexcept { state_.schedule(); }
 
 private:
     void PerformFullGC(int64_t epoch) noexcept;
 
-#ifndef CUSTOM_ALLOCATOR
-    mm::ObjectFactory<ConcurrentMarkAndSweep>& objectFactory_;
-#else
-    alloc::Heap heap_;
-#endif
     gcScheduler::GCScheduler& gcScheduler_;
+    alloc::Allocator& allocator_;
 
     GCStateHolder state_;
     ScopedThread gcThread_;
-    FinalizerProcessor<FinalizerQueue, FinalizerQueueTraits> finalizerProcessor_;
 
     MarkQueue markQueue_;
     MarkingBehavior markingBehavior_;
@@ -154,19 +118,18 @@ struct MarkTraits {
 
     static ObjHeader* tryDequeue(MarkQueue& queue) noexcept {
         if (auto* top = queue.try_pop_front()) {
-            auto node = mm::ObjectFactory<gc::ConcurrentMarkAndSweep>::NodeRef::From(*top);
-            return node->GetObjHeader();
+            return alloc::Allocator::objectForData(top);
         }
         return nullptr;
     }
 
     static bool tryEnqueue(MarkQueue& queue, ObjHeader* object) noexcept {
-        auto& objectData = mm::ObjectFactory<gc::ConcurrentMarkAndSweep>::NodeRef::From(object).ObjectData();
+        auto& objectData = *static_cast<ConcurrentMarkAndSweep::ObjectData*>(alloc::Allocator::dataForObject(object));
         return queue.try_push_front(objectData);
     }
 
     static bool tryMark(ObjHeader* object) noexcept {
-        auto& objectData = mm::ObjectFactory<gc::ConcurrentMarkAndSweep>::NodeRef::From(object).ObjectData();
+        auto& objectData = *static_cast<ConcurrentMarkAndSweep::ObjectData*>(alloc::Allocator::dataForObject(object));
         return objectData.tryMark();
     }
 

@@ -158,13 +158,11 @@ bitcode {
         }
 
         module("custom_alloc") {
-            headersDirs.from(files("src/main/cpp", "src/mm/cpp", "src/gc/common/cpp", "src/gcScheduler/common/cpp", "src/gc/cms/cpp"))
+            headersDirs.from(files("src/main/cpp", "src/mm/cpp", "src/gc/common/cpp", "src/gcScheduler/common/cpp"))
             sourceSets {
                 main {}
                 test {}
             }
-
-            compilerArgs.add("-DCUSTOM_ALLOCATOR")
 
             // Directly depends on cms which is only supported with threads.
             onlyIf { target.supportsThreads() }
@@ -251,33 +249,19 @@ bitcode {
         }
 
         module("mm") {
-            headersDirs.from(files("src/gcScheduler/common/cpp", "src/gc/common/cpp", "src/main/cpp"))
+            headersDirs.from(files("src/alloc/common/cpp", "src/gcScheduler/common/cpp", "src/gc/common/cpp", "src/main/cpp"))
             sourceSets {
                 main {}
                 testFixtures {}
                 test {}
             }
-
-            onlyIf { target.supportsThreads() }
-        }
-
-        module("mm_custom") {
-            srcRoot.set(layout.projectDirectory.dir("src/mm"))
-            headersDirs.from(files("src/gcScheduler/common/cpp", "src/gc/common/cpp", "src/main/cpp", "src/custom_alloc/cpp"))
-            sourceSets {
-                main {}
-                testFixtures {}
-                test {}
-            }
-
-            compilerArgs.add("-DCUSTOM_ALLOCATOR")
 
             onlyIf { target.supportsThreads() }
         }
 
         module("common_gc") {
             srcRoot.set(layout.projectDirectory.dir("src/gc/common"))
-            headersDirs.from(files("src/gcScheduler/common/cpp", "src/mm/cpp", "src/main/cpp"))
+            headersDirs.from(files("src/alloc/common/cpp", "src/gcScheduler/common/cpp", "src/mm/cpp", "src/main/cpp"))
             sourceSets {
                 main {}
                 test {}
@@ -288,7 +272,7 @@ bitcode {
 
         module("noop_gc") {
             srcRoot.set(layout.projectDirectory.dir("src/gc/noop"))
-            headersDirs.from(files("src/gcScheduler/common/cpp", "src/gc/common/cpp", "src/mm/cpp", "src/main/cpp"))
+            headersDirs.from(files("src/alloc/common/cpp", "src/gcScheduler/common/cpp", "src/gc/common/cpp", "src/mm/cpp", "src/main/cpp"))
             sourceSets {
                 main {}
                 testFixtures {}
@@ -299,7 +283,7 @@ bitcode {
 
         module("stwms_gc") {
             srcRoot.set(layout.projectDirectory.dir("src/gc/stwms"))
-            headersDirs.from(files("src/gcScheduler/common/cpp", "src/gc/common/cpp", "src/mm/cpp", "src/main/cpp"))
+            headersDirs.from(files("src/alloc/common/cpp", "src/gcScheduler/common/cpp", "src/gc/common/cpp", "src/mm/cpp", "src/main/cpp"))
             sourceSets {
                 main {}
                 testFixtures {}
@@ -311,33 +295,19 @@ bitcode {
 
         module("cms_gc") {
             srcRoot.set(layout.projectDirectory.dir("src/gc/cms"))
-            headersDirs.from(files("src/gcScheduler/common/cpp", "src/gc/common/cpp", "src/mm/cpp", "src/main/cpp"))
+            headersDirs.from(files("src/alloc/common/cpp", "src/gcScheduler/common/cpp", "src/gc/common/cpp", "src/mm/cpp", "src/main/cpp"))
             sourceSets {
                 main {}
                 testFixtures {}
                 test {}
             }
-
-            onlyIf { target.supportsThreads() }
-        }
-
-        module("cms_gc_custom") {
-            srcRoot.set(layout.projectDirectory.dir("src/gc/cms"))
-            headersDirs.from(files("src/gcScheduler/common/cpp", "src/gc/common/cpp", "src/mm/cpp", "src/main/cpp", "src/custom_alloc/cpp"))
-            sourceSets {
-                main {}
-                testFixtures {}
-                test {}
-            }
-
-            compilerArgs.add("-DCUSTOM_ALLOCATOR")
 
             onlyIf { target.supportsThreads() }
         }
 
         module("common_gcScheduler") {
             srcRoot.set(layout.projectDirectory.dir("src/gcScheduler/common"))
-            headersDirs.from(files("src/gc/common/cpp", "src/mm/cpp", "src/main/cpp"))
+            headersDirs.from(files("src/alloc/common/cpp", "src/gc/common/cpp", "src/mm/cpp", "src/main/cpp"))
             sourceSets {
                 main {}
                 testFixtures {}
@@ -349,7 +319,7 @@ bitcode {
 
         module("manual_gcScheduler") {
             srcRoot.set(layout.projectDirectory.dir("src/gcScheduler/manual"))
-            headersDirs.from(files("src/gcScheduler/common/cpp", "src/gc/common/cpp", "src/mm/cpp", "src/main/cpp"))
+            headersDirs.from(files("src/alloc/common/cpp", "src/gcScheduler/common/cpp", "src/gc/common/cpp", "src/mm/cpp", "src/main/cpp"))
             sourceSets {
                 main {}
             }
@@ -359,7 +329,7 @@ bitcode {
 
         module("adaptive_gcScheduler") {
             srcRoot.set(layout.projectDirectory.dir("src/gcScheduler/adaptive"))
-            headersDirs.from(files("src/gcScheduler/common/cpp", "src/gc/common/cpp", "src/mm/cpp", "src/main/cpp"))
+            headersDirs.from(files("src/alloc/common/cpp", "src/gcScheduler/common/cpp", "src/gc/common/cpp", "src/mm/cpp", "src/main/cpp"))
             sourceSets {
                 main {}
                 test {}
@@ -370,10 +340,52 @@ bitcode {
 
         module("aggressive_gcScheduler") {
             srcRoot.set(layout.projectDirectory.dir("src/gcScheduler/aggressive"))
+            headersDirs.from(files("src/alloc/common/cpp", "src/gcScheduler/common/cpp", "src/gc/common/cpp", "src/mm/cpp", "src/main/cpp"))
+            sourceSets {
+                main {}
+                test {}
+            }
+
+            onlyIf { target.supportsThreads() }
+        }
+
+        module("common_alloc") {
+            srcRoot.set(layout.projectDirectory.dir("src/alloc/common"))
             headersDirs.from(files("src/gcScheduler/common/cpp", "src/gc/common/cpp", "src/mm/cpp", "src/main/cpp"))
             sourceSets {
                 main {}
                 test {}
+            }
+
+            onlyIf { target.supportsThreads() }
+        }
+
+        module("mimalloc_alloc") {
+            srcRoot.set(layout.projectDirectory.dir("src/alloc/mimalloc"))
+            headersDirs.from(files("src/alloc/common/cpp", "src/gcScheduler/common/cpp", "src/gc/common/cpp", "src/mm/cpp", "src/main/cpp"))
+            sourceSets {
+                main {}
+            }
+
+            onlyIf { target.supportsThreads() }
+            onlyIf { target.supportsMimallocAllocator() }
+        }
+
+        module("malloc_alloc") {
+            srcRoot.set(layout.projectDirectory.dir("src/alloc/malloc"))
+            headersDirs.from(files("src/alloc/common/cpp", "src/gcScheduler/common/cpp", "src/gc/common/cpp", "src/mm/cpp", "src/main/cpp"))
+            sourceSets {
+                main {}
+            }
+
+            onlyIf { target.supportsThreads() }
+        }
+
+        module("custom_hack_alloc") {
+            srcRoot.set(layout.projectDirectory.dir("src/alloc/custom"))
+            headersDirs.from(files("src/custom_alloc/cpp", "src/alloc/common/cpp", "src/gcScheduler/common/cpp", "src/gc/common/cpp", "src/mm/cpp", "src/main/cpp"))
+            sourceSets {
+                main {}
             }
 
             onlyIf { target.supportsThreads() }

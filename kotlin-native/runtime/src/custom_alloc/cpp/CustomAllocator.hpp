@@ -28,9 +28,7 @@ public:
     ArrayHeader* CreateArray(const TypeInfo* typeInfo, uint32_t count) noexcept;
 
     mm::ExtraObjectData* CreateExtraObject() noexcept;
-
-    static mm::ExtraObjectData& CreateExtraObjectDataForObject(
-            mm::ThreadData* threadData, ObjHeader* baseObject, const TypeInfo* info) noexcept;
+    mm::ExtraObjectData& CreateExtraObject(ObjHeader* baseObject, const TypeInfo* info) noexcept;
 
     void PrepareForGC() noexcept;
 

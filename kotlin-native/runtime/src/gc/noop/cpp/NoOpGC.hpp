@@ -8,7 +8,6 @@
 
 #include <cstddef>
 
-#include "Allocator.hpp"
 #include "Logging.hpp"
 #include "Utils.hpp"
 
@@ -24,28 +23,17 @@ namespace gc {
 // TODO: It can be made more efficient.
 class NoOpGC : private Pinned {
 public:
-    class ObjectData {};
-
-    using Allocator = gc::Allocator;
-
     class ThreadData : private Pinned {
     public:
-        using ObjectData = NoOpGC::ObjectData;
-
         ThreadData() noexcept {}
         ~ThreadData() = default;
 
         void SafePointFunctionPrologue() noexcept {}
         void SafePointLoopBody() noexcept {}
-        void SafePointAllocation(size_t size) noexcept {}
 
         void Schedule() noexcept {}
         void ScheduleAndWaitFullGC() noexcept {}
         void ScheduleAndWaitFullGCWithFinalizers() noexcept {}
-
-        void OnOOM(size_t size) noexcept {}
-
-        Allocator CreateAllocator() noexcept { return Allocator(); }
 
     private:
     };

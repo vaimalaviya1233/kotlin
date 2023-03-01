@@ -8,7 +8,6 @@
 #include "GC.hpp"
 
 #include "NoOpGC.hpp"
-#include "ObjectFactory.hpp"
 
 namespace kotlin {
 namespace gc {
@@ -19,25 +18,20 @@ class GC::Impl : private Pinned {
 public:
     Impl() noexcept = default;
 
-    mm::ObjectFactory<gc::GCImpl>& objectFactory() noexcept { return objectFactory_; }
     GCImpl& gc() noexcept { return gc_; }
 
 private:
-    mm::ObjectFactory<gc::GCImpl> objectFactory_;
     GCImpl gc_;
 };
 
 class GC::ThreadData::Impl : private Pinned {
 public:
-    Impl(GC& gc, mm::ThreadData& threadData) noexcept :
-        objectFactoryThreadQueue_(gc.impl_->objectFactory(), gc_.CreateAllocator()) {}
+    Impl() noexcept = default;
 
     GCImpl::ThreadData& gc() noexcept { return gc_; }
-    mm::ObjectFactory<GCImpl>::ThreadQueue& objectFactoryThreadQueue() noexcept { return objectFactoryThreadQueue_; }
 
 private:
     GCImpl::ThreadData gc_;
-    mm::ObjectFactory<GCImpl>::ThreadQueue objectFactoryThreadQueue_;
 };
 
 } // namespace gc

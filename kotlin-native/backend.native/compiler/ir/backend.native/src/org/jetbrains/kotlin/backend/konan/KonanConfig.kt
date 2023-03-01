@@ -284,14 +284,39 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
             MemoryModel.STRICT -> {
                 add("strict.bc")
                 add("legacy_memory_manager.bc")
+                when (allocationMode) {
+                    AllocationMode.MIMALLOC -> {
+                        add("opt_alloc.bc")
+                        add("mimalloc.bc")
+                    }
+                    AllocationMode.STD -> {
+                        add("std_alloc.bc")
+                    }
+                    AllocationMode.CUSTOM -> {
+                        throw IllegalStateException("Custom allocator could not have been enabled here")
+                    }
+                }
             }
             MemoryModel.RELAXED -> {
                 add("relaxed.bc")
                 add("legacy_memory_manager.bc")
+                when (allocationMode) {
+                    AllocationMode.MIMALLOC -> {
+                        add("opt_alloc.bc")
+                        add("mimalloc.bc")
+                    }
+                    AllocationMode.STD -> {
+                        add("std_alloc.bc")
+                    }
+                    AllocationMode.CUSTOM -> {
+                        throw IllegalStateException("Custom allocator could not have been enabled here")
+                    }
+                }
             }
             MemoryModel.EXPERIMENTAL -> {
                 add("common_gc.bc")
                 add("common_gcScheduler.bc")
+                add("common_alloc.bc")
                 when (gcSchedulerType) {
                     GCSchedulerType.MANUAL -> {
                         add("manual_gcScheduler.bc")
@@ -306,21 +331,31 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
                         throw IllegalStateException("Deprecated options must have already been handled")
                     }
                 }
-                if (allocationMode == AllocationMode.CUSTOM) {
-                    add("mm_custom.bc")
-                    add("cms_gc_custom.bc")
-                } else {
-                    add("mm.bc")
-                    when (gc) {
-                        GC.NOOP -> {
-                            add("noop_gc.bc")
-                        }
-                        GC.STOP_THE_WORLD_MARK_AND_SWEEP -> {
-                            add("stwms_gc.bc")
-                        }
-                        GC.PARALLEL_MARK_CONCURRENT_SWEEP -> {
-                            add("cms_gc.bc")
-                        }
+                when (allocationMode) {
+                    AllocationMode.MIMALLOC -> {
+                        add("opt_alloc.bc")
+                        add("mimalloc_alloc.bc")
+                        add("mimalloc.bc")
+                    }
+                    AllocationMode.STD -> {
+                        add("std_alloc.bc")
+                        add("malloc_alloc.bc")
+                    }
+                    AllocationMode.CUSTOM -> {
+                        add("custom_alloc.bc")
+                        add("custom_hack_alloc.bc")
+                    }
+                }
+                add("mm.bc")
+                when (gc) {
+                    GC.NOOP -> {
+                        add("noop_gc.bc")
+                    }
+                    GC.STOP_THE_WORLD_MARK_AND_SWEEP -> {
+                        add("stwms_gc.bc")
+                    }
+                    GC.PARALLEL_MARK_CONCURRENT_SWEEP -> {
+                        add("cms_gc.bc")
                     }
                 }
             }
@@ -332,18 +367,6 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
         if (target.supportsLibBacktrace()) {
             add("source_info_libbacktrace.bc")
             add("libbacktrace.bc")
-        }
-        when (allocationMode) {
-            AllocationMode.MIMALLOC -> {
-                add("opt_alloc.bc")
-                add("mimalloc.bc")
-            }
-            AllocationMode.STD -> {
-                add("std_alloc.bc")
-            }
-            AllocationMode.CUSTOM -> {
-                add("custom_alloc.bc")
-            }
         }
     }.map {
         File(distribution.defaultNatives(target)).child(it).absolutePath

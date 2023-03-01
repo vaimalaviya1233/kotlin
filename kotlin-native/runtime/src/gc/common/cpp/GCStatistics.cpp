@@ -312,8 +312,8 @@ void GCHandle::extraObjectsUsageAfter(MemoryUsage usage) {
 
 MemoryUsage GCHandle::GCSweepScope::getUsage() {
     return MemoryUsage{
-            mm::GlobalData::Instance().gc().GetHeapObjectsCountUnsafe(),
-            mm::GlobalData::Instance().gc().GetTotalHeapObjectsSizeUnsafe(),
+            mm::GlobalData::Instance().allocator().GetHeapObjectsCountUnsafe(),
+            mm::GlobalData::Instance().allocator().GetTotalHeapObjectsSizeUnsafe(),
     };
 }
 
@@ -329,8 +329,8 @@ GCHandle::GCSweepScope::~GCSweepScope() {
 
 MemoryUsage GCHandle::GCSweepExtraObjectsScope::getUsage() {
     return MemoryUsage{
-            mm::GlobalData::Instance().gc().GetExtraObjectsCountUnsafe(),
-            mm::GlobalData::Instance().gc().GetTotalExtraObjectsSizeUnsafe(),
+            mm::GlobalData::Instance().allocator().GetExtraObjectsCountUnsafe(),
+            mm::GlobalData::Instance().allocator().GetTotalExtraObjectsSizeUnsafe(),
     };
 }
 

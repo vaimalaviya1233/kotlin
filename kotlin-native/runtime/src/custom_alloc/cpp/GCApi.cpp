@@ -7,36 +7,23 @@
 
 #include <limits>
 
-#include "ConcurrentMarkAndSweep.hpp"
 #include "CustomLogging.hpp"
 #include "FinalizerHooks.hpp"
+#include "GC.hpp"
 #include "KAssert.h"
-#include "ObjectFactory.hpp"
 
 namespace kotlin::alloc {
 
 bool TryResetMark(void* ptr) noexcept {
-    using Node = typename kotlin::mm::ObjectFactory<kotlin::gc::ConcurrentMarkAndSweep>::Storage::Node;
-    using NodeRef = typename kotlin::mm::ObjectFactory<kotlin::gc::ConcurrentMarkAndSweep>::NodeRef;
-    Node& node = Node::FromData(ptr);
-    NodeRef ref = NodeRef(node);
-    auto& objectData = ref.ObjectData();
-    bool reset = objectData.tryResetMark();
-    CustomAllocDebug("TryResetMark(%p) = %d", ptr, reset);
-    return reset;
+    return gc::GC::tryResetMark(ObjectFromObjectData(ptr));
 }
 
-using ObjectFactory = mm::ObjectFactory<gc::ConcurrentMarkAndSweep>;
-using ExtraObjectsFactory = mm::ExtraObjectDataFactory;
-
 static void KeepAlive(ObjHeader* baseObject) noexcept {
-    auto& objectData = ObjectFactory::NodeRef::From(baseObject).ObjectData();
-    objectData.tryMark();
+    gc::GC::keepAlive(baseObject);
 }
 
 static bool IsAlive(ObjHeader* baseObject) noexcept {
-    auto& objectData = ObjectFactory::NodeRef::From(baseObject).ObjectData();
-    return objectData.marked();
+    return gc::GC::isMarked(baseObject);
 }
 
 bool SweepExtraObject(ExtraObjectCell* extraObjectCell, AtomicStack<ExtraObjectCell>& finalizerQueue) noexcept {

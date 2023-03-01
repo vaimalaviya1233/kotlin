@@ -13,6 +13,10 @@
 
 namespace kotlin {
 
+namespace alloc {
+class Allocator;
+}
+
 namespace mm {
 class ThreadData;
 }
@@ -21,6 +25,9 @@ namespace gc {
 
 class GC : private Pinned {
 public:
+    static const size_t objectDataSize;
+    static const size_t objectDataAlignment;
+
     class Impl;
 
     class ThreadData : private Pinned {
@@ -42,32 +49,25 @@ public:
         void Publish() noexcept;
         void ClearForTests() noexcept;
 
-        ObjHeader* CreateObject(const TypeInfo* typeInfo) noexcept;
-        ArrayHeader* CreateArray(const TypeInfo* typeInfo, uint32_t elements) noexcept;
-
         void OnSuspendForGC() noexcept;
 
     private:
         std_support::unique_ptr<Impl> impl_;
     };
 
-    explicit GC(gcScheduler::GCScheduler& gcScheduler) noexcept;
+    GC(gcScheduler::GCScheduler& gcScheduler, alloc::Allocator& allocator) noexcept;
     ~GC();
 
     Impl& impl() noexcept { return *impl_; }
 
-    static size_t GetAllocatedHeapSize(ObjHeader* object) noexcept;
-
-    size_t GetHeapObjectsCountUnsafe() const noexcept;
-    size_t GetTotalHeapObjectsSizeUnsafe() const noexcept;
-    size_t GetExtraObjectsCountUnsafe() const noexcept;
-    size_t GetTotalExtraObjectsSizeUnsafe() const noexcept;
-
     void ClearForTests() noexcept;
 
-    void StartFinalizerThreadIfNeeded() noexcept;
-    void StopFinalizerThreadIfRunning() noexcept;
-    bool FinalizersThreadIsRunning() noexcept;
+    // Only makes sense during mark or sweep phase.
+    static bool isMarked(ObjHeader* object) noexcept;
+    // Only makes sense during sweep phase. Returns true if the mark bit was set.
+    static bool tryResetMark(ObjHeader* object) noexcept;
+    // Only makes sense during mark phase.
+    static void keepAlive(ObjHeader* object) noexcept;
 
     static void processObjectInMark(void* state, ObjHeader* object) noexcept;
     static void processArrayInMark(void* state, ArrayHeader* array) noexcept;

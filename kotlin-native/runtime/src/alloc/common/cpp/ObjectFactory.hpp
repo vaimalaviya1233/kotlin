@@ -3,8 +3,7 @@
  * that can be found in the LICENSE file.
  */
 
-#ifndef RUNTIME_MM_OBJECT_FACTORY_H
-#define RUNTIME_MM_OBJECT_FACTORY_H
+#pragma once
 
 #include <algorithm>
 #include <cinttypes>
@@ -14,14 +13,15 @@
 
 #include "Alignment.hpp"
 #include "FinalizerHooks.hpp"
+#include "GC.hpp"
+#include "GCStatistics.hpp"
 #include "Memory.h"
 #include "Mutex.hpp"
 #include "Porting.h"
 #include "Types.h"
 #include "Utils.hpp"
 
-namespace kotlin {
-namespace mm {
+namespace kotlin::alloc {
 
 namespace internal {
 
@@ -430,22 +430,26 @@ private:
 
 } // namespace internal
 
-template <typename Traits>
+template <typename Allocator>
 class ObjectFactory : private Pinned {
-    using ObjectData = typename Traits::ObjectData;
-    using Allocator = typename Traits::Allocator;
+    static size_t ObjectAllocatedDataSize(const TypeInfo* typeInfo) noexcept {
+        return AlignUp(AlignUp(gc::GC::objectDataSize, kObjectAlignment) + typeInfo->instanceSize_, std::max(gc::GC::objectDataAlignment, kObjectAlignment));
+    }
 
-    struct HeapObjHeader {
-        ObjectData gcData;
-        alignas(kObjectAlignment) ObjHeader object;
-    };
+    static uint64_t ArrayAllocatedDataSize(const TypeInfo* typeInfo, uint32_t count) noexcept {
+        // -(int32_t min) * uint32_t max cannot overflow uint64_t. And are capped
+        // at about half of uint64_t max.
+        uint64_t membersSize = static_cast<uint64_t>(-typeInfo->instanceSize_) * count;
+        return AlignUp<uint64_t>(AlignUp(gc::GC::objectDataSize, kObjectAlignment) + sizeof(ArrayHeader) + membersSize, std::max(gc::GC::objectDataAlignment, kObjectAlignment));
+    }
 
-    // Needs to be kept compatible with `HeapObjHeader` just like `ArrayHeader` is compatible
-    // with `ObjHeader`: the former can always be casted to the other.
-    struct HeapArrayHeader {
-        ObjectData gcData;
-        alignas(kObjectAlignment) ArrayHeader array;
-    };
+    static ObjHeader* ObjectFromObjectData(void* data) noexcept {
+        return reinterpret_cast<ObjHeader*>(static_cast<uint8_t*>(data) + AlignUp(gc::GC::objectDataSize, kObjectAlignment));
+    }
+
+    static void* ObjectDataFromObject(ObjHeader* object) noexcept {
+        return reinterpret_cast<uint8_t*>(object) - AlignUp(gc::GC::objectDataSize, kObjectAlignment);
+    }
 
 public:
     using Storage = internal::ObjectFactoryStorage<kObjectAlignment, Allocator>;
@@ -454,33 +458,27 @@ public:
     public:
         explicit NodeRef(typename Storage::Node& node) noexcept : node_(node) {}
 
-        static NodeRef From(ObjHeader* object) noexcept {
+        static NodeRef FromObject(ObjHeader* object) noexcept {
             RuntimeAssert(object->heap(), "Must be a heap object");
-            auto& heapObject = ownerOf(HeapObjHeader, object, *object);
-            return NodeRef(Storage::Node::FromData(&heapObject));
+            return NodeRef(Storage::Node::FromData(ObjectDataFromObject(object)));
         }
 
-        static NodeRef From(ArrayHeader* array) noexcept {
-            RuntimeAssert(array->obj()->heap(), "Must be a heap object");
-            auto& heapArray = ownerOf(HeapArrayHeader, array, *array);
-            return NodeRef(Storage::Node::FromData(&heapArray));
+        static NodeRef FromObject(ArrayHeader* array) noexcept {
+            return FromObject(array->obj());
         }
 
-        static NodeRef From(ObjectData& objectData) noexcept {
-            auto& heapObject = ownerOf(HeapObjHeader, gcData, objectData);
-            return NodeRef(Storage::Node::FromData(&heapObject));
+        static NodeRef FromObjectData(void* objectData) noexcept {
+            return NodeRef(Storage::Node::FromData(objectData));
         }
 
         NodeRef* operator->() noexcept { return this; }
 
-        ObjectData& ObjectData() noexcept {
-            // `HeapArrayHeader` and `HeapObjHeader` are kept compatible, so the former can
-            // be always casted to the other.
-            return static_cast<HeapObjHeader*>(node_.Data())->gcData;
+        void* ObjectData() noexcept {
+            return node_.Data();
         }
 
         ObjHeader* GetObjHeader() noexcept {
-            return &static_cast<HeapObjHeader*>(node_.Data())->object;
+            return ObjectFromObjectData(node_.Data());
         }
 
         bool operator==(const NodeRef& rhs) const noexcept { return &node_ == &rhs.node_; }
@@ -527,8 +525,7 @@ public:
             RuntimeAssert(!typeInfo->IsArray(), "Must not be an array");
             size_t allocSize = ObjectAllocatedDataSize(typeInfo);
             auto& node = producer_.Insert(allocSize);
-            auto* heapObject = new (node.Data()) HeapObjHeader();
-            auto* object = &heapObject->object;
+            auto* object = ObjectFromObjectData(node.Data());
             object->typeInfoOrMeta_ = const_cast<TypeInfo*>(typeInfo);
             // TODO: Consider supporting TF_IMMUTABLE: mark instance as frozen upon creation.
             return object;
@@ -545,8 +542,7 @@ public:
             RuntimeAssert(typeInfo->IsArray(), "Must be an array");
             auto allocSize = ArrayAllocatedDataSize(typeInfo, count);
             auto& node = producer_.Insert(allocSize);
-            auto* heapArray = new (node.Data()) HeapArrayHeader();
-            auto* array = &heapArray->array;
+            auto* array = ObjectFromObjectData(node.Data())->array();
             array->typeInfoOrMeta_ = const_cast<TypeInfo*>(typeInfo);
             array->count_ = count;
             // TODO: Consider supporting TF_IMMUTABLE: mark instance as frozen upon creation.
@@ -561,18 +557,6 @@ public:
         void ClearForTests() noexcept { producer_.ClearForTests(); }
 
     private:
-        static size_t ObjectAllocatedDataSize(const TypeInfo* typeInfo) noexcept {
-            size_t membersSize = typeInfo->instanceSize_ - sizeof(ObjHeader);
-            return AlignUp(sizeof(HeapObjHeader) + membersSize, kObjectAlignment);
-        }
-
-        static uint64_t ArrayAllocatedDataSize(const TypeInfo* typeInfo, uint32_t count) noexcept {
-            // -(int32_t min) * uint32_t max cannot overflow uint64_t. And are capped
-            // at about half of uint64_t max.
-            uint64_t membersSize = static_cast<uint64_t>(-typeInfo->instanceSize_) * count;
-            // Note: array body is aligned, but for size computation it is enough to align the sum.
-            return AlignUp<uint64_t>(sizeof(HeapArrayHeader) + membersSize, kObjectAlignment);
-        }
 
         typename Storage::Producer producer_;
     };
@@ -679,6 +663,27 @@ public:
             iter_.MoveAndAdvance(queue.consumer_, iterator.iterator_, GetAllocatedHeapSize(iterator->GetObjHeader()));
         }
 
+        template <typename F>
+        FinalizerQueue Sweep(gc::GCHandle handle, F&& tryResetMark) noexcept {
+            FinalizerQueue finalizerQueue;
+            auto sweepHandle = handle.sweep();
+
+            for (auto it = begin(); it != end();) {
+                auto* objHeader = it->GetObjHeader();
+                if (tryResetMark(objHeader)) {
+                    ++it;
+                    continue;
+                }
+                if (HasFinalizers(objHeader)) {
+                    MoveAndAdvance(finalizerQueue, it);
+                } else {
+                    EraseAndAdvance(it);
+                }
+            }
+
+            return finalizerQueue;
+        }
+
     private:
         typename Storage::Iterable iter_;
     };
@@ -708,7 +713,4 @@ private:
     Storage storage_;
 };
 
-} // namespace mm
-} // namespace kotlin
-
-#endif // RUNTIME_MM_OBJECT_FACTORY_H
+} // namespace kotlin::alloc

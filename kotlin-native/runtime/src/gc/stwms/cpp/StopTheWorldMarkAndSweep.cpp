@@ -21,36 +21,6 @@
 
 using namespace kotlin;
 
-namespace {
-
-struct SweepTraits {
-    using ObjectFactory = mm::ObjectFactory<gc::StopTheWorldMarkAndSweep>;
-    using ExtraObjectsFactory = mm::ExtraObjectDataFactory;
-
-    static bool IsMarkedByExtraObject(mm::ExtraObjectData& object) noexcept {
-        auto* baseObject = object.GetBaseObject();
-        if (!baseObject->heap()) return true;
-        auto& objectData = mm::ObjectFactory<gc::StopTheWorldMarkAndSweep>::NodeRef::From(baseObject).ObjectData();
-        return objectData.marked();
-    }
-
-    static bool TryResetMark(ObjectFactory::NodeRef node) noexcept {
-        auto& objectData = node.ObjectData();
-        return objectData.tryResetMark();
-    }
-};
-
-struct FinalizeTraits {
-    using ObjectFactory = mm::ObjectFactory<gc::StopTheWorldMarkAndSweep>;
-};
-
-} // namespace
-
-void gc::StopTheWorldMarkAndSweep::ThreadData::SafePointAllocation(size_t size) noexcept {
-    gcScheduler_.OnSafePointAllocation(size);
-    mm::SuspendIfRequested();
-}
-
 void gc::StopTheWorldMarkAndSweep::ThreadData::Schedule() noexcept {
     ThreadStateGuard guard(ThreadState::kNative);
     gc_.state_.schedule();
@@ -68,17 +38,14 @@ void gc::StopTheWorldMarkAndSweep::ThreadData::ScheduleAndWaitFullGCWithFinalize
     gc_.state_.waitEpochFinalized(scheduled_epoch);
 }
 
-void gc::StopTheWorldMarkAndSweep::ThreadData::OnOOM(size_t size) noexcept {
-    RuntimeLogDebug({kTagGC}, "Attempt to GC on OOM at size=%zu", size);
-    ScheduleAndWaitFullGC();
-}
-
 gc::StopTheWorldMarkAndSweep::StopTheWorldMarkAndSweep(
-        mm::ObjectFactory<StopTheWorldMarkAndSweep>& objectFactory, gcScheduler::GCScheduler& gcScheduler) noexcept :
-    objectFactory_(objectFactory), gcScheduler_(gcScheduler), finalizerProcessor_([this](int64_t epoch) noexcept {
+        gcScheduler::GCScheduler& gcScheduler,
+        alloc::Allocator& allocator) noexcept :
+    gcScheduler_(gcScheduler), allocator_(allocator) {
+    allocator_.setFinalizerCompletion([this](int64_t epoch) noexcept {
         GCHandle::getByEpoch(epoch).finalizersDone();
         state_.finalized(epoch);
-    }) {
+    });
     gcThread_ = ScopedThread(ScopedThread::attributes().name("GC thread"), [this] {
         while (true) {
             auto epoch = state_.waitScheduled();
@@ -96,21 +63,6 @@ gc::StopTheWorldMarkAndSweep::~StopTheWorldMarkAndSweep() {
     state_.shutdown();
 }
 
-void gc::StopTheWorldMarkAndSweep::StartFinalizerThreadIfNeeded() noexcept {
-    NativeOrUnregisteredThreadGuard guard(true);
-    finalizerProcessor_.StartFinalizerThreadIfNone();
-    finalizerProcessor_.WaitFinalizerThreadInitialized();
-}
-
-void gc::StopTheWorldMarkAndSweep::StopFinalizerThreadIfRunning() noexcept {
-    NativeOrUnregisteredThreadGuard guard(true);
-    finalizerProcessor_.StopFinalizerThread();
-}
-
-bool gc::StopTheWorldMarkAndSweep::FinalizersThreadIsRunning() noexcept {
-    return finalizerProcessor_.IsRunning();
-}
-
 void gc::StopTheWorldMarkAndSweep::PerformFullGC(int64_t epoch) noexcept {
     auto gcHandle = GCHandle::create(epoch);
     bool didSuspend = mm::RequestThreadsSuspension();
@@ -121,26 +73,23 @@ void gc::StopTheWorldMarkAndSweep::PerformFullGC(int64_t epoch) noexcept {
     mm::WaitForThreadsSuspension();
     gcHandle.threadsAreSuspended();
 
+    auto gcContext = allocator_.prepareForGC(gcHandle);
+
     auto& scheduler = gcScheduler_;
     scheduler.gcData().OnPerformFullGC();
 
     state_.start(epoch);
 
     gc::collectRootSet<internal::MarkTraits>(gcHandle, markQueue_, [](mm::ThreadData&) { return true; });
-    auto& extraObjectsDataFactory = mm::GlobalData::Instance().extraObjectDataFactory();
 
     gc::Mark<internal::MarkTraits>(gcHandle, markQueue_);
     auto markStats = gcHandle.getMarked();
     scheduler.gcData().UpdateAliveSetBytes(markStats.totalObjectsSize);
-    gc::SweepExtraObjects<SweepTraits>(gcHandle, extraObjectsDataFactory);
-    auto finalizerQueue = gc::Sweep<SweepTraits>(gcHandle, objectFactory_);
-
-    kotlin::compactObjectPoolInMainThread();
+    gcContext.sweepExtraObjects();
+    gcContext.sweep();
 
     mm::ResumeThreads();
     gcHandle.threadsAreResumed();
     state_.finish(epoch);
-    gcHandle.finalizersScheduled(finalizerQueue.size());
     gcHandle.finished();
-    finalizerProcessor_.ScheduleTasks(std::move(finalizerQueue), epoch);
 }
