@@ -23833,6 +23833,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("overrideJavaRawType.kt")
+            public void testOverrideJavaRawType() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/override/overrideJavaRawType.kt");
+            }
+
+            @Test
             @TestMetadata("overrideMemberFromFinalClass.kt")
             public void testOverrideMemberFromFinalClass() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/override/overrideMemberFromFinalClass.kt");

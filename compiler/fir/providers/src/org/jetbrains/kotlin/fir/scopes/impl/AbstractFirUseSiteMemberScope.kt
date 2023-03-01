@@ -6,11 +6,13 @@
 package org.jetbrains.kotlin.fir.scopes.impl
 
 import org.jetbrains.kotlin.fir.FirSession
+import org.jetbrains.kotlin.fir.declarations.FirSimpleFunction
 import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
 import org.jetbrains.kotlin.fir.scopes.*
 import org.jetbrains.kotlin.fir.scopes.impl.FirTypeIntersectionScopeContext.ResultOfIntersection
 import org.jetbrains.kotlin.fir.symbols.impl.*
 import org.jetbrains.kotlin.fir.types.ConeSimpleKotlinType
+import org.jetbrains.kotlin.fir.types.isRaw
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
 
@@ -117,12 +119,39 @@ abstract class AbstractFirUseSiteMemberScope(
         val result = mutableListOf<ResultOfIntersection<FirNamedFunctionSymbol>>()
         val declaredFunction = declaredFunctionSymbol.fir
         for (resultOfIntersection in getFunctionsFromSupertypesByName(declaredFunctionSymbol.name)) {
-            val symbolFromSupertype = resultOfIntersection.extractSomeSymbolFromSuperType()
-            if (overrideChecker.isOverriddenFunction(declaredFunction, symbolFromSupertype.fir)) {
+            if (isOverriddenFunction(
+                    declaredFunction,
+                    resultOfIntersection.extractSomeSymbolFromSuperType(),
+                    resultOfIntersection.containingScope
+                )
+            ) {
                 result.add(resultOfIntersection)
             }
         }
         return result
+    }
+
+    private fun isOverriddenFunction(
+        declaredFunction: FirSimpleFunction,
+        baseSymbol: FirNamedFunctionSymbol,
+        baseScope: FirTypeScope?
+    ): Boolean {
+        if (overrideChecker.isOverriddenFunction(declaredFunction, baseSymbol.fir)) {
+            return true
+        }
+
+        // Very questionable logic to keep compatibility with K1. See KT-56626.
+        // If one of the base function's parameters is a raw type and the override would not be compatible, it could still override a
+        // grandparent and be valid.
+        if (baseSymbol.valueParameterSymbols.any { it.resolvedReturnType.isRaw() }) {
+            val membersWithBaseScopes =
+                baseScope?.getDirectOverriddenFunctionsWithBaseScope(baseSymbol) ?: return false
+
+            return membersWithBaseScopes.any { (symbol, scope) -> isOverriddenFunction(declaredFunction, symbol, scope) }
+        }
+
+
+        return false
     }
 
     protected fun <D : FirCallableSymbol<*>> ResultOfIntersection<D>.extractSomeSymbolFromSuperType(): D {
