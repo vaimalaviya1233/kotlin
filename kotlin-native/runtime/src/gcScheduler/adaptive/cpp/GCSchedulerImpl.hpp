@@ -34,8 +34,8 @@ public:
                 scheduleGC_();
             }
         }) {
-            RuntimeLogInfo({kTagGC}, "Adaptive GC scheduler initialized");
-        }
+        RuntimeLogInfo({kTagGC}, "Adaptive GC scheduler initialized");
+    }
 
     void UpdateFromThreadData(GCSchedulerThreadData& threadData) noexcept override {
         heapGrowthController_.OnAllocated(threadData.allocatedBytes());
@@ -61,4 +61,4 @@ private:
     RepeatedTimer<Clock> timer_;
 };
 
-}
+} // namespace kotlin::gcScheduler::internal

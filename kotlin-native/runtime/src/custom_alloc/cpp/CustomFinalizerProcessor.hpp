@@ -18,9 +18,7 @@ using FinalizerQueue = kotlin::alloc::AtomicStack<kotlin::alloc::ExtraObjectCell
 struct FinalizerQueueTraits {
     static bool isEmpty(const FinalizerQueue& queue) noexcept { return queue.isEmpty(); }
 
-    static void add(FinalizerQueue& into, FinalizerQueue from) noexcept {
-        into.TransferAllFrom(std::move(from));
-    }
+    static void add(FinalizerQueue& into, FinalizerQueue from) noexcept { into.TransferAllFrom(std::move(from)); }
 
     static void process(FinalizerQueue queue) noexcept {
         while (auto* cell = queue.Pop()) {

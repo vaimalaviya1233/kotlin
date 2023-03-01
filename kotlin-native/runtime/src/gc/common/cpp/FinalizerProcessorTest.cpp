@@ -1,7 +1,7 @@
 /*
-* Copyright 2010-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
-* that can be found in the LICENSE file.
-*/
+ * Copyright 2010-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
+ * that can be found in the LICENSE file.
+ */
 
 #include "FinalizerProcessor.hpp"
 
@@ -20,9 +20,7 @@ public:
 
     struct FinalizerQueueTraits {
         static bool isEmpty(const FinalizerQueue& queue) noexcept { return queue.empty(); }
-        static void add(FinalizerQueue& into, FinalizerQueue from) noexcept {
-            into.insert(into.end(), from.begin(), from.end());
-        }
+        static void add(FinalizerQueue& into, FinalizerQueue from) noexcept { into.insert(into.end(), from.begin(), from.end()); }
         static void process(FinalizerQueue queue) noexcept {
             AssertThreadState(ThreadState::kRunnable);
             for (auto& obj : queue) {
@@ -33,15 +31,11 @@ public:
 
     using FinalizerProcessor = gc::FinalizerProcessor<FinalizerQueue, FinalizerQueueTraits>;
 
-    FinalizerProcessorTest() noexcept {
-        setFinalizerHook_ = &finalizerHook_;
-    }
+    FinalizerProcessorTest() noexcept { setFinalizerHook_ = &finalizerHook_; }
 
-   ~FinalizerProcessorTest() {
-       setFinalizerHook_ = nullptr;
-   }
+    ~FinalizerProcessorTest() { setFinalizerHook_ = nullptr; }
 
-   testing::MockFunction<void(int)>& finalizerHook() { return finalizerHook_; }
+    testing::MockFunction<void(int)>& finalizerHook() { return finalizerHook_; }
 
 private:
     static testing::MockFunction<void(int)>* setFinalizerHook_;
@@ -78,7 +72,8 @@ TEST_F(FinalizerProcessorTest, RemoveObject) {
         queue.push_back(obj);
         EXPECT_CALL(finalizerHook(), Call(obj));
         processor.ScheduleTasks(std::move(queue), 1);
-        while (done != 1) {}
+        while (done != 1) {
+        }
         ASSERT_EQ(threadsCount(), 2);
         ASSERT_TRUE(processor.IsRunning());
         processor.StopFinalizerThread();
@@ -102,13 +97,14 @@ TEST_F(FinalizerProcessorTest, ScheduleTasksWhileFinalizing) {
             }
             queues.emplace_back(std::move(queue));
         }
-        for (auto object: objects) {
+        for (auto object : objects) {
             EXPECT_CALL(finalizerHook(), Call(object));
         }
         for (int epoch = 0; epoch < epochs; epoch++) {
             processor.ScheduleTasks(std::move(queues[epoch]), epoch + 1);
         }
-        while (done != epochs) {}
+        while (done != epochs) {
+        }
         ASSERT_EQ(threadsCount(), 2);
         ASSERT_TRUE(processor.IsRunning());
         processor.StopFinalizerThread();

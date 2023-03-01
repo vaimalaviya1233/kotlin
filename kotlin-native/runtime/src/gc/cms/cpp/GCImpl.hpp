@@ -37,7 +37,8 @@ public:
 #ifndef CUSTOM_ALLOCATOR
         objectFactoryThreadQueue_(gc.impl_->objectFactory(), gc_.CreateAllocator()) {}
 #else
-        alloc_(gc.impl_->gc().heap(), gcScheduler) {}
+        alloc_(gc.impl_->gc().heap(), gcScheduler) {
+    }
 #endif
 
     GCImpl::ThreadData& gc() noexcept { return gc_; }

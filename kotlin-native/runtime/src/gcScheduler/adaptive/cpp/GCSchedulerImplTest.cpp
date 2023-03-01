@@ -75,7 +75,7 @@ private:
     gcScheduler::internal::GCSchedulerDataAdaptive<test_support::manual_clock> scheduler_;
 };
 
-}
+} // namespace
 
 class AdaptiveSchedulerTest : public ::testing::Test {
 public:

@@ -50,9 +50,7 @@ public:
     private:
     };
 
-    NoOpGC() noexcept {
-        RuntimeLogInfo({kTagGC}, "No-op GC initialized");
-    }
+    NoOpGC() noexcept { RuntimeLogInfo({kTagGC}, "No-op GC initialized"); }
     ~NoOpGC() = default;
 
 private:

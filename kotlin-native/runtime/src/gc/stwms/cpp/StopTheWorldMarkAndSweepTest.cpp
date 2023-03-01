@@ -209,7 +209,7 @@ WeakCounter& InstallWeakCounter(mm::ThreadData& threadData, ObjHeader* objHeader
     mm::AllocateObject(&threadData, typeHolderWeakCounter.typeInfo(), location);
     auto& weakCounter = WeakCounter::FromObjHeader(*location);
     auto& extraObjectData = mm::ExtraObjectData::GetOrInstall(objHeader);
-    auto *setCounter = extraObjectData.GetOrSetWeakReferenceCounter(objHeader, weakCounter.header());
+    auto* setCounter = extraObjectData.GetOrSetWeakReferenceCounter(objHeader, weakCounter.header());
     EXPECT_EQ(setCounter, weakCounter.header());
     weakCounter->referred = objHeader;
     return weakCounter;
@@ -804,10 +804,10 @@ TEST_F(StopTheWorldMarkAndSweepTest, MultipleMutatorsAllCollect) {
 
     for (int i = 0; i < kDefaultThreadCount; ++i) {
         mutators[i]
-        .Execute([](mm::ThreadData& threadData, Mutator& mutator) {
+                .Execute([](mm::ThreadData& threadData, Mutator& mutator) {
                     SwitchThreadState(mm::GetMemoryState(), kotlin::ThreadState::kRunnable);
                 })
-        .wait();
+                .wait();
     }
 
     std_support::vector<ObjHeader*> expectedAlive;
@@ -1054,7 +1054,9 @@ TEST_F(StopTheWorldMarkAndSweepTest, NewThreadsWhileRequestingCollection) {
     std_support::vector<std::future<void>> attachFutures(kDefaultThreadCount);
 
     for (int i = 0; i < kDefaultThreadCount; ++i) {
-        attachFutures[i] = newMutators[i].Execute([i, expandRootSet](mm::ThreadData& threadData, Mutator& mutator) { expandRootSet(threadData, mutator, i + kDefaultThreadCount); });
+        attachFutures[i] = newMutators[i].Execute([i, expandRootSet](mm::ThreadData& threadData, Mutator& mutator) {
+            expandRootSet(threadData, mutator, i + kDefaultThreadCount);
+        });
     }
 
     // All the other threads are stopping at safe points.
@@ -1097,13 +1099,12 @@ TEST_F(StopTheWorldMarkAndSweepTest, NewThreadsWhileRequestingCollection) {
     }
 }
 
-
 TEST_F(StopTheWorldMarkAndSweepTest, FreeObjectWithFreeWeakReversedOrder) {
     std_support::vector<Mutator> mutators(2);
     std::atomic<test_support::Object<Payload>*> object1 = nullptr;
     std::atomic<WeakCounter*> weak = nullptr;
     std::atomic<bool> done = false;
-    auto f0 = mutators[0].Execute([&](mm::ThreadData& threadData, Mutator &) {
+    auto f0 = mutators[0].Execute([&](mm::ThreadData& threadData, Mutator&) {
         GlobalObjectHolder global1{threadData};
         auto& object1_local = AllocateObject(threadData);
         object1 = &object1_local;
@@ -1125,11 +1126,12 @@ TEST_F(StopTheWorldMarkAndSweepTest, FreeObjectWithFreeWeakReversedOrder) {
         EXPECT_THAT(Alive(threadData), testing::UnorderedElementsAre(global1.header()));
         done = true;
     });
-    
-    auto f1 = mutators[1].Execute([&](mm::ThreadData& threadData, Mutator &) {
-        while (object1.load() == nullptr) {}
+
+    auto f1 = mutators[1].Execute([&](mm::ThreadData& threadData, Mutator&) {
+        while (object1.load() == nullptr) {
+        }
         ObjHolder holder;
-        auto &weak_local = InstallWeakCounter(threadData, object1.load()->header(), holder.slot());
+        auto& weak_local = InstallWeakCounter(threadData, object1.load()->header(), holder.slot());
         weak = &weak_local;
         *holder.slot() = nullptr;
         while (!done) threadData.gc().SafePointLoopBody();

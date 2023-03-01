@@ -29,9 +29,7 @@ class StopTheWorldMarkAndSweep : private Pinned {
 public:
     class ObjectData {
     public:
-        bool tryMark() noexcept {
-            return trySetNext(reinterpret_cast<ObjectData*>(1));
-        }
+        bool tryMark() noexcept { return trySetNext(reinterpret_cast<ObjectData*>(1)); }
 
         bool marked() const noexcept { return next_ != nullptr; }
 
@@ -83,7 +81,6 @@ public:
         Allocator CreateAllocator() noexcept { return Allocator(gc::Allocator(), *this); }
 
     private:
-
         StopTheWorldMarkAndSweep& gc_;
         gcScheduler::GCSchedulerThreadData& gcScheduler_;
     };

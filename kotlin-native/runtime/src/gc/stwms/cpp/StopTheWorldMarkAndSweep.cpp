@@ -27,8 +27,8 @@ struct SweepTraits {
     using ObjectFactory = mm::ObjectFactory<gc::StopTheWorldMarkAndSweep>;
     using ExtraObjectsFactory = mm::ExtraObjectDataFactory;
 
-    static bool IsMarkedByExtraObject(mm::ExtraObjectData &object) noexcept {
-        auto *baseObject = object.GetBaseObject();
+    static bool IsMarkedByExtraObject(mm::ExtraObjectData& object) noexcept {
+        auto* baseObject = object.GetBaseObject();
         if (!baseObject->heap()) return true;
         auto& objectData = mm::ObjectFactory<gc::StopTheWorldMarkAndSweep>::NodeRef::From(baseObject).ObjectData();
         return objectData.marked();
@@ -75,9 +75,7 @@ void gc::StopTheWorldMarkAndSweep::ThreadData::OnOOM(size_t size) noexcept {
 
 gc::StopTheWorldMarkAndSweep::StopTheWorldMarkAndSweep(
         mm::ObjectFactory<StopTheWorldMarkAndSweep>& objectFactory, gcScheduler::GCScheduler& gcScheduler) noexcept :
-    objectFactory_(objectFactory),
-    gcScheduler_(gcScheduler),
-    finalizerProcessor_([this](int64_t epoch) noexcept {
+    objectFactory_(objectFactory), gcScheduler_(gcScheduler), finalizerProcessor_([this](int64_t epoch) noexcept {
         GCHandle::getByEpoch(epoch).finalizersDone();
         state_.finalized(epoch);
     }) {
@@ -128,7 +126,7 @@ void gc::StopTheWorldMarkAndSweep::PerformFullGC(int64_t epoch) noexcept {
 
     state_.start(epoch);
 
-    gc::collectRootSet<internal::MarkTraits>(gcHandle, markQueue_, [] (mm::ThreadData&) { return true; });
+    gc::collectRootSet<internal::MarkTraits>(gcHandle, markQueue_, [](mm::ThreadData&) { return true; });
     auto& extraObjectsDataFactory = mm::GlobalData::Instance().extraObjectDataFactory();
 
     gc::Mark<internal::MarkTraits>(gcHandle, markQueue_);

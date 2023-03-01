@@ -50,4 +50,4 @@ private:
     std_support::unordered_set<SafePointID> metSafePoints_;
 };
 
-}
+} // namespace kotlin::gcScheduler::internal

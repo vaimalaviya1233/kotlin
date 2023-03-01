@@ -14,9 +14,14 @@ using namespace kotlin;
 // on Windows a trace contains function addresses instead.
 // So skip these tests on Windows.
 #if (__MINGW32__ || __MINGW64__)
-#define SKIP_ON_WINDOWS() do { GTEST_SKIP() << "Skip on Windows"; } while(false)
+#define SKIP_ON_WINDOWS() \
+    do { \
+        GTEST_SKIP() << "Skip on Windows"; \
+    } while (false)
 #else
-#define SKIP_ON_WINDOWS() do { } while(false)
+#define SKIP_ON_WINDOWS() \
+    do { \
+    } while (false)
 #endif
 
 TEST(AggressiveSchedulerTest, TriggerGCOnUniqueSafePoint) {
@@ -28,7 +33,7 @@ TEST(AggressiveSchedulerTest, TriggerGCOnUniqueSafePoint) {
         gcScheduler::internal::GCSchedulerDataAggressive scheduler(config, scheduleGC.AsStdFunction());
         ASSERT_EQ(config.threshold, 1);
 
-        gcScheduler::GCSchedulerThreadData threadSchedulerData(config, [](gcScheduler::GCSchedulerThreadData&){});
+        gcScheduler::GCSchedulerThreadData threadSchedulerData(config, [](gcScheduler::GCSchedulerThreadData&) {});
 
         EXPECT_CALL(scheduleGC, Call()).Times(1);
         for (int i = 0; i < 10; i++) {
@@ -49,9 +54,8 @@ TEST(AggressiveSchedulerTest, TriggerGCOnAllocationThreshold) {
 
         gcScheduler::GCSchedulerConfig config;
         gcScheduler::internal::GCSchedulerDataAggressive scheduler(config, scheduleGC.AsStdFunction());
-        gcScheduler::GCSchedulerThreadData threadSchedulerData(config, [&scheduler](gcScheduler::GCSchedulerThreadData& data){
-            scheduler.UpdateFromThreadData(data);
-        });
+        gcScheduler::GCSchedulerThreadData threadSchedulerData(
+                config, [&scheduler](gcScheduler::GCSchedulerThreadData& data) { scheduler.UpdateFromThreadData(data); });
 
         ASSERT_EQ(config.allocationThresholdBytes, 1);
 
@@ -61,9 +65,7 @@ TEST(AggressiveSchedulerTest, TriggerGCOnAllocationThreshold) {
         int i = 0;
         // We trigger GC on the first iteration, when the unique allocation point is faced,
         // and on the last iteration when target heap size is reached.
-        EXPECT_CALL(scheduleGC, Call())
-            .WillOnce([&i]() { EXPECT_THAT(i, 0); })
-            .WillOnce([&i]() { EXPECT_THAT(i, 9); });
+        EXPECT_CALL(scheduleGC, Call()).WillOnce([&i]() { EXPECT_THAT(i, 0); }).WillOnce([&i]() { EXPECT_THAT(i, 9); });
 
         for (; i < 10; i++) {
             threadSchedulerData.OnSafePointAllocation(1);

@@ -57,4 +57,4 @@ private:
     std::atomic<size_t> lastAliveSetBytes_ = 0;
 };
 
-}
+} // namespace kotlin::gcScheduler::internal

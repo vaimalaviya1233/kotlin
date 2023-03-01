@@ -1,7 +1,7 @@
 /*
-* Copyright 2010-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
-* that can be found in the LICENSE file.
-*/
+ * Copyright 2010-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
+ * that can be found in the LICENSE file.
+ */
 
 #pragma once
 
@@ -25,17 +25,16 @@ class FinalizerProcessor : private Pinned {
 public:
     // epochDoneCallback could be called on any subset of them.
     // If no new tasks are set, epochDoneCallback will be eventually called on last epoch
-    explicit FinalizerProcessor(std::function<void(int64_t)> epochDoneCallback) noexcept : epochDoneCallback_(std::move(epochDoneCallback)) {}
+    explicit FinalizerProcessor(std::function<void(int64_t)> epochDoneCallback) noexcept :
+        epochDoneCallback_(std::move(epochDoneCallback)) {}
 
-    ~FinalizerProcessor() {
-        StopFinalizerThread();
-    }
+    ~FinalizerProcessor() { StopFinalizerThread(); }
 
     void ScheduleTasks(FinalizerQueue tasks, int64_t epoch) noexcept {
         std::unique_lock guard(finalizerQueueMutex_);
         if (FinalizerQueueTraits::isEmpty(tasks) && !IsRunning()) {
-          epochDoneCallback_(epoch);
-          return;
+            epochDoneCallback_(epoch);
+            return;
         }
         finalizerQueueCondVar_.wait(guard, [this] { return newTasksAllowed_; });
         StartFinalizerThreadIfNone();
@@ -59,9 +58,7 @@ public:
         finalizerQueueCondVar_.notify_all();
     }
 
-    bool IsRunning() const noexcept {
-        return finalizerThread_.joinable();
-    }
+    bool IsRunning() const noexcept { return finalizerThread_.joinable(); }
 
     void StartFinalizerThreadIfNone() noexcept {
         std::unique_lock guard(threadCreatingMutex_);

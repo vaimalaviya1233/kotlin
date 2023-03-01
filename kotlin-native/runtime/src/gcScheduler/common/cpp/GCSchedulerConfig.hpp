@@ -35,4 +35,4 @@ struct GCSchedulerConfig {
     std::chrono::microseconds regularGcInterval() const { return std::chrono::microseconds(regularGcIntervalMicroseconds.load()); }
 };
 
-}
+} // namespace kotlin::gcScheduler

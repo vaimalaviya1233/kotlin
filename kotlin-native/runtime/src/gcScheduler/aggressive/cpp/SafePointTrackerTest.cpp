@@ -14,9 +14,14 @@ using namespace kotlin;
 // on Windows a trace contains function addresses instead.
 // So skip these tests on Windows.
 #if (__MINGW32__ || __MINGW64__)
-#define SKIP_ON_WINDOWS() do { GTEST_SKIP() << "Skip on Windows"; } while(false)
+#define SKIP_ON_WINDOWS() \
+    do { \
+        GTEST_SKIP() << "Skip on Windows"; \
+    } while (false)
 #else
-#define SKIP_ON_WINDOWS() do { } while(false)
+#define SKIP_ON_WINDOWS() \
+    do { \
+    } while (false)
 #endif
 
 TEST(SafePointTrackerTest, RegisterSafePoints) {

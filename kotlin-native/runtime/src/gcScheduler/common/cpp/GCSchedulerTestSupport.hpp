@@ -21,4 +21,4 @@ private:
     GCSchedulerThreadData& scheduler_;
 };
 
-}
+} // namespace kotlin::gcScheduler::test_support

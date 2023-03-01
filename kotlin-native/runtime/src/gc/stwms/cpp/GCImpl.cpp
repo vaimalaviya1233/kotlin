@@ -13,7 +13,8 @@
 
 using namespace kotlin;
 
-gc::GC::ThreadData::ThreadData(GC& gc, gcScheduler::GCSchedulerThreadData& gcScheduler, mm::ThreadData& threadData) noexcept : impl_(std_support::make_unique<Impl>(gc, gcScheduler, threadData)) {}
+gc::GC::ThreadData::ThreadData(GC& gc, gcScheduler::GCSchedulerThreadData& gcScheduler, mm::ThreadData& threadData) noexcept :
+    impl_(std_support::make_unique<Impl>(gc, gcScheduler, threadData)) {}
 
 gc::GC::ThreadData::~ThreadData() = default;
 
@@ -53,7 +54,7 @@ ALWAYS_INLINE ArrayHeader* gc::GC::ThreadData::CreateArray(const TypeInfo* typeI
     return impl_->objectFactoryThreadQueue().CreateArray(typeInfo, elements);
 }
 
-void gc::GC::ThreadData::OnSuspendForGC() noexcept { }
+void gc::GC::ThreadData::OnSuspendForGC() noexcept {}
 
 gc::GC::GC(gcScheduler::GCScheduler& gcScheduler) noexcept : impl_(std_support::make_unique<Impl>(gcScheduler)) {}
 

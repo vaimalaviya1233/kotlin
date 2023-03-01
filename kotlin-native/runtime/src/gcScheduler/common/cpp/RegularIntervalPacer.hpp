@@ -33,4 +33,4 @@ private:
     std::atomic<TimePoint> lastGC_;
 };
 
-}
+} // namespace kotlin::gcScheduler::internal

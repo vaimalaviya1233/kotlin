@@ -45,4 +45,4 @@ private:
     SafePointTracker<> safePointTracker_;
 };
 
-}
+} // namespace kotlin::gcScheduler::internal

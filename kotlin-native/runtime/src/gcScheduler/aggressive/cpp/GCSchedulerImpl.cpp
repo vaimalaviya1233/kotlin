@@ -16,9 +16,10 @@ void gcScheduler::GCSchedulerThreadData::OnSafePointRegular(size_t weight) noexc
     OnSafePointRegularImpl(weight);
 }
 
-gcScheduler::GCScheduler::GCScheduler() noexcept : gcData_(std_support::make_unique<internal::GCSchedulerDataAggressive>(config_, []() noexcept {
-    RuntimeLogDebug({kTagGC}, "Scheduling GC by thread %d", konan::currentThreadId());
-    // This call acquires a lock, so we need to ensure that we're in the safe state.
-    NativeOrUnregisteredThreadGuard guard(/* reentrant = */ true);
-    mm::GlobalData::Instance().gc().Schedule();
-})) {}
+gcScheduler::GCScheduler::GCScheduler() noexcept :
+    gcData_(std_support::make_unique<internal::GCSchedulerDataAggressive>(config_, []() noexcept {
+        RuntimeLogDebug({kTagGC}, "Scheduling GC by thread %d", konan::currentThreadId());
+        // This call acquires a lock, so we need to ensure that we're in the safe state.
+        NativeOrUnregisteredThreadGuard guard(/* reentrant = */ true);
+        mm::GlobalData::Instance().gc().Schedule();
+    })) {}
