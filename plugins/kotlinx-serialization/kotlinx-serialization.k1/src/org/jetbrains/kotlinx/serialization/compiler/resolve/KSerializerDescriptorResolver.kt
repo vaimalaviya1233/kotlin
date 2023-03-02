@@ -347,7 +347,7 @@ object KSerializerDescriptorResolver {
 
         functionDescriptor.initialize(
             consParams,
-            DescriptorVisibilities.PUBLIC
+            DescriptorVisibilities.PRIVATE
         )
 
         functionDescriptor.returnType = classDescriptor.defaultType
@@ -586,7 +586,7 @@ object KSerializerDescriptorResolver {
             args,
             returnType,
             Modality.FINAL,
-            DescriptorVisibilities.PUBLIC
+            DescriptorVisibilities.INTERNAL
         )
 
         return f
