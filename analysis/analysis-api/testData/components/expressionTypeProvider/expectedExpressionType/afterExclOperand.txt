@@ -1,5 +1,2 @@
 expression: av
-expected type: KtUsualClassType:
-  annotationsList: []
-  ownTypeArguments: []
-  type: kotlin/Boolean
+expected type: null

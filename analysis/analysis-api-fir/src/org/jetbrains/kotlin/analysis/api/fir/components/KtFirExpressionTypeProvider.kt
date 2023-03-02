@@ -96,17 +96,19 @@ internal class KtFirExpressionTypeProvider(
         val assignment = expression.parent as? KtBinaryExpression ?: return null
         if (assignment.operationToken !in KtTokens.ALL_ASSIGNMENTS) return null
         if (assignment.left != expression) return null
-        val setTargetParameterType = fir.argumentsToParametersWithSubstitutedTypes()?.entries?.last()?.value?.second ?: return null
+        val setTargetParameterType = fir.argumentsToSubstitutedValueParameters()?.values?.last()?.substitutedType ?: return null
         return setTargetParameterType.asKtType()
     }
 
-    private fun FirFunctionCall.argumentsToParametersWithSubstitutedTypes(
+    private data class SubstitutedValueParameter(val parameter: FirValueParameter, val substitutedType: ConeKotlinType)
+
+    private fun FirFunctionCall.argumentsToSubstitutedValueParameters(
         substituteWithErrorTypes: Boolean = true
-    ): LinkedHashMap<FirExpression, Pair<FirValueParameter, ConeKotlinType>>? {
+    ): LinkedHashMap<FirExpression, SubstitutedValueParameter>? {
         val substitutor = createConeSubstitutorFromTypeArguments(discardErrorTypes = !substituteWithErrorTypes) ?: ConeSubstitutor.Empty
-        return resolvedArgumentMapping?.mapValues { (_, parameter) ->
-            parameter to substitutor.substituteOrSelf(parameter.returnTypeRef.coneType)
-        } as? LinkedHashMap<FirExpression, Pair<FirValueParameter, ConeKotlinType>>
+        return resolvedArgumentMapping?.mapValuesTo(LinkedHashMap()) { (_, parameter) ->
+            SubstitutedValueParameter(parameter, substitutor.substituteOrSelf(parameter.returnTypeRef.coneType))
+        }
     }
 
     override fun getReturnTypeForKtDeclaration(declaration: KtDeclaration): KtType {
@@ -145,7 +147,6 @@ internal class KtFirExpressionTypeProvider(
         val unwrapped = expression.unwrap()
         val expectedType = getExpectedTypeByReturnExpression(unwrapped)
             ?: getExpressionTypeByIfOrBooleanCondition(unwrapped)
-            ?: getExpressionTypeByExclOperand(unwrapped)
             ?: getExpectedTypeByTypeCast(unwrapped)
             ?: getExpectedTypeOfFunctionParameter(unwrapped)
             ?: getExpectedTypeOfIndexingParameter(unwrapped)
@@ -179,7 +180,7 @@ internal class KtFirExpressionTypeProvider(
             return (callee.fir as FirSimpleFunction).returnTypeRef.coneType.asKtType()
         }
 
-        val argumentsToParameters = firCall.argumentsToParametersWithSubstitutedTypes(substituteWithErrorTypes = false) ?: return null
+        val argumentsToParameters = firCall.argumentsToSubstitutedValueParameters(substituteWithErrorTypes = false) ?: return null
         val (firParameterForExpression, substitutedType) =
             argumentsToParameters.entries.firstOrNull { (arg, _) ->
                 when (arg) {
@@ -196,6 +197,14 @@ internal class KtFirExpressionTypeProvider(
             substitutedType.asKtType()
     }
 
+    /**
+     * Expected type of the indexing parameter in array access, for example, in the following code:
+     * ```
+     *     val map = mapOf<Int, String>()
+     *     map[k] = v
+     * ```
+     * `k` is indexing parameter and its expected type is `Int`.
+     */
     private fun getExpectedTypeOfIndexingParameter(expression: PsiElement): KtType? {
         val arrayAccessExpression = expression.unwrapQualified<KtArrayAccessExpression> { arrayAccessExpression, currentExpression ->
             currentExpression in arrayAccessExpression.indexExpressions
@@ -203,8 +212,8 @@ internal class KtFirExpressionTypeProvider(
         val firCall = arrayAccessExpression.getOrBuildFirSafe<FirFunctionCall>(firResolveSession) ?: return null
         val firArgument = firCall.argumentList.arguments.firstOrNull { it.psi == expression } ?: return null
 
-        val argumentsToParameters = firCall.argumentsToParametersWithSubstitutedTypes(substituteWithErrorTypes = false) ?: return null
-        return argumentsToParameters[firArgument]?.second?.asKtType()
+        val argumentsToParameters = firCall.argumentsToSubstitutedValueParameters(substituteWithErrorTypes = false) ?: return null
+        return argumentsToParameters[firArgument]?.substitutedType?.asKtType()
     }
 
     private fun PsiElement.getFunctionCallAsWithThisAsParameter(): KtCallWithArgument? {
@@ -227,8 +236,8 @@ internal class KtFirExpressionTypeProvider(
         val firCall = infixCallExpression.getOrBuildFirSafe<FirFunctionCall>(firResolveSession) ?: return null
 
         // There is only one parameter for infix functions; get its type
-        val argumentsToParameters = firCall.argumentsToParametersWithSubstitutedTypes(substituteWithErrorTypes = false) ?: return null
-        return argumentsToParameters.values.singleOrNull()?.second?.asKtType() ?: return null
+        val argumentsToParameters = firCall.argumentsToSubstitutedValueParameters(substituteWithErrorTypes = false) ?: return null
+        return argumentsToParameters.values.singleOrNull()?.substitutedType?.asKtType() ?: return null
     }
 
     private fun getExpectedTypeByReturnExpression(expression: PsiElement): KtType? {
@@ -245,13 +254,6 @@ internal class KtFirExpressionTypeProvider(
         else -> null
     }
 
-    private fun getExpressionTypeByExclOperand(expression: PsiElement): KtType? {
-        val prefixExpression = expression.parent as? KtPrefixExpression ?: return null
-        return if (prefixExpression.operationToken == KtTokens.EXCL) {
-            with(analysisSession) { builtinTypes.BOOLEAN }
-        } else null
-    }
-
     private fun getExpectedTypeByVariableAssignment(expression: PsiElement): KtType? {
         // Given: `x = expression`
         // Expected type of `expression` is type of `x`
@@ -266,7 +268,7 @@ internal class KtFirExpressionTypeProvider(
         // Given: `val x: T = expression`
         // Expected type of `expression` is `T`
         val property = expression.unwrapQualified<KtProperty> { property, expr -> property.initializer == expr } ?: return null
-        return getReturnTypeForKtDeclaration(property).takeUnless { it is KtErrorType }
+        return getReturnTypeForKtDeclaration(property).nonErrorTypeOrNull()
     }
 
     private fun getExpectedTypeByFunctionExpressionBody(expression: PsiElement): KtType? {
@@ -278,7 +280,7 @@ internal class KtFirExpressionTypeProvider(
             // which may raise an exception if we attempt to retrieve, e.g., callable declaration from it.
             return null
         }
-        return getReturnTypeForKtDeclaration(function).takeUnless { it is KtErrorType }
+        return getReturnTypeForKtDeclaration(function).nonErrorTypeOrNull()
     }
 
     private fun getExpectedTypeOfLastStatementInBlock(expression: PsiElement): KtType? {
@@ -357,7 +359,9 @@ internal class KtFirExpressionTypeProvider(
     }
 
     private fun getKtExpressionNonErrorType(expression: KtExpression): KtType? =
-        getKtExpressionType(expression)?.takeUnless { it is KtErrorType }
+        getKtExpressionType(expression)?.nonErrorTypeOrNull()
+
+    private fun KtType.nonErrorTypeOrNull() = takeUnless { it is KtErrorType }
 
     private fun PsiElement.isWhileLoopCondition() =
         unwrapQualified<KtWhileExpressionBase> { whileExpr, cond -> whileExpr.condition == cond } != null
