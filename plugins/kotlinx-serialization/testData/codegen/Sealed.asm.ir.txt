@@ -272,24 +272,7 @@ public final class Container : java/lang/Object {
 
     public final Result getR()
 
-    public final static void write$Self(Container self, kotlinx.serialization.encoding.CompositeEncoder output, kotlinx.serialization.descriptors.SerialDescriptor serialDesc) {
-        LABEL (L0)
-        LINENUMBER (18)
-          GETSTATIC (Container, $childSerializers, [Lkotlinx/serialization/KSerializer;)
-          ASTORE (3)
-          ALOAD (1)
-          ALOAD (2)
-          ICONST_0
-          ALOAD (3)
-          ICONST_0
-          AALOAD
-          CHECKCAST (kotlinx/serialization/SerializationStrategy)
-          ALOAD (0)
-          GETFIELD (Container, r, LResult;)
-          INVOKEINTERFACE (kotlinx/serialization/encoding/CompositeEncoder, encodeSerializableElement, (Lkotlinx/serialization/descriptors/SerialDescriptor;ILkotlinx/serialization/SerializationStrategy;Ljava/lang/Object;)V)
-          RETURN
-        LABEL (L1)
-    }
+    public final static void write$Self$main(Container self, kotlinx.serialization.encoding.CompositeEncoder output, kotlinx.serialization.descriptors.SerialDescriptor serialDesc)
 }
 
 final class Result$Companion$1 : kotlin/jvm/internal/Lambda, kotlin/jvm/functions/Function0 {
@@ -715,7 +698,8 @@ public final class Result$OK : Result {
           ALOAD (0)
           ILOAD (1)
           ALOAD (3)
-          INVOKESPECIAL (Result, <init>, (ILkotlinx/serialization/internal/SerializationConstructorMarker;)V)
+          ACONST_NULL
+          INVOKESPECIAL (Result, <init>, (ILkotlinx/serialization/internal/SerializationConstructorMarker;Lkotlin/jvm/internal/DefaultConstructorMarker;)V)
           ALOAD (0)
           ALOAD (2)
           PUTFIELD (Result$OK, s, Ljava/lang/String;)
@@ -725,23 +709,7 @@ public final class Result$OK : Result {
 
     public final java.lang.String getS()
 
-    public final static void write$Self(Result$OK self, kotlinx.serialization.encoding.CompositeEncoder output, kotlinx.serialization.descriptors.SerialDescriptor serialDesc) {
-        LABEL (L0)
-        LINENUMBER (14)
-          ALOAD (0)
-          CHECKCAST (Result)
-          ALOAD (1)
-          ALOAD (2)
-          INVOKESTATIC (Result, write$Self, (LResult;Lkotlinx/serialization/encoding/CompositeEncoder;Lkotlinx/serialization/descriptors/SerialDescriptor;)V)
-          ALOAD (1)
-          ALOAD (2)
-          ICONST_0
-          ALOAD (0)
-          GETFIELD (Result$OK, s, Ljava/lang/String;)
-          INVOKEINTERFACE (kotlinx/serialization/encoding/CompositeEncoder, encodeStringElement, (Lkotlinx/serialization/descriptors/SerialDescriptor;ILjava/lang/String;)V)
-          RETURN
-        LABEL (L1)
-    }
+    public final static void write$Self$main(Result$OK self, kotlinx.serialization.encoding.CompositeEncoder output, kotlinx.serialization.descriptors.SerialDescriptor serialDesc)
 }
 
 public abstract class Result : java/lang/Object, X {
@@ -778,7 +746,7 @@ public abstract class Result : java/lang/Object, X {
         LABEL (L2)
     }
 
-    public void <init>(int seen1, kotlinx.serialization.internal.SerializationConstructorMarker serializationConstructorMarker) {
+    private void <init>(int seen1, kotlinx.serialization.internal.SerializationConstructorMarker serializationConstructorMarker) {
         LABEL (L0)
         LINENUMBER (12)
           ALOAD (0)
@@ -795,15 +763,21 @@ public abstract class Result : java/lang/Object, X {
         LABEL (L1)
     }
 
+    public void <init>(int seen1, kotlinx.serialization.internal.SerializationConstructorMarker serializationConstructorMarker, kotlin.jvm.internal.DefaultConstructorMarker $constructor_marker) {
+        LABEL (L0)
+          ALOAD (0)
+          ILOAD (1)
+          ALOAD (2)
+          INVOKESPECIAL (Result, <init>, (ILkotlinx/serialization/internal/SerializationConstructorMarker;)V)
+          RETURN
+        LABEL (L1)
+    }
+
     public final static kotlin.Lazy access$get$cachedSerializer$delegate$cp()
 
     public void def()
 
-    public final static void write$Self(Result self, kotlinx.serialization.encoding.CompositeEncoder output, kotlinx.serialization.descriptors.SerialDescriptor serialDesc) {
-        LABEL (L0)
-          RETURN
-        LABEL (L1)
-    }
+    public final static void write$Self$main(Result self, kotlinx.serialization.encoding.CompositeEncoder output, kotlinx.serialization.descriptors.SerialDescriptor serialDesc)
 }
 
 public final class X$Companion : java/lang/Object {

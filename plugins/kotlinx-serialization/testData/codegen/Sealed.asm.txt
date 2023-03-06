@@ -318,58 +318,7 @@ public final class Container : java/lang/Object {
 
     public final Result getR()
 
-    public final static void write$Self(Container self, kotlinx.serialization.encoding.CompositeEncoder output, kotlinx.serialization.descriptors.SerialDescriptor serialDesc) {
-        LABEL (L0)
-          ALOAD (0)
-          LDC (self)
-          INVOKESTATIC (kotlin/jvm/internal/Intrinsics, checkNotNullParameter, (Ljava/lang/Object;Ljava/lang/String;)V)
-          ALOAD (1)
-          LDC (output)
-          INVOKESTATIC (kotlin/jvm/internal/Intrinsics, checkNotNullParameter, (Ljava/lang/Object;Ljava/lang/String;)V)
-          ALOAD (2)
-          LDC (serialDesc)
-          INVOKESTATIC (kotlin/jvm/internal/Intrinsics, checkNotNullParameter, (Ljava/lang/Object;Ljava/lang/String;)V)
-          ALOAD (1)
-          ALOAD (2)
-          ICONST_0
-          NEW (kotlinx/serialization/SealedClassSerializer)
-          DUP
-          LDC (Result)
-          LDC (LResult;)
-          INVOKESTATIC (kotlin/jvm/internal/Reflection, getOrCreateKotlinClass, (Ljava/lang/Class;)Lkotlin/reflect/KClass;)
-          ICONST_2
-          ANEWARRAY (kotlin/reflect/KClass)
-          DUP
-          ICONST_0
-          LDC (LResult$Err;)
-          INVOKESTATIC (kotlin/jvm/internal/Reflection, getOrCreateKotlinClass, (Ljava/lang/Class;)Lkotlin/reflect/KClass;)
-          AASTORE
-          DUP
-          ICONST_1
-          LDC (LResult$OK;)
-          INVOKESTATIC (kotlin/jvm/internal/Reflection, getOrCreateKotlinClass, (Ljava/lang/Class;)Lkotlin/reflect/KClass;)
-          AASTORE
-          ICONST_2
-          ANEWARRAY (kotlinx/serialization/KSerializer)
-          DUP
-          ICONST_0
-          NEW (kotlinx/serialization/internal/ObjectSerializer)
-          DUP
-          LDC (Result.Err)
-          GETSTATIC (Result$Err, INSTANCE, LResult$Err;)
-          INVOKESPECIAL (kotlinx/serialization/internal/ObjectSerializer, <init>, (Ljava/lang/String;Ljava/lang/Object;)V)
-          AASTORE
-          DUP
-          ICONST_1
-          GETSTATIC (Result$OK$$serializer, INSTANCE, LResult$OK$$serializer;)
-          AASTORE
-          INVOKESPECIAL (kotlinx/serialization/SealedClassSerializer, <init>, (Ljava/lang/String;Lkotlin/reflect/KClass;[Lkotlin/reflect/KClass;[Lkotlinx/serialization/KSerializer;)V)
-          ALOAD (0)
-          GETFIELD (Container, r, LResult;)
-          INVOKEINTERFACE (kotlinx/serialization/encoding/CompositeEncoder, encodeSerializableElement, (Lkotlinx/serialization/descriptors/SerialDescriptor;ILkotlinx/serialization/SerializationStrategy;Ljava/lang/Object;)V)
-          RETURN
-        LABEL (L1)
-    }
+    public final static void write$Self$main(Container self, kotlinx.serialization.encoding.CompositeEncoder output, kotlinx.serialization.descriptors.SerialDescriptor serialDesc)
 }
 
 final class Result$Companion$serializer$1 : kotlin/jvm/internal/Lambda, kotlin/jvm/functions/Function0 {
@@ -787,30 +736,7 @@ public final class Result$OK : Result {
 
     public final java.lang.String getS()
 
-    public final static void write$Self(Result$OK self, kotlinx.serialization.encoding.CompositeEncoder output, kotlinx.serialization.descriptors.SerialDescriptor serialDesc) {
-        LABEL (L0)
-          ALOAD (0)
-          LDC (self)
-          INVOKESTATIC (kotlin/jvm/internal/Intrinsics, checkNotNullParameter, (Ljava/lang/Object;Ljava/lang/String;)V)
-          ALOAD (1)
-          LDC (output)
-          INVOKESTATIC (kotlin/jvm/internal/Intrinsics, checkNotNullParameter, (Ljava/lang/Object;Ljava/lang/String;)V)
-          ALOAD (2)
-          LDC (serialDesc)
-          INVOKESTATIC (kotlin/jvm/internal/Intrinsics, checkNotNullParameter, (Ljava/lang/Object;Ljava/lang/String;)V)
-          ALOAD (0)
-          ALOAD (1)
-          ALOAD (2)
-          INVOKESTATIC (Result, write$Self, (LResult;Lkotlinx/serialization/encoding/CompositeEncoder;Lkotlinx/serialization/descriptors/SerialDescriptor;)V)
-          ALOAD (1)
-          ALOAD (2)
-          ICONST_0
-          ALOAD (0)
-          GETFIELD (Result$OK, s, Ljava/lang/String;)
-          INVOKEINTERFACE (kotlinx/serialization/encoding/CompositeEncoder, encodeStringElement, (Lkotlinx/serialization/descriptors/SerialDescriptor;ILjava/lang/String;)V)
-          RETURN
-        LABEL (L1)
-    }
+    public final static void write$Self$main(Result$OK self, kotlinx.serialization.encoding.CompositeEncoder output, kotlinx.serialization.descriptors.SerialDescriptor serialDesc)
 }
 
 public abstract class Result : java/lang/Object, X {
@@ -843,7 +769,7 @@ public abstract class Result : java/lang/Object, X {
         LABEL (L1)
     }
 
-    public void <init>(int seen1, kotlinx.serialization.internal.SerializationConstructorMarker serializationConstructorMarker) {
+    private void <init>(int seen1, kotlinx.serialization.internal.SerializationConstructorMarker serializationConstructorMarker) {
         LABEL (L0)
           ALOAD (0)
           INVOKESPECIAL (java/lang/Object, <init>, ()V)
@@ -853,20 +779,7 @@ public abstract class Result : java/lang/Object, X {
 
     public void def()
 
-    public final static void write$Self(Result self, kotlinx.serialization.encoding.CompositeEncoder output, kotlinx.serialization.descriptors.SerialDescriptor serialDesc) {
-        LABEL (L0)
-          ALOAD (0)
-          LDC (self)
-          INVOKESTATIC (kotlin/jvm/internal/Intrinsics, checkNotNullParameter, (Ljava/lang/Object;Ljava/lang/String;)V)
-          ALOAD (1)
-          LDC (output)
-          INVOKESTATIC (kotlin/jvm/internal/Intrinsics, checkNotNullParameter, (Ljava/lang/Object;Ljava/lang/String;)V)
-          ALOAD (2)
-          LDC (serialDesc)
-          INVOKESTATIC (kotlin/jvm/internal/Intrinsics, checkNotNullParameter, (Ljava/lang/Object;Ljava/lang/String;)V)
-          RETURN
-        LABEL (L1)
-    }
+    public final static void write$Self$main(Result self, kotlinx.serialization.encoding.CompositeEncoder output, kotlinx.serialization.descriptors.SerialDescriptor serialDesc)
 }
 
 public final class X$Companion : java/lang/Object {
