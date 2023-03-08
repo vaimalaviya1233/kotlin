@@ -164,6 +164,8 @@ object StandardClassIds {
         val JvmRepeatable = "JvmRepeatable".jvmId()
         val JvmRecord = "JvmRecord".jvmId()
         val Throws = "Throws".jvmId()
+        val ThrowsNative = ClassId(FqName("kotlin.native"), Name.identifier("Throws"))
+        val ThrowsAlias = "Throws".baseId()
 
         val RawTypeAnnotation = "RawType".internalIrId()
         val FlexibleNullability = "FlexibleNullability".internalIrId()

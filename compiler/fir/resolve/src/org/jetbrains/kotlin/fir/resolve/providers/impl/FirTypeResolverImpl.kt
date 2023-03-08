@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.fir.types.impl.ConeClassLikeTypeImpl
 import org.jetbrains.kotlin.fir.types.impl.ConeTypeParameterTypeImpl
 import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.resolve.calls.inference.model.ConstraintSystemError
 import org.jetbrains.kotlin.resolve.calls.tasks.ExplicitReceiverKind
 import org.jetbrains.kotlin.resolve.calls.tower.CandidateApplicability
@@ -136,6 +137,8 @@ class FirTypeResolverImpl(private val session: FirSession) : FirTypeResolver() {
             }
         }
 
+        filterOutDuplicatedKotlinThrows(candidates)
+
         val candidateCount = candidates.size
         return when {
             candidateCount == 1 -> {
@@ -149,6 +152,19 @@ class FirTypeResolverImpl(private val session: FirSession) : FirTypeResolver() {
                 TypeResolutionResult.Unresolved
             }
             else -> error("Unexpected")
+        }
+    }
+
+    // Handling of the special case when both `kotlin.Throws` and `kotlin.jvm.Throws` (or `kotlin.native.Throws`) don't cause ambiguity
+    private fun filterOutDuplicatedKotlinThrows(candidates: MutableSet<TypeCandidate>) {
+        if (candidates.size > 1 &&
+            candidates.find { (it.symbol as? FirClassLikeSymbol)?.classId == StandardClassIds.Annotations.ThrowsAlias } != null
+        ) {
+            candidates.removeAll {
+                (it.symbol as? FirClassLikeSymbol)?.classId?.let { classId ->
+                    classId == StandardClassIds.Annotations.Throws || classId == StandardClassIds.Annotations.ThrowsNative
+                } == true
+            }
         }
     }
 
