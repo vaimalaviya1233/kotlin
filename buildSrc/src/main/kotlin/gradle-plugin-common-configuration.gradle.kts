@@ -2,7 +2,6 @@
  * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
-import com.gradle.publish.PluginBundleExtension
 import plugins.signLibraryPublication
 
 plugins {
@@ -22,10 +21,11 @@ addBomCheckTask()
 extensions.extraProperties["kotlin.stdlib.default.dependency"] = "false"
 
 // common plugin bundle configuration
-configure<PluginBundleExtension> {
-    website = "https://kotlinlang.org/"
-    vcsUrl = "https://github.com/jetbrains/kotlin"
-    tags = listOf("kotlin")
+configure<GradlePluginDevelopmentExtension> {
+    website.set("https://kotlinlang.org/")
+    vcsUrl.set("https://github.com/jetbrains/kotlin")
+    // TODO:
+    // tags = listOf("kotlin")
 }
 
 publishing {

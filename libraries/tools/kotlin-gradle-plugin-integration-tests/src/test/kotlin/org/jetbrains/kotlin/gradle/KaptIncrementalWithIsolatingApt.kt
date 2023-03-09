@@ -373,7 +373,7 @@ open class KaptIncrementalWithIsolatingApt : KaptIncrementalIT() {
             )
 
             // Remove all sources, and add only 1 source file
-            javaSourcesDir().deleteRecursively()
+            javaSourcesDir().toFile().deleteRecursively()
             with(javaSourcesDir().resolve("example/A.kt")) {
                 parent.createDirectories()
                 writeText(

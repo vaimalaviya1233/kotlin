@@ -99,7 +99,7 @@ var Project.mainPublicationName: String
 
 @OptIn(ExperimentalStdlibApi::class)
 private fun humanReadableName(name: String) =
-    name.split("-").joinToString(separator = " ") { it.capitalize(Locale.ROOT) }
+    name.split("-").joinToString(separator = " ") { word -> word.replaceFirstChar { it.titlecase(Locale.getDefault()) } }
 
 fun MavenPublication.configureKotlinPomAttributes(project: Project, explicitDescription: String? = null, packaging: String = "jar") {
     val publication = this
@@ -186,9 +186,9 @@ private fun PublishToMavenRepository.configureRepository() {
     dependsOn(project.rootProject.tasks.named("preparePublication"))
     doFirst {
         val preparePublication = project.rootProject.tasks.named("preparePublication").get()
-        val username: String? by preparePublication.extra
-        val password: String? by preparePublication.extra
-        val repoUrl: String by preparePublication.extra
+        val username: String? = preparePublication.extra.get("username")?.toString()
+        val password: String? = preparePublication.extra.get("password")?.toString()
+        val repoUrl: String = preparePublication.extra.get("repoUrl").toString()
 
         repository.apply {
             url = project.uri(repoUrl)

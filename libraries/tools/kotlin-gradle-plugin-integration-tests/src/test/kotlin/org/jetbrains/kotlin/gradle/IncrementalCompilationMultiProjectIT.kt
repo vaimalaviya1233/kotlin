@@ -23,7 +23,7 @@ open class IncrementalCompilationJsMultiProjectIT : BaseIncrementalCompilationMu
     ): TestProject = project(defaultProjectName, gradleVersion) {
         listOf("app", "lib").forEach {
             val subProject = subProject(it)
-            subProject.javaSourcesDir().deleteRecursively()
+            subProject.javaSourcesDir().toFile().deleteRecursively()
             val buildGradleJs = subProject.projectPath.resolve("build-js.gradle")
             subProject.buildGradle.writeText(buildGradleJs.readText())
             buildGradleJs.deleteExisting()

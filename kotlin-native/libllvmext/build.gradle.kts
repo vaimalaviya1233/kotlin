@@ -43,6 +43,7 @@ native {
         OSX -> {
             cxxflags += "-DKONAN_MACOS=1"
         }
+        else -> error("Unexpected host!")
     }
     suffixes {
         (".cpp" to ".$obj") {

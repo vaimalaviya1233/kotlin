@@ -1361,7 +1361,7 @@ abstract class AbstractKotlin2JsGradlePluginIT(protected val irBackend: Boolean)
                 assertTasksExecuted(":$STORE_YARN_LOCK_NAME")
             }
 
-            projectPath.resolve("kotlin-js-store").deleteRecursively()
+            projectPath.resolve("kotlin-js-store").toFile().deleteRecursively()
 
             buildGradleKts.modify {
                 it + "\n" +
@@ -1452,7 +1452,7 @@ abstract class AbstractKotlin2JsGradlePluginIT(protected val irBackend: Boolean)
                 it.replace("implementation(npm(\"decamelize\", \"6.0.0\"))", "")
             }
 
-            projectPath.resolve("kotlin-js-store").deleteRecursively()
+            projectPath.resolve("kotlin-js-store").toFile().deleteRecursively()
 
             buildGradleKts.modify {
                 it + "\n" +
@@ -1514,7 +1514,7 @@ abstract class AbstractKotlin2JsGradlePluginIT(protected val irBackend: Boolean)
                 assertTasksFailed(":$STORE_YARN_LOCK_NAME")
             }
 
-            projectPath.resolve("kotlin-js-store").deleteRecursively()
+            projectPath.resolve("kotlin-js-store").toFile().deleteRecursively()
 
             //check if independent tasks can be executed
             build("help") {

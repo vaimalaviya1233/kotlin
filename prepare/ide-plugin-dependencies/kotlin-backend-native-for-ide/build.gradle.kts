@@ -1,4 +1,5 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+import org.gradle.api.internal.file.BaseDirFileResolver
 
 plugins {
     kotlin("jvm")
@@ -85,17 +86,17 @@ idePluginDependency {
     publish()
 
     // includes more sources than left by proguard
-    org.gradle.api.plugins.internal.JvmPluginsHelper.configureDocumentationVariantWithArtifact(
-        JavaPlugin.SOURCES_ELEMENTS_CONFIGURATION_NAME,
-        null,
-        DocsType.SOURCES,
-        listOf(),
-        "sourcesJar",
-        project(":kotlin-native:backend.native").sourceSets["cli_bc"].allSource +
-                project(":kotlin-native:backend.native").sourceSets["compiler"].allSource,
-        components["kotlinLibrary"] as AdhocComponentWithVariants,
-        configurations,
-        tasks,
-        objects
-    )
+//    org.gradle.api.plugins.internal.JvmPluginsHelper.configureDocumentationVariantWithArtifact(
+//        JavaPlugin.SOURCES_ELEMENTS_CONFIGURATION_NAME,
+//        null,
+//        DocsType.SOURCES,
+//        listOf(),
+//        "sourcesJar",
+//        project(":kotlin-native:backend.native").sourceSets["cli_bc"].allSource +
+//                project(":kotlin-native:backend.native").sourceSets["compiler"].allSource,
+//        components["kotlinLibrary"] as AdhocComponentWithVariants,
+//        configurations,
+//        tasks,
+//        objects
+//    )
 }

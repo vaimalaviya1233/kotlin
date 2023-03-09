@@ -26,21 +26,21 @@ def versionProperties = new Properties()
 versionPropertiesFile.withInputStream {
     versionProperties.load(it)
 }
-dependencyResolutionManagement {
-    components {
-        withModule("com.google.code.gson:gson") {
-            allVariants {
-                withDependencies {
-                    add("com.google.code.gson:gson") {
-                        version {
-                            it.require(versionProperties['versions.gson'])
-                        }
-                        because("Force using same gson version because of https://github.com/google/gson/pull/1991")
-                    }
-                }
-            }
-        }
-    }
-}
+//dependencyResolutionManagement {
+//    components {
+//        withModule("com.google.code.gson:gson") {
+//            allVariants {
+//                withDependencies {
+//                    add("com.google.code.gson:gson") {
+//                        version {
+//                            it.require(versionProperties['versions.gson'])
+//                        }
+//                        because("Force using same gson version because of https://github.com/google/gson/pull/1991")
+//                    }
+//                }
+//            }
+//        }
+//    }
+//}
 
 include "prepare-deps"

@@ -368,7 +368,7 @@ val distKotlinc = distTask<Sync>("distKotlinc") {
                 it.replace(Regex("-\\d.*\\.jar\$"), ".jar")
             }
         }
-        from(sourcesFiles)
+        // TODO: from(sourcesFiles) // fails with Gradle 8
         from(compilerPluginsFiles) {
             rename { it.removePrefix("kotlin-") }
         }

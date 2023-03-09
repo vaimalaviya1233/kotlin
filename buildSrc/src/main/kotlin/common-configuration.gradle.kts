@@ -8,25 +8,25 @@ group = "org.jetbrains.kotlin"
 version = kotlinVersion
 
 // Forcing minimal gson dependency version
-val gsonVersion = rootProject.extra["versions.gson"] as String
-dependencies {
-    constraints {
-        configurations.all {
-            if (isCanBeResolved) {
-                allDependencies.configureEach {
-                    if (group == "com.google.code.gson" && name == "gson") {
-                        this@constraints.add(this@all.name, "com.google.code.gson:gson") {
-                            version {
-                                require(gsonVersion)
-                            }
-                            because("Force using same gson version because of https://github.com/google/gson/pull/1991")
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
+//val gsonVersion = rootProject.extra["versions.gson"] as String
+//dependencies {
+//    constraints {
+//        configurations.all {
+//            if (isCanBeResolved) {
+//                allDependencies.configureEach {
+//                    if (group == "com.google.code.gson" && name == "gson") {
+//                        this@constraints.add(this@all.name, "com.google.code.gson:gson") {
+//                            version {
+//                                require(gsonVersion)
+//                            }
+//                            because("Force using same gson version because of https://github.com/google/gson/pull/1991")
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//    }
+//}
 
 project.configureJvmDefaultToolchain()
 project.addEmbeddedConfigurations()

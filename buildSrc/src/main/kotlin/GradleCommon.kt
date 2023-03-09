@@ -344,7 +344,7 @@ fun Project.reconfigureMainSourcesSetForGradlePlugin(
                             tasks.named<JavaCompile>(compileJavaTaskName).get().apply {
                                 attribute(
                                     TargetJvmVersion.TARGET_JVM_VERSION_ATTRIBUTE,
-                                    targetCompatibility.toInt()
+                                    targetCompatibility.substringAfter("1.").toInt()
                                 )
                             }
                         }

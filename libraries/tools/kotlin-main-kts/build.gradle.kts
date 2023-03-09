@@ -50,7 +50,9 @@ dependencies {
     proguardLibraryJars(commonDependency("org.jetbrains.kotlin:kotlin-reflect")) { isTransitive = false }
     proguardLibraryJars(project(":kotlin-compiler"))
 
-    relocatedJarContents(embedded)
+    embedded.dependencies.forEach {
+        relocatedJarContents(it)
+    }
     relocatedJarContents(mainSourceSet.output)
 }
 
