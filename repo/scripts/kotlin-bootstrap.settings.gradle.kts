@@ -58,19 +58,12 @@ fun getRootSettings(
     // Gradle interface neither exposes flag if it is a root of composite-build hierarchy
     // nor gives access to Settings object. Fortunately it is availaibe inside GradleInternal internal api
     // used by build scan plugin.
-    //
-    // Included builds for build logic are evaluated earlier then root settings leading to error that root settings object is not yet
-    // available. For such cases we fallback to included build settings object and later manual mapping for kotlinRootDir
     val gradleInternal = (gradle as GradleInternal)
-    return when {
-        gradleInternal.isRootBuild() ||
-                settings.rootProject.name == "gradle-settings-conventions" -> {
-            settings
-        }
-        else -> {
-            val gradleParent = gradle.parent ?: error("Could not get includedBuild parent build for ${settings.rootDir}!")
-            getRootSettings(gradle.parent!!.settings, gradle.parent!!)
-        }
+    return if (gradleInternal.isRootBuild()) {
+        settings
+    } else {
+        val gradleParent = gradle.parent ?: error("Could not get includedBuild parent build for ${settings.rootDir}!")
+        getRootSettings(gradle.parent!!.settings, gradle.parent!!)
     }
 }
 
@@ -90,7 +83,6 @@ val kotlinRootDir: File = when (rootSettings.rootProject.name) {
         }
     }
     "benchmarksAnalyzer", "performance-server" -> rootSettings.rootDir.parentFile.parentFile.parentFile
-    "gradle-settings-conventions" -> rootSettings.rootDir.parentFile.parentFile
     "performance" -> rootSettings.rootDir.parentFile.parentFile
     "ui" -> rootSettings.rootDir.parentFile.parentFile.parentFile.parentFile
     else -> rootSettings.rootDir
