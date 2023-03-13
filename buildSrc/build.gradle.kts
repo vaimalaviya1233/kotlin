@@ -31,6 +31,7 @@ plugins {
     `kotlin-dsl`
     `java-gradle-plugin`
     id("org.jetbrains.kotlin.jvm")
+    id("org.jetbrains.kotlin.plugin.sam.with.receiver")
 }
 
 gradlePlugin {
