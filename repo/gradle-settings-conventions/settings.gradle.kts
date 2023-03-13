@@ -22,7 +22,6 @@ buildscript {
 }
 
 include(":build-cache")
-include(":gradle-enterprise")
 
 // Unfortunately it is not possible to apply build-cache.settings.gradle.kts as script compilation
 // could not then find types from "kotlin-build-gradle-plugin"
