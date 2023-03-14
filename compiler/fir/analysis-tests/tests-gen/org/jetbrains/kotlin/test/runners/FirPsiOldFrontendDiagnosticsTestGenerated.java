@@ -29875,6 +29875,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
             }
 
             @Test
+            @TestMetadata("inClassInit.kt")
+            public void testInClassInit() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/smartCasts/inClassInit.kt");
+            }
+
+            @Test
             @TestMetadata("incDecToNull.kt")
             public void testIncDecToNull() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/smartCasts/incDecToNull.kt");

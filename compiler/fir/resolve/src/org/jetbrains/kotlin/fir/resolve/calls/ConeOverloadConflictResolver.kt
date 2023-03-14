@@ -9,11 +9,13 @@ import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.declarations.FirMemberDeclaration
 import org.jetbrains.kotlin.fir.declarations.utils.modality
+import org.jetbrains.kotlin.fir.expressions.FirThisReceiverExpression
 import org.jetbrains.kotlin.fir.render
 import org.jetbrains.kotlin.fir.resolve.BodyResolveComponents
 import org.jetbrains.kotlin.fir.resolve.inference.ConeTypeParameterBasedTypeVariable
 import org.jetbrains.kotlin.fir.resolve.inference.InferenceComponents
 import org.jetbrains.kotlin.fir.resolve.substitution.substitutorByMap
+import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.BodyResolveContext
 import org.jetbrains.kotlin.fir.symbols.ConeTypeParameterLookupTag
 import org.jetbrains.kotlin.fir.types.coneType
 import org.jetbrains.kotlin.resolve.calls.inference.model.NewConstraintSystemImpl
@@ -31,7 +33,8 @@ typealias CandidateSignature = FlatSignature<Candidate>
 class ConeOverloadConflictResolver(
     specificityComparator: TypeSpecificityComparator,
     inferenceComponents: InferenceComponents,
-    transformerComponents: BodyResolveComponents
+    transformerComponents: BodyResolveComponents,
+    private val context: BodyResolveContext
 ) : AbstractConeCallConflictResolver(specificityComparator, inferenceComponents, transformerComponents) {
 
     override fun chooseMaximallySpecificCandidates(
@@ -163,12 +166,44 @@ class ConeOverloadConflictResolver(
             // one foo is protected in B, so we can't call it outside the B subclasses.
             // But that resolution result would be less precise result that the one before smart-cast applied (A::foo has more specific parameters),
             // so at MemberScopeTowerLevel we create candidates both from A's and B's scopes on the same level.
-            // But in case when there would be successful candidates from both types, we discriminate ones from original type,
-            // thus sticking to the candidates from smart cast type.
             // See more details at KT-51460, KT-55722, KT-56310 and relevant tests
             //    testData/diagnostics/tests/visibility/moreSpecificProtectedSimple.kt
             //    testData/diagnostics/tests/smartCasts/kt51460.kt
-            val filtered = candidates.filterTo(mutableSetOf()) { !it.isFromOriginalTypeInPresenceOfSmartCast }
+
+            // But in case when there would be successful candidates from both types and if the call is an assignment in a class initializer,
+            // we pick the non-smart-casted candidate to support scenarios like
+            // open class Base {
+            //     val foo: Int
+            //
+            //     init {
+            //         this as B
+            //         this.foo = 1
+            //     }
+            // }
+            //
+            // class Derived : Base() {
+            //     override val foo: Int = 1
+            // }
+
+            val classSymbolBeingInitialized = candidates.firstNotNullOfOrNull { it.callInfo.potentialPropertyInitializationReceiver }
+            var filtered = emptySet<Candidate>()
+
+            if (classSymbolBeingInitialized != null) {
+                filtered = candidates.filterTo(mutableSetOf()) { candidate ->
+                    candidate.isFromOriginalTypeInPresenceOfSmartCast &&
+                            candidate.dispatchReceiverExpression().let {
+                                it is FirThisReceiverExpression &&
+                                        context.implicitReceiverStack[it.calleeReference.labelName]?.boundSymbol == classSymbolBeingInitialized
+                            }
+                }
+            }
+
+            // Otherwise, pick the smart-casted candidate.
+            if (filtered.isEmpty()) {
+                filtered = candidates.filterTo(mutableSetOf()) { !it.isFromOriginalTypeInPresenceOfSmartCast }
+            }
+
+
             when (filtered.size) {
                 1 -> return filtered
                 0, candidates.size -> {

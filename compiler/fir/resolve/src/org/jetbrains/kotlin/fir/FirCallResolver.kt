@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.fir
 
 import org.jetbrains.kotlin.KtSourceElement
+import org.jetbrains.kotlin.contracts.description.EventOccurrencesRange
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.utils.hasExplicitBackingField
@@ -63,8 +64,14 @@ class FirCallResolver(
         this.transformer = transformer
     }
 
-    val conflictResolver: ConeCallConflictResolver =
-        session.callConflictResolverFactory.create(TypeSpecificityComparator.NONE, session.inferenceComponents, components)
+    val conflictResolver: ConeCallConflictResolver by lazy(LazyThreadSafetyMode.NONE) {
+        session.callConflictResolverFactory.create(
+            TypeSpecificityComparator.NONE,
+            session.inferenceComponents,
+            components,
+            transformer.context,
+        )
+    }
 
     fun resolveCallAndSelectCandidate(functionCall: FirFunctionCall): FirFunctionCall {
         val name = functionCall.calleeReference.name
@@ -148,6 +155,20 @@ class FirCallResolver(
         val argumentList = (qualifiedAccess as? FirFunctionCall)?.argumentList ?: FirEmptyArgumentList
         val typeArguments = (qualifiedAccess as? FirFunctionCall)?.typeArguments.orEmpty()
 
+        val potentialPropertyInitializationReceiver = if (callSite is FirVariableAssignment) {
+            // If we're immediately in an init block, take it, otherwise null.
+            // Ignore inline lambdas that are invoked exactly once (i.e. that are allowed for property initializations).
+            (resolutionContext.bodyResolveContext.containers
+                .asReversed()
+                .lastOrNull {
+                    it is FirAnonymousInitializer || it is FirAnonymousFunction && it.invocationKind == EventOccurrencesRange.EXACTLY_ONCE
+                }
+                    as? FirAnonymousInitializer)
+                ?.dispatchReceiverType?.toRegularClassSymbol(session)
+        } else {
+            null
+        }
+
         val info = CallInfo(
             callSite,
             forceCallKind ?: if (qualifiedAccess is FirFunctionCall) CallKind.Function else CallKind.VariableAccess,
@@ -159,7 +180,8 @@ class FirCallResolver(
             session,
             components.file,
             containingDeclarations,
-            origin = origin
+            origin = origin,
+            potentialPropertyInitializationReceiver = potentialPropertyInitializationReceiver,
         )
         towerResolver.reset()
         val result = towerResolver.runResolver(info, resolutionContext, collector)
@@ -617,9 +639,9 @@ class FirCallResolver(
             transformer.components.containingDeclarations,
             candidateForCommonInvokeReceiver = null,
             // Additional things for callable reference resolve
-            expectedType,
-            outerConstraintSystemBuilder,
-            lhs,
+            expectedType = expectedType,
+            outerCSBuilder = outerConstraintSystemBuilder,
+            lhs = lhs,
         )
     }
 
