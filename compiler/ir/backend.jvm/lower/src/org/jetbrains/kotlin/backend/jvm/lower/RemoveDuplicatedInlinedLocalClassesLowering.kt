@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.backend.common.lower.LocalDeclarationsLowering
 import org.jetbrains.kotlin.backend.common.lower.parents
 import org.jetbrains.kotlin.backend.common.phaser.makeIrFilePhase
 import org.jetbrains.kotlin.backend.jvm.*
+import org.jetbrains.kotlin.config.JVMConfigurationKeys
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.declarations.*
@@ -24,7 +25,12 @@ import org.jetbrains.kotlin.ir.visitors.IrElementTransformer
 import org.jetbrains.kotlin.name.NameUtils
 
 internal val removeDuplicatedInlinedLocalClasses = makeIrFilePhase(
-    ::RemoveDuplicatedInlinedLocalClassesLowering,
+    { context ->
+        if (!context.configuration.getBoolean(JVMConfigurationKeys.ENABLE_IR_INLINER)) {
+            return@makeIrFilePhase FileLoweringPass.Empty
+        }
+        RemoveDuplicatedInlinedLocalClassesLowering(context)
+    },
     name = "RemoveDuplicatedInlinedLocalClasses",
     description = "Drop excess local classes that were copied by ir inliner",
     prerequisite = setOf(functionInliningPhase, localDeclarationsPhase)

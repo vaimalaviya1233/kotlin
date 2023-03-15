@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.backend.common.phaser.makeIrModulePhase
 import org.jetbrains.kotlin.backend.jvm.JvmBackendContext
 import org.jetbrains.kotlin.backend.jvm.functionInliningPhase
 import org.jetbrains.kotlin.backend.jvm.ir.isInlineParameter
+import org.jetbrains.kotlin.config.JVMConfigurationKeys
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.*
@@ -26,7 +27,12 @@ import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
 import org.jetbrains.kotlin.ir.visitors.acceptVoid
 
 internal val markNecessaryInlinedClassesAsRegenerated = makeIrModulePhase(
-    ::MarkNecessaryInlinedClassesAsRegeneratedLowering,
+    { context ->
+        if (!context.configuration.getBoolean(JVMConfigurationKeys.ENABLE_IR_INLINER)) {
+            return@makeIrModulePhase FileLoweringPass.Empty
+        }
+        MarkNecessaryInlinedClassesAsRegeneratedLowering(context)
+    },
     name = "MarkNecessaryInlinedClassesAsRegeneratedLowering",
     description = "Will scan all inlined functions and mark anonymous objects that must be later regenerated at backend",
     prerequisite = setOf(functionInliningPhase, createSeparateCallForInlinedLambdas)
