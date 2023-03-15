@@ -1,3 +1,4 @@
+// IGNORE_INLINER: IR
 // FILE: test.kt
 
 fun box() {

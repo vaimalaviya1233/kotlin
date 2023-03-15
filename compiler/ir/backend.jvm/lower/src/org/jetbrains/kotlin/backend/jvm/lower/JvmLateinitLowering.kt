@@ -32,7 +32,7 @@ import org.jetbrains.kotlin.ir.util.resolveFakeOverride
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
 
-internal val jvmLateinitLowering = makeIrModulePhase(
+internal val jvmLateinitLowering = makeIrFilePhase(
     ::JvmLateinitLowering,
     name = "JvmLateinitLowering",
     description = "Lower lateinit properties and variables"

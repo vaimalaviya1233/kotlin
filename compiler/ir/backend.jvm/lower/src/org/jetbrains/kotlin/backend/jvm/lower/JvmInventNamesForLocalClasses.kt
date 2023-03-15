@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.ir.util.render
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 import org.jetbrains.org.objectweb.asm.Type
 
-val inventNamesForLocalClassesPhase = makeIrModulePhase(
+val inventNamesForLocalClassesPhase = makeIrFilePhase(
     { context -> JvmInventNamesForLocalClasses(context) },
     name = "InventNamesForLocalClasses",
     description = "Invent names for local classes and anonymous objects",

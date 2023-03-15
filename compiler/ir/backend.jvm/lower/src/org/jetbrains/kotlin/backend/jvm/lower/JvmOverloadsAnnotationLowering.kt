@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.ir.types.defaultType
 import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.name.JvmNames.JVM_OVERLOADS_FQ_NAME
 
-internal val jvmOverloadsAnnotationPhase = makeIrModulePhase(
+internal val jvmOverloadsAnnotationPhase = makeIrFilePhase(
     ::JvmOverloadsAnnotationLowering,
     name = "JvmOverloadsAnnotation",
     description = "Handle JvmOverloads annotations"
