@@ -55,17 +55,8 @@ internal fun transformArgs(args: List<String>, messageCollector: MessageCollecto
     }
 }
 
-private const val KAPT_COMPILER_PLUGIN_JAR_NAME = "kotlin-annotation-processing.jar"
-
 private fun transformKaptToolArgs(args: List<String>, messageCollector: MessageCollector, isTest: Boolean): List<String> {
     val transformed = mutableListOf<String>()
-
-    if (!isTest) {
-        val kaptCompilerPluginFile = findKaptCompilerPlugin()
-            ?: throw IllegalStateException("Can't find $KAPT_COMPILER_PLUGIN_JAR_NAME")
-
-        transformed += "-Xplugin=${kaptCompilerPluginFile.absolutePath}"
-    }
 
     var toolsJarPassed = false
     var aptModePassed = false
@@ -113,8 +104,21 @@ private fun transformKaptToolArgs(args: List<String>, messageCollector: MessageC
         transformed += kaptArg(option.pluginOption, transformedOption)
     }
 
+    val isK2 = "-Xuse-k2" in transformed ||
+            transformed.any { it.startsWith("-language-version=2") } ||
+            transformed.indexOf("-language-version").takeIf { it >= 0 && it < transformed.size - 1 }
+                ?.let { transformed[it + 1].startsWith('2') } == true
+
+    if (!isTest) {
+        val kaptCompilerPluginFile = findKaptCompilerPlugin(isK2)
+            ?: throw IllegalStateException("Can't find ${pluginJarName(isK2)}")
+
+        transformed.add(0, "-Xplugin=${kaptCompilerPluginFile.absolutePath}")
+    }
+
+
     if (!aptModePassed) {
-        transformed.addAll(0, kaptArg(KaptCliOption.APT_MODE_OPTION, "compile"))
+        transformed.addAll(0, kaptArg(KaptCliOption.APT_MODE_OPTION, if (isK2) "stubsAndApt" else "compile"))
     }
 
     if (!isTest && !isAtLeastJava9() && !areJavacComponentsAvailable() && !toolsJarPassed) {
@@ -168,11 +172,12 @@ private fun argError(text: String): Nothing {
     throw IllegalArgumentException(text)
 }
 
-private fun findKaptCompilerPlugin(): File? {
+private fun findKaptCompilerPlugin(isK2: Boolean): File? {
     val pathToThisJar = File(PathUtil.getJarPathForClass(CliToolOption::class.java))
     if (pathToThisJar.extension.lowercase() != "jar") {
         return null
     }
-
-    return File(pathToThisJar.parentFile, KAPT_COMPILER_PLUGIN_JAR_NAME).takeIf { it.exists() }
+    return File(pathToThisJar.parentFile, pluginJarName(isK2)).takeIf { it.exists() }
 }
+
+private fun pluginJarName(isK2: Boolean) = if (isK2) "kotlin-annotation-processing-k2.jar" else "kotlin-annotation-processing.jar"

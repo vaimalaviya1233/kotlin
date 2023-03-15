@@ -56,7 +56,7 @@ import java.io.File
 import java.io.ObjectInputStream
 import java.util.*
 
-private val KAPT_OPTIONS = CompilerConfigurationKey.create<KaptOptions.Builder>("Kapt options")
+val KAPT_OPTIONS = CompilerConfigurationKey.create<KaptOptions.Builder>("Kapt options")
 
 class Kapt3CommandLineProcessor : CommandLineProcessor {
     override val pluginId: String = ANNOTATION_PROCESSING_COMPILER_PLUGIN_ID
@@ -68,12 +68,12 @@ class Kapt3CommandLineProcessor : CommandLineProcessor {
         if (option !is KaptCliOption) {
             throw CliOptionProcessingException("Unknown option: ${option.optionName}")
         }
-        if (configuration.getBoolean(CommonConfigurationKeys.USE_FIR)) {
-            configuration[CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY]?.report(
-                CompilerMessageSeverity.ERROR,
-                "kapt currently doesn't support language version 2.0\nPlease use language version 1.9 or below"
-            )
-        }
+//        if (configuration.getBoolean(CommonConfigurationKeys.USE_FIR)) {
+//            configuration[CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY]?.report(
+//                CompilerMessageSeverity.ERROR,
+//                "kapt currently doesn't support language version 2.0\nPlease use language version 1.9 or below"
+//            )
+//        }
 
         val kaptOptions = configuration[KAPT_OPTIONS]
             ?: KaptOptions.Builder().also { configuration.put(KAPT_OPTIONS, it) }
@@ -169,6 +169,9 @@ class Kapt3CommandLineProcessor : CommandLineProcessor {
 
 @Suppress("DEPRECATION")
 class Kapt3ComponentRegistrar : ComponentRegistrar {
+    override val supportsK2: Boolean
+        get() = true
+
     override fun registerProjectComponents(project: MockProject, configuration: CompilerConfiguration) {
         doOpenInternalPackagesIfRequired()
         val contentRoots = configuration[CLIConfigurationKeys.CONTENT_ROOTS] ?: emptyList()
