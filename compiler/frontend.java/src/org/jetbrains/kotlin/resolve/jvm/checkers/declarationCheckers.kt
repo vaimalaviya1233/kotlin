@@ -143,7 +143,9 @@ class JvmNameAnnotationChecker : DeclarationChecker {
     private fun checkDeclaration(descriptor: DeclarationDescriptor, annotation: AnnotationDescriptor, diagnosticHolder: DiagnosticSink) {
         val annotationEntry = DescriptorToSourceUtils.getSourceFromAnnotation(annotation) ?: return
 
+
         if (descriptor is FunctionDescriptor && !isRenamableFunction(descriptor)) {
+            // tested
             diagnosticHolder.report(ErrorsJvm.INAPPLICABLE_JVM_NAME.on(annotationEntry))
         }
 
@@ -154,8 +156,10 @@ class JvmNameAnnotationChecker : DeclarationChecker {
 
         if (descriptor is CallableMemberDescriptor) {
             if (DescriptorUtils.isOverride(descriptor) || descriptor.isOverridable) {
+                // tested
                 diagnosticHolder.report(ErrorsJvm.INAPPLICABLE_JVM_NAME.on(annotationEntry))
             } else if (descriptor.containingDeclaration.isValueClassThatRequiresMangling()) {
+                // not tested?!
                 diagnosticHolder.report(ErrorsJvm.INAPPLICABLE_JVM_NAME.on(annotationEntry))
             }
         }
