@@ -917,6 +917,14 @@ public class DescriptorResolver {
             targetSet.add(PROPERTY_DELEGATE_FIELD);
         }
         AnnotationSplitter annotationSplitter = new AnnotationSplitter(storageManager, allAnnotations, targetSet);
+        KtPropertyAccessor propertyGetter = propertyInfo.getPropertyGetter();
+        AnnotationSplitter propertyGetterAnnotationSplitter =
+                propertyGetter == null ? null : new AnnotationSplitter(storageManager,
+                                                                       annotationResolver.resolveAnnotationsWithoutArguments(
+                                                                               scopeForDeclarationResolution,
+                                                                               propertyGetter.getModifierList(),
+                                                                               trace),
+                                                                       targetSet);
 
         Annotations propertyAnnotations = new CompositeAnnotations(CollectionsKt.listOf(
                 annotationSplitter.getAnnotationsForTarget(PROPERTY),
@@ -1032,7 +1040,8 @@ public class DescriptorResolver {
                     annotationSplitter,
                     trace,
                     typeIfKnown,
-                    propertyInfo.getPropertyGetter(),
+                    propertyGetter,
+                    propertyGetterAnnotationSplitter,
                     propertyInfo.getHasDelegate(),
                     inferenceSession
             );
@@ -1229,16 +1238,17 @@ public class DescriptorResolver {
             @NotNull BindingTrace trace,
             @Nullable KotlinType propertyTypeIfKnown,
             @Nullable KtPropertyAccessor getter,
+            @Nullable AnnotationSplitter propertyGetterAnnotationSplitter,
             boolean hasDelegate,
             @Nullable InferenceSession inferenceSession
     ) {
         PropertyGetterDescriptorImpl getterDescriptor;
         KotlinType getterType;
         Annotations getterTargetedAnnotations = annotationSplitter.getAnnotationsForTarget(PROPERTY_GETTER);
-        if (getter != null) {
+        if (getter != null && propertyGetterAnnotationSplitter != null) {
             Annotations getterAnnotations = new CompositeAnnotations(CollectionsKt.listOf(
                     getterTargetedAnnotations,
-                    annotationResolver.resolveAnnotationsWithoutArguments(scopeForDeclarationResolution, getter.getModifierList(), trace)
+                    propertyGetterAnnotationSplitter.getAnnotationsForTarget(PROPERTY_GETTER)
             ));
 
             getterDescriptor = new PropertyGetterDescriptorImpl(
