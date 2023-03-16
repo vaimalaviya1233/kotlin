@@ -5,11 +5,13 @@
 
 package org.jetbrains.kotlin.backend.jvm.lower
 
+import org.jetbrains.kotlin.backend.common.FileLoweringPass
 import org.jetbrains.kotlin.backend.common.lower.InventNamesForLocalClasses
 import org.jetbrains.kotlin.backend.common.phaser.makeIrFilePhase
 import org.jetbrains.kotlin.backend.common.phaser.makeIrModulePhase
 import org.jetbrains.kotlin.backend.jvm.JvmBackendContext
 import org.jetbrains.kotlin.codegen.JvmCodegenUtil
+import org.jetbrains.kotlin.config.JVMConfigurationKeys
 import org.jetbrains.kotlin.ir.declarations.IrAttributeContainer
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
@@ -27,7 +29,12 @@ val inventNamesForLocalClassesPhase = makeIrFilePhase(
 )
 
 val inventNamesForInlinedLocalClassesPhase = makeIrFilePhase(
-    { context -> JvmInventNamesForInlinedAnonymousObjects(context) },
+    { context ->
+        if (!context.configuration.getBoolean(JVMConfigurationKeys.ENABLE_IR_INLINER)) {
+            return@makeIrFilePhase FileLoweringPass.Empty
+        }
+        JvmInventNamesForInlinedAnonymousObjects(context)
+    },
     name = "InventNamesForInlinedLocalClasses",
     description = "Invent names for INLINED local classes and anonymous objects",
     prerequisite = setOf(inventNamesForLocalClassesPhase, removeDuplicatedInlinedLocalClasses)

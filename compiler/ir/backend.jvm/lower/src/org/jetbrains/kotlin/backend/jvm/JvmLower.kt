@@ -329,7 +329,6 @@ private val jvmFilePhases = listOf(
     jvmLateinitLowering,
     inventNamesForLocalClassesPhase,
 
-
     inlineCallableReferenceToLambdaPhase,
     directInvokeLowering,
     functionReferencePhase,
