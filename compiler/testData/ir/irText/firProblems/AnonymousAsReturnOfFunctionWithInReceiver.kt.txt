@@ -1,0 +1,22 @@
+interface Invariant<A : Any?> {
+
+}
+
+fun Invariant<in Number>.publicFunc(): Invariant<in Number> {
+  return <this>.privateFunc<Any?>()
+}
+
+private fun <B : Any?> Invariant<B>.privateFunc(): <no name provided><B> {
+  return { // BLOCK
+    local class <no name provided> : Invariant<B> {
+      constructor() /* primary */ {
+        super/*Any*/()
+        /* <init>() */
+
+      }
+
+    }
+
+    <no name provided>()
+  }
+}

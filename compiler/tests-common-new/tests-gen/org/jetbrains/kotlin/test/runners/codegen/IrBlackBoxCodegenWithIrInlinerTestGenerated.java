@@ -18260,6 +18260,12 @@ public class IrBlackBoxCodegenWithIrInlinerTestGenerated extends AbstractIrBlack
         }
 
         @Test
+        @TestMetadata("anonymousAsReturnOfFunctionWithInReceiver.kt")
+        public void testAnonymousAsReturnOfFunctionWithInReceiver() throws Exception {
+            runTest("compiler/testData/codegen/box/fir/anonymousAsReturnOfFunctionWithInReceiver.kt");
+        }
+
+        @Test
         @TestMetadata("assertEqualsFakeOverride.kt")
         public void testAssertEqualsFakeOverride() throws Exception {
             runTest("compiler/testData/codegen/box/fir/assertEqualsFakeOverride.kt");

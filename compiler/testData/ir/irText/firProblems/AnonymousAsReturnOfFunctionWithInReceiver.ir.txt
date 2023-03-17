@@ -1,0 +1,50 @@
+FILE fqName:<root> fileName:/AnonymousAsReturnOfFunctionWithInReceiver.kt
+  CLASS INTERFACE name:Invariant modality:ABSTRACT visibility:public superTypes:[kotlin.Any]
+    $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:<root>.Invariant<A of <root>.Invariant>
+    TYPE_PARAMETER name:A index:0 variance: superTypes:[kotlin.Any?] reified:false
+    FUN FAKE_OVERRIDE name:equals visibility:public modality:OPEN <> ($this:kotlin.Any, other:kotlin.Any?) returnType:kotlin.Boolean [fake_override,operator]
+      overridden:
+        public open fun equals (other: kotlin.Any?): kotlin.Boolean [operator] declared in kotlin.Any
+      $this: VALUE_PARAMETER name:<this> type:kotlin.Any
+      VALUE_PARAMETER name:other index:0 type:kotlin.Any?
+    FUN FAKE_OVERRIDE name:hashCode visibility:public modality:OPEN <> ($this:kotlin.Any) returnType:kotlin.Int [fake_override]
+      overridden:
+        public open fun hashCode (): kotlin.Int declared in kotlin.Any
+      $this: VALUE_PARAMETER name:<this> type:kotlin.Any
+    FUN FAKE_OVERRIDE name:toString visibility:public modality:OPEN <> ($this:kotlin.Any) returnType:kotlin.String [fake_override]
+      overridden:
+        public open fun toString (): kotlin.String declared in kotlin.Any
+      $this: VALUE_PARAMETER name:<this> type:kotlin.Any
+  FUN name:publicFunc visibility:public modality:FINAL <> ($receiver:<root>.Invariant<in kotlin.Number>) returnType:<root>.Invariant<in kotlin.Number>
+    $receiver: VALUE_PARAMETER name:<this> type:<root>.Invariant<in kotlin.Number>
+    BLOCK_BODY
+      RETURN type=kotlin.Nothing from='public final fun publicFunc (): <root>.Invariant<in kotlin.Number> declared in <root>'
+        CALL 'private final fun privateFunc <B> (): <root>.privateFunc.<no name provided><B of <root>.privateFunc> declared in <root>' type=<root>.privateFunc.<no name provided><in kotlin.Number> origin=null
+          <B>: kotlin.Any?
+          $receiver: GET_VAR '<this>: <root>.Invariant<in kotlin.Number> declared in <root>.publicFunc' type=<root>.Invariant<in kotlin.Number> origin=null
+  FUN name:privateFunc visibility:private modality:FINAL <B> ($receiver:<root>.Invariant<B of <root>.privateFunc>) returnType:<root>.privateFunc.<no name provided><B of <root>.privateFunc>
+    TYPE_PARAMETER name:B index:0 variance: superTypes:[kotlin.Any?] reified:false
+    $receiver: VALUE_PARAMETER name:<this> type:<root>.Invariant<B of <root>.privateFunc>
+    BLOCK_BODY
+      RETURN type=kotlin.Nothing from='private final fun privateFunc <B> (): <root>.privateFunc.<no name provided><B of <root>.privateFunc> declared in <root>'
+        BLOCK type=<root>.privateFunc.<no name provided><B of <root>.privateFunc> origin=OBJECT_LITERAL
+          CLASS CLASS name:<no name provided> modality:FINAL visibility:local superTypes:[<root>.Invariant<B of <root>.privateFunc>]
+            $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:<root>.privateFunc.<no name provided><B of <root>.privateFunc>
+            CONSTRUCTOR visibility:public <> () returnType:<root>.privateFunc.<no name provided><B of <root>.privateFunc> [primary]
+              BLOCK_BODY
+                DELEGATING_CONSTRUCTOR_CALL 'public constructor <init> () [primary] declared in kotlin.Any'
+                INSTANCE_INITIALIZER_CALL classDescriptor='CLASS CLASS name:<no name provided> modality:FINAL visibility:local superTypes:[<root>.Invariant<B of <root>.privateFunc>]'
+            FUN FAKE_OVERRIDE name:equals visibility:public modality:OPEN <> ($this:kotlin.Any, other:kotlin.Any?) returnType:kotlin.Boolean [fake_override,operator]
+              overridden:
+                public open fun equals (other: kotlin.Any?): kotlin.Boolean [fake_override,operator] declared in <root>.Invariant
+              $this: VALUE_PARAMETER name:<this> type:kotlin.Any
+              VALUE_PARAMETER name:other index:0 type:kotlin.Any?
+            FUN FAKE_OVERRIDE name:hashCode visibility:public modality:OPEN <> ($this:kotlin.Any) returnType:kotlin.Int [fake_override]
+              overridden:
+                public open fun hashCode (): kotlin.Int [fake_override] declared in <root>.Invariant
+              $this: VALUE_PARAMETER name:<this> type:kotlin.Any
+            FUN FAKE_OVERRIDE name:toString visibility:public modality:OPEN <> ($this:kotlin.Any) returnType:kotlin.String [fake_override]
+              overridden:
+                public open fun toString (): kotlin.String [fake_override] declared in <root>.Invariant
+              $this: VALUE_PARAMETER name:<this> type:kotlin.Any
+          CONSTRUCTOR_CALL 'public constructor <init> () [primary] declared in <root>.privateFunc.<no name provided>' type=<root>.privateFunc.<no name provided><B of <root>.privateFunc> origin=OBJECT_LITERAL

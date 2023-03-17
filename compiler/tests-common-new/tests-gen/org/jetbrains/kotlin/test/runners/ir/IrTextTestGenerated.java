@@ -2553,6 +2553,12 @@ public class IrTextTestGenerated extends AbstractIrTextTest {
         }
 
         @Test
+        @TestMetadata("AnonymousAsReturnOfFunctionWithInReceiver.kt")
+        public void testAnonymousAsReturnOfFunctionWithInReceiver() throws Exception {
+            runTest("compiler/testData/ir/irText/firProblems/AnonymousAsReturnOfFunctionWithInReceiver.kt");
+        }
+
+        @Test
         @TestMetadata("AnonymousAsReturnOfGenericFunction.kt")
         public void testAnonymousAsReturnOfGenericFunction() throws Exception {
             runTest("compiler/testData/ir/irText/firProblems/AnonymousAsReturnOfGenericFunction.kt");
