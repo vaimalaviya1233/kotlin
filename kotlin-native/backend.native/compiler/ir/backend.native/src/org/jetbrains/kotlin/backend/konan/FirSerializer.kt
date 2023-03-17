@@ -67,7 +67,7 @@ internal fun PhaseContext.firSerializer(
                 firFile,
                 session,
                 scopeSession,
-                input.removedExpectDeclarations,
+                input.fir2IrResults.removedExpectDeclarations,
                 FirNativeKLibSerializerExtension(session, metadataVersion, FirElementAwareSerializableStringTable()),
                 configuration.languageVersionSettings,
         )

@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.fir.BinaryModuleData
 import org.jetbrains.kotlin.fir.DependencyListForCliModule
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.backend.Fir2IrExtensions
+import org.jetbrains.kotlin.fir.backend.Fir2IrResult
 import org.jetbrains.kotlin.fir.backend.Fir2IrVisibilityConverter
 import org.jetbrains.kotlin.fir.declarations.FirFile
 import org.jetbrains.kotlin.fir.descriptors.FirModuleDescriptor
@@ -96,7 +97,7 @@ fun compileModuleToAnalyzedFir(
 fun transformFirToIr(
     moduleStructure: ModulesStructure,
     firOutputs: List<ModuleCompilerAnalyzedOutput>
-): Fir2IrAndIrActualizerResult {
+): Fir2IrResult {
     val fir2IrExtensions = Fir2IrExtensions.Default
 
     var builtInsModule: KotlinBuiltIns? = null
@@ -140,7 +141,7 @@ fun transformFirToIr(
 fun serializeFirKlib(
     moduleStructure: ModulesStructure,
     firOutputs: List<ModuleCompilerAnalyzedOutput>,
-    fir2IrResult: Fir2IrAndIrActualizerResult,
+    fir2IrResult: Fir2IrResult,
     outputKlibPath: String,
     messageCollector: MessageCollector,
     diagnosticsReporter: BaseDiagnosticsCollector,
@@ -167,7 +168,7 @@ fun serializeFirKlib(
         sourceFiles,
         klibPath = outputKlibPath,
         moduleStructure.allDependencies,
-        fir2IrResult.fir2IrResult.irModuleFragment,
+        fir2IrResult.irModuleFragment,
         expectDescriptorToSymbol = mutableMapOf(),
         cleanFiles = icData,
         nopack = true,

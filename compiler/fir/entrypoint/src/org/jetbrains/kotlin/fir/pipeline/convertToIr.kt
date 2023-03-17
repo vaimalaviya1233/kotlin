@@ -15,7 +15,6 @@ import org.jetbrains.kotlin.fir.backend.*
 import org.jetbrains.kotlin.fir.backend.jvm.Fir2IrJvmSpecialAnnotationSymbolProvider
 import org.jetbrains.kotlin.fir.backend.jvm.FirJvmKotlinMangler
 import org.jetbrains.kotlin.fir.backend.jvm.FirJvmVisibilityConverter
-import org.jetbrains.kotlin.fir.declarations.FirDeclaration
 import org.jetbrains.kotlin.fir.declarations.FirFile
 import org.jetbrains.kotlin.fir.languageVersionSettings
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
@@ -34,16 +33,11 @@ data class ModuleCompilerAnalyzedOutput(
     val fir: List<FirFile>
 )
 
-data class Fir2IrAndIrActualizerResult(
-    val fir2IrResult: Fir2IrResult,
-    val removedExpectDeclarations: Set<FirDeclaration>,
-)
-
 fun FirResult.convertToIrAndActualizeForJvm(
     fir2IrExtensions: Fir2IrExtensions,
     irGeneratorExtensions: Collection<IrGenerationExtension>,
     linkViaSignatures: Boolean,
-): Fir2IrAndIrActualizerResult = this.convertToIrAndActualize(
+): Fir2IrResult = this.convertToIrAndActualize(
     fir2IrExtensions,
     irGeneratorExtensions,
     linkViaSignatures = linkViaSignatures,
@@ -62,7 +56,7 @@ fun FirResult.convertToIrAndActualize(
     visibilityConverter: Fir2IrVisibilityConverter,
     kotlinBuiltIns: KotlinBuiltIns,
     fir2IrResultPostCompute: Fir2IrResult.() -> Unit = {},
-): Fir2IrAndIrActualizerResult {
+): Fir2IrResult {
     val fir2IrResult: Fir2IrResult
     val removedExpectDeclarationMetadata: List<MetadataSource>
 
@@ -128,7 +122,7 @@ fun FirResult.convertToIrAndActualize(
         }
     }
 
-    return Fir2IrAndIrActualizerResult(fir2IrResult, removedExpectDeclarationMetadata.extractFirDeclarations())
+    return fir2IrResult.copy(removedExpectDeclarations = removedExpectDeclarationMetadata.extractFirDeclarations())
 }
 
 private fun ModuleCompilerAnalyzedOutput.convertToIr(

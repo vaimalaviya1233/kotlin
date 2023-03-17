@@ -231,9 +231,8 @@ fun convertAnalyzedFirToIr(
             IrGenerationExtension.getInstances(it)
         } ?: emptyList()
     val linkViaSignatures = input.configuration.getBoolean(JVMConfigurationKeys.LINK_VIA_SIGNATURES)
-    val (fir2IrResult, _) =
+    val (irModuleFragment, components, pluginContext) =
         analysisResults.convertToIrAndActualizeForJvm(extensions, irGenerationExtensions, linkViaSignatures)
-    val (irModuleFragment, components, pluginContext) = fir2IrResult
 
     return ModuleCompilerIrBackendInput(
         input.targetId,

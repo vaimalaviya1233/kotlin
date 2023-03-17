@@ -5,17 +5,20 @@
 
 package org.jetbrains.kotlin.fir.backend
 
+import org.jetbrains.kotlin.fir.declarations.FirDeclaration
 import org.jetbrains.kotlin.fir.descriptors.FirModuleDescriptor
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
 
-class Fir2IrResult(
+@Suppress("DataClassPrivateConstructor")
+data class Fir2IrResult private constructor(
     val irModuleFragment: IrModuleFragment,
     val components: Fir2IrComponents,
-    moduleDescriptor: FirModuleDescriptor
+    val pluginContext: Fir2IrPluginContext,
+    val removedExpectDeclarations: Set<FirDeclaration>
 ) {
-    val pluginContext: Fir2IrPluginContext = Fir2IrPluginContext(components, moduleDescriptor)
-
-    operator fun component1(): IrModuleFragment = irModuleFragment
-    operator fun component2(): Fir2IrComponents = components
-    operator fun component3(): Fir2IrPluginContext = pluginContext
+    constructor(
+        irModuleFragment: IrModuleFragment,
+        components: Fir2IrComponents,
+        moduleDescriptor: FirModuleDescriptor
+    ) : this(irModuleFragment, components, Fir2IrPluginContext(components, moduleDescriptor), emptySet())
 }
