@@ -109,7 +109,7 @@ class Fir2IrJsResultsConverter(
         }
         val hasErrors = diagnosticsMap.any { entry -> entry.value.any { it.severity == Severity.ERROR } }
 
-        var removedExpectDeclarations: Set<FirDeclaration>? = null
+        var actualizedExpectDeclarations: Set<FirDeclaration>? = null
 
         return IrBackendInput.JsIrBackendInput(
             mainIrPart,
@@ -119,17 +119,17 @@ class Fir2IrJsResultsConverter(
             configuration.incrementalDataProvider?.getSerializedData(sourceFiles) ?: emptyList(),
             expectDescriptorToSymbol = mutableMapOf(),
             hasErrors = hasErrors
-        ) { file, removedExpectDeclarationMetadata ->
+        ) { file, actualizedExpectDeclarationMetadata ->
             val (firFile, components) = firFilesAndComponentsBySourceFile[file]
                 ?: error("cannot find FIR file by source file ${file.name} (${file.path})")
-            if (removedExpectDeclarations == null && removedExpectDeclarationMetadata != null) {
-                removedExpectDeclarations = removedExpectDeclarationMetadata.extractFirDeclarations()
+            if (actualizedExpectDeclarations == null && actualizedExpectDeclarationMetadata != null) {
+                actualizedExpectDeclarations = actualizedExpectDeclarationMetadata.extractFirDeclarations()
             }
             serializeSingleFirFile(
                 firFile,
                 components.session,
                 components.scopeSession,
-                removedExpectDeclarations,
+                actualizedExpectDeclarations,
                 FirKLibSerializerExtension(components.session, metadataVersion, FirElementAwareSerializableStringTable()),
                 configuration.languageVersionSettings,
             )
