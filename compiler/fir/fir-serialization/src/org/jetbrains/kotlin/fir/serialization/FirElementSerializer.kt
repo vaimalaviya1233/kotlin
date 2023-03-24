@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.comparators.FirCallableDeclarationComparator
 import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertyAccessor
+import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertyGetter
 import org.jetbrains.kotlin.fir.declarations.utils.*
 import org.jetbrains.kotlin.fir.deserialization.projection
 import org.jetbrains.kotlin.fir.expressions.*
@@ -328,14 +329,16 @@ class FirElementSerializer private constructor(
             false, false, false
         )
 
-        val getter = property.getter
-        if (getter != null) {
+        val getter = property.getter ?: with(property) {
+            FirDefaultPropertyGetter(source = null, moduleData, origin, returnTypeRef, visibility, symbol)
+        }
+//        if (getter != null) {
             hasGetter = true
             val accessorFlags = getAccessorFlags(getter, property)
             if (accessorFlags != defaultAccessorFlags) {
                 builder.getterFlags = accessorFlags
             }
-        }
+//        }
 
         val setter = property.setter
         if (setter != null) {
