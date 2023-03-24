@@ -315,7 +315,6 @@ class FirElementSerializer private constructor(
 
         val local = createChildSerializer(property)
 
-        var hasGetter = false
         var hasSetter = false
 
         val hasAnnotations = property.nonSourceAnnotations(session).isNotEmpty()
@@ -332,13 +331,10 @@ class FirElementSerializer private constructor(
         val getter = property.getter ?: with(property) {
             FirDefaultPropertyGetter(source = null, moduleData, origin, returnTypeRef, visibility, symbol)
         }
-//        if (getter != null) {
-            hasGetter = true
-            val accessorFlags = getAccessorFlags(getter, property)
-            if (accessorFlags != defaultAccessorFlags) {
-                builder.getterFlags = accessorFlags
-            }
-//        }
+        val getterAccessorFlags = getAccessorFlags(getter, property)
+        if (getterAccessorFlags != defaultAccessorFlags) {
+            builder.getterFlags = getterAccessorFlags
+        }
 
         val setter = property.setter
         if (setter != null) {
@@ -363,7 +359,7 @@ class FirElementSerializer private constructor(
             ProtoEnumFlags.visibility(normalizeVisibility(property)),
             ProtoEnumFlags.modality(modality),
             ProtoBuf.MemberKind.DECLARATION,
-            property.isVar, hasGetter, hasSetter, property.isConst, property.isConst, property.isLateInit,
+            property.isVar, true, hasSetter, property.isConst, property.isConst, property.isLateInit,
             property.isExternal, property.delegateFieldSymbol != null, property.isExpect
         )
         if (flags != builder.flags) {
