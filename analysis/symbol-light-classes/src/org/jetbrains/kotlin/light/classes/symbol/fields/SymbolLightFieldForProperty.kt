@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.analysis.api.annotations.*
 import org.jetbrains.kotlin.analysis.api.base.KtConstantValue
 import org.jetbrains.kotlin.analysis.api.symbols.KtKotlinPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.isPrivateOrPrivateToThis
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KtSymbolPointer
 import org.jetbrains.kotlin.analysis.api.symbols.sourcePsiSafe
 import org.jetbrains.kotlin.analysis.api.types.KtTypeMappingMode
@@ -95,7 +96,20 @@ internal class SymbolLightFieldForProperty private constructor(
     override fun getName(): String = fieldName
 
     private fun computeModifiers(modifier: String): Map<String, Boolean>? = when (modifier) {
-        in GranularModifiersBox.VISIBILITY_MODIFIERS -> GranularModifiersBox.computeVisibilityForMember(ktModule, propertySymbolPointer)
+        in GranularModifiersBox.VISIBILITY_MODIFIERS -> {
+            val visibility = withPropertySymbol { propertySymbol ->
+                when {
+                    propertySymbol.visibility.isPrivateOrPrivateToThis() -> PsiModifier.PRIVATE
+                    propertySymbol.isLateInit || propertySymbol.isConstOrJvmField -> {
+                        val declaration = propertySymbol.setter ?: propertySymbol
+                        declaration.toPsiVisibilityForMember()
+                    }
+                    else -> PsiModifier.PRIVATE
+                }
+            }
+
+            GranularModifiersBox.VISIBILITY_MODIFIERS_MAP.with(visibility)
+        }
         in GranularModifiersBox.MODALITY_MODIFIERS -> {
             val modality = withPropertySymbol { propertySymbol ->
                 if (propertySymbol.isVal || propertySymbol.isDelegatedProperty) {
