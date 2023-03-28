@@ -66,7 +66,7 @@ internal class KtFirMetadataCalculator(
         val firFiles = ktFiles.map { it.getOrBuildFirFile(firResolveSession) }
         firFiles.forEach { it.symbol.lazyResolveToPhase(FirResolvePhase.IMPLICIT_TYPES_BODY_RESOLVE) }
         val (serializer, stringTable) = createTopLevelSerializer(FirMetadataSource.File(firFiles))
-        val fileProto = serializer.packagePartProto(firFiles.first().packageFqName, firFiles)
+        val fileProto = serializer.packagePartProto(firFiles.first().packageFqName, firFiles, null)
 
         return generateAnnotation(fileProto.build(), stringTable, Kind.File)
     }

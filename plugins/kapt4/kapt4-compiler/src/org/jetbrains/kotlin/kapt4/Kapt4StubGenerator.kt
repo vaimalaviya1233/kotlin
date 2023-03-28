@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtEnumEntrySymbol
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
+import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.base.kapt3.KaptFlag
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.references.KtReference
@@ -27,7 +28,6 @@ import org.jetbrains.kotlin.kapt3.base.javac.kaptError
 import org.jetbrains.kotlin.kapt3.base.javac.reportKaptError
 import org.jetbrains.kotlin.kapt3.base.stubs.KaptStubLineInformation
 import org.jetbrains.kotlin.kapt3.base.stubs.KotlinPosition
-import org.jetbrains.kotlin.light.classes.symbol.classes.SymbolLightClassForFacade
 import org.jetbrains.kotlin.light.classes.symbol.classes.SymbolLightClassForNamedClassLike
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.FqName
@@ -166,7 +166,7 @@ class Kapt4StubGenerator(private val analysisSession: KtAnalysisSession) {
         val metadata = runUnless(stripMetadata) {
             when (lightClass) {
                 is SymbolLightClassForNamedClassLike -> lightClass.kotlinOrigin?.let { metadataCalculator.calculate(it) }
-                is SymbolLightClassForFacade -> {
+                is KtLightClassForFacade -> {
                     val ktFiles = lightClass.files
                     when (ktFiles.size) {
                         0 -> null
