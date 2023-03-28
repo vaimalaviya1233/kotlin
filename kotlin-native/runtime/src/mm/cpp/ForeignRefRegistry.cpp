@@ -19,6 +19,8 @@ mm::ForeignRefRegistry::Record* mm::ForeignRefRegistry::nextRoot(Record* current
     RuntimeAssert(current != rootsTail(), "current cannot be tail");
     Record* candidate = current->next_.load(std::memory_order_relaxed);
     while (true) {
+        RuntimeAssert(current != nullptr, "current cannot be null");
+        RuntimeAssert(current != rootsTail(), "current cannot be tail");
         RuntimeAssert(candidate != nullptr, "candidate cannot be null");
         if (candidate == rootsTail())
             // Reached tail, nothing to do anymore
@@ -60,15 +62,17 @@ mm::ForeignRefRegistry::Record* mm::ForeignRefRegistry::nextRoot(Record* current
 
 std::pair<mm::ForeignRefRegistry::Record*, mm::ForeignRefRegistry::Record*> mm::ForeignRefRegistry::eraseFromRoots(
         Record* prev, Record* record) noexcept {
+    RuntimeAssert(prev != rootsTail(), "prev cannot be tail");
     RuntimeAssert(record != rootsHead(), "record cannot be head");
     RuntimeAssert(record != rootsTail(), "record cannot be tail");
     Record* next = record->next_.load(std::memory_order_acquire);
     RuntimeAssert(next != nullptr, "record's next cannot be null");
     do {
         Record* prevExpectedNext = record;
-        bool removed = prev->next_.compare_exchange_weak(prevExpectedNext, next, std::memory_order_release, std::memory_order_acquire);
+        bool removed = prev->next_.compare_exchange_strong(prevExpectedNext, next, std::memory_order_release, std::memory_order_acquire);
         if (removed) {
-            record->next_.store(nullptr, std::memory_order_release);
+            Record* actualNext = record->next_.exchange(nullptr, std::memory_order_acq_rel);
+            RuntimeAssert(next == actualNext, "Broken Record@%p removal. Expected next %p actual %p", record, next, actualNext);
             return {prev, next};
         }
         prev = prevExpectedNext;
