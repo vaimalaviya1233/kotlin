@@ -58,7 +58,8 @@ mm::ForeignRefRegistry::Record* mm::ForeignRefRegistry::nextRoot(Record* current
     }
 }
 
-std::pair<mm::ForeignRefRegistry::Record*, mm::ForeignRefRegistry::Record*> mm::ForeignRefRegistry::eraseFromRoots(Record* prev, Record* record) noexcept {
+std::pair<mm::ForeignRefRegistry::Record*, mm::ForeignRefRegistry::Record*> mm::ForeignRefRegistry::eraseFromRoots(
+        Record* prev, Record* record) noexcept {
     RuntimeAssert(record != rootsHead(), "record cannot be head");
     RuntimeAssert(record != rootsTail(), "record cannot be tail");
     Record* next = record->next_.load(std::memory_order_acquire);
@@ -75,7 +76,7 @@ std::pair<mm::ForeignRefRegistry::Record*, mm::ForeignRefRegistry::Record*> mm::
         RuntimeAssert(prev != rootsTail(), "prev cannot be tail");
         // We moved `prev` forward, nothing can insert after `prev` anymore, this
         // cannot be an infinite loop, then.
-    } while(true);
+    } while (true);
 }
 
 void mm::ForeignRefRegistry::insertIntoRootsHead(Record* record) noexcept {

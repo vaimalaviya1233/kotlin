@@ -50,6 +50,7 @@ test_support::TypeInfoHolder typeHolder{test_support::TypeInfoHolder::ObjectBuil
 class Object : public test_support::Object<Payload> {
 public:
     Object() noexcept : test_support::Object<Payload>(typeHolder.typeInfo()) {}
+
 private:
 };
 
@@ -206,7 +207,7 @@ TEST_F(ForeignRefRegistryTest, ReRetainObjCRefBeforePublish) {
 
 TEST_F(ForeignRefRegistryTest, StressObjCRef) {
     Object object;
-        ObjHeader* obj = object.header();
+    ObjHeader* obj = object.header();
     ASSERT_TRUE(obj->heap());
     Waiter waiter;
     std::vector<ScopedThread> mutators;
@@ -224,7 +225,7 @@ TEST_F(ForeignRefRegistryTest, StressObjCRef) {
     mutators.clear();
     // Simulating full GC.
     roots();
-    for (auto& ref: refs) {
+    for (auto& ref : refs) {
         ref.detach();
     }
     all();

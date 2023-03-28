@@ -295,10 +295,10 @@ template ObjHeader* BackRefFromAssociatedObject::ref<ErrorPolicy::kDefaultValue>
 template ObjHeader* BackRefFromAssociatedObject::ref<ErrorPolicy::kThrow>() const;
 template ObjHeader* BackRefFromAssociatedObject::ref<ErrorPolicy::kTerminate>() const;
 
-bool BackRefFromAssociatedObject::isUnreferenced() const {
-  auto rc = atomicGetAcquire(&refCount);
+bool BackRefFromAssociatedObject::isReferenced() const {
+  auto rc = atomicGet(&refCount);
   RuntimeAssert(rc >= 0, "BackRefFromAssociatedObject@%p rc is %d", this, rc);
-  return rc == 0;
+  return rc != 0;
 }
 
 extern "C" {

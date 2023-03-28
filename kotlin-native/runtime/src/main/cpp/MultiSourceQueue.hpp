@@ -122,9 +122,7 @@ public:
 
         bool operator!=(const Iterator& rhs) const noexcept { return position_ != rhs.position_; }
 
-        void EraseAndAdvance() noexcept {
-            owner_->EraseAndAdvance(*this);
-        }
+        void EraseAndAdvance() noexcept { owner_->EraseAndAdvance(*this); }
 
     private:
         friend class MultiSourceQueue;

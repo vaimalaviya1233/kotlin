@@ -159,4 +159,7 @@ void mm::GlobalRootSet::Iterator::Init() noexcept {
 mm::ThreadRootSet::ThreadRootSet(ThreadData& threadData) noexcept : ThreadRootSet(threadData.shadowStack(), threadData.tls()) {}
 
 mm::GlobalRootSet::GlobalRootSet() noexcept :
-    GlobalRootSet(mm::GlobalData::Instance().globalsRegistry(), mm::GlobalData::Instance().stableRefRegistry(), mm::GlobalData::Instance().foreignRefRegistry()) {}
+    GlobalRootSet(
+            mm::GlobalData::Instance().globalsRegistry(),
+            mm::GlobalData::Instance().stableRefRegistry(),
+            mm::GlobalData::Instance().foreignRefRegistry()) {}

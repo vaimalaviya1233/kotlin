@@ -22,9 +22,13 @@ void Kotlin_Internal_GC_GCInfoBuilder_setEndTime(KRef thiz, KLong value);
 void Kotlin_Internal_GC_GCInfoBuilder_setPauseStartTime(KRef thiz, KLong value);
 void Kotlin_Internal_GC_GCInfoBuilder_setPauseEndTime(KRef thiz, KLong value);
 void Kotlin_Internal_GC_GCInfoBuilder_setPostGcCleanupTime(KRef thiz, KLong value);
-void Kotlin_Internal_GC_GCInfoBuilder_setRootSet(KRef thiz,
-                                                 KLong threadLocalReferences, KLong stackReferences,
-                                                 KLong globalReferences, KLong stableReferences, KLong foreignReferences);
+void Kotlin_Internal_GC_GCInfoBuilder_setRootSet(
+        KRef thiz,
+        KLong threadLocalReferences,
+        KLong stackReferences,
+        KLong globalReferences,
+        KLong stableReferences,
+        KLong foreignReferences);
 void Kotlin_Internal_GC_GCInfoBuilder_setMemoryUsageBefore(KRef thiz, KNativePtr name, KLong objectsCount, KLong totalObjectsSize);
 void Kotlin_Internal_GC_GCInfoBuilder_setMemoryUsageAfter(KRef thiz, KNativePtr name, KLong objectsCount, KLong totalObjectsSize);
 void Kotlin_Internal_GC_GCInfoBuilder_setForeignObjectsCount(KRef thiz, KLong count);
@@ -82,12 +86,11 @@ struct GCInfo {
         if (finalizersDoneTime) Kotlin_Internal_GC_GCInfoBuilder_setPostGcCleanupTime(builder, *finalizersDoneTime);
         if (rootSet)
             Kotlin_Internal_GC_GCInfoBuilder_setRootSet(
-                    builder, rootSet->threadLocalReferences, rootSet->stackReferences, rootSet->globalReferences,
-                    rootSet->stableReferences, rootSet->foreignReferences);
+                    builder, rootSet->threadLocalReferences, rootSet->stackReferences, rootSet->globalReferences, rootSet->stableReferences,
+                    rootSet->foreignReferences);
         memoryUsageBefore.build(builder, Kotlin_Internal_GC_GCInfoBuilder_setMemoryUsageBefore);
         memoryUsageAfter.build(builder, Kotlin_Internal_GC_GCInfoBuilder_setMemoryUsageAfter);
-        if (foreignObjectsCount)
-            Kotlin_Internal_GC_GCInfoBuilder_setForeignObjectsCount(builder, *foreignObjectsCount);
+        if (foreignObjectsCount) Kotlin_Internal_GC_GCInfoBuilder_setForeignObjectsCount(builder, *foreignObjectsCount);
     }
 };
 
@@ -239,7 +242,6 @@ void GCHandle::globalRootSetCollected(uint64_t globalReferences, uint64_t stable
     }
 }
 
-
 void GCHandle::heapUsageBefore(MemoryUsage usage) {
     std::lock_guard guard(lock);
     if (auto* stat = statByEpoch(epoch_)) {
@@ -261,7 +263,9 @@ void GCHandle::marked(kotlin::gc::MemoryUsage usage) {
 void GCHandle::sweptForeignObjects(uint64_t swept, uint64_t kept) noexcept {
     std::lock_guard guard(lock);
     if (auto* stat = statByEpoch(epoch_)) {
-        RuntimeAssert(!stat->foreignObjectsCount, "Already have foreignObjectsCount %" PRId64 " for epoch %" PRIu64, *stat->foreignObjectsCount, epoch_);
+        RuntimeAssert(
+                !stat->foreignObjectsCount, "Already have foreignObjectsCount %" PRId64 " for epoch %" PRIu64, *stat->foreignObjectsCount,
+                epoch_);
         stat->foreignObjectsCount = kept;
     }
 }
@@ -362,8 +366,10 @@ GCHandle::GCGlobalRootSetScope::GCGlobalRootSetScope(kotlin::gc::GCHandle& handl
 
 GCHandle::GCGlobalRootSetScope::~GCGlobalRootSetScope(){
     handle_.globalRootSetCollected(globalRoots_, stableRoots_, foreignRoots_);
-    GCLogDebug(handle_.getEpoch(), "Collected global root set global=%" PRIu64 " stableRef=%" PRIu64 " foreignRef=%" PRIu64 " in %" PRIu64" microseconds.",
-               globalRoots_, stableRoots_, foreignRoots_, getStageTime());
+    GCLogDebug(
+            handle_.getEpoch(),
+            "Collected global root set global=%" PRIu64 " stableRef=%" PRIu64 " foreignRef=%" PRIu64 " in %" PRIu64 " microseconds.",
+            globalRoots_, stableRoots_, foreignRoots_, getStageTime());
 }
 
 GCHandle::GCThreadRootSetScope::GCThreadRootSetScope(kotlin::gc::GCHandle& handle, mm::ThreadData& threadData) :
@@ -386,8 +392,9 @@ GCHandle::GCMarkScope::~GCMarkScope() {
 
 GCHandle::GCSweepForeignRefsScope::~GCSweepForeignRefsScope() {
     handle_.sweptForeignObjects(swept_, kept_);
-    GCLogDebug(handle_.getEpoch(),
-               "Swept %" PRIu64 " foreign refs in %" PRIu64" microseconds. Kept %" PRIu64 " refs", swept_, getStageTime(), kept_);
+    GCLogDebug(
+            handle_.getEpoch(), "Swept %" PRIu64 " foreign refs in %" PRIu64 " microseconds. Kept %" PRIu64 " refs", swept_, getStageTime(),
+            kept_);
 }
 
 } // namespace kotlin::gc

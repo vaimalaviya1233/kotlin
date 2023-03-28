@@ -49,6 +49,6 @@ namespace kotlin::test_support {
 void markRuntimeInitialized() noexcept;
 void markRuntimeUninitialized() noexcept;
 
-}
+} // namespace kotlin::test_support
 
 #endif // RUNTIME_RUNTIME_H

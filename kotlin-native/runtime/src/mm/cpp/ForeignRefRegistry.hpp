@@ -20,13 +20,11 @@ class ForeignRefRegistry : Pinned {
     using Mutex = SpinLock<MutexThreadStateHandling::kIgnore>;
 
 public:
+    // TODO: Consider storing it in the ExtraObjectData instead.
     class Record {
     public:
-        explicit Record(BackRefFromAssociatedObject* owner) noexcept :
-            owner_(owner),
-            obj_(owner->refUnsafe()) {
+        explicit Record(BackRefFromAssociatedObject* owner) noexcept : owner_(owner), obj_(owner->refUnsafe()) {
             RuntimeAssert(owner != nullptr, "Creating Record@%p with null owner", this);
-            obj_ = owner->refUnsafe();
         }
 
         ~Record() {
@@ -50,14 +48,13 @@ public:
         }
 
         void promote() noexcept {
-            // TODO: With CMS barrier for marking object should be here.
+            // TODO: With CMS barrier for marking obj_ should be here.
             ForeignRefRegistry::instance().insertIntoRootsHead(this);
         }
 
         bool canBeSwept() const noexcept {
             // This happens during foreign refs sweeping.
-            if (owner_.load(std::memory_order_relaxed) != nullptr)
-                return false;
+            if (owner_.load(std::memory_order_relaxed) != nullptr) return false;
             if (compiler::runtimeAssertsEnabled()) {
                 auto* next = next_.load(std::memory_order_relaxed);
                 RuntimeAssert(next == nullptr, "Record@%p is inside roots list with next %p during foreign refs sweeping", this, next);
@@ -70,12 +67,10 @@ public:
             // The owner can only be detached during weak references processing,
             // which cannot run concurrently with root scanning.
             auto* owner = owner_.load(std::memory_order_relaxed);
-            return owner && !owner->isUnreferenced();
+            return owner && owner->isReferenced();
         }
 
-        ObjHeader* refForTests() const noexcept {
-            return obj_;
-        }
+        ObjHeader* refForTests() const noexcept { return obj_; }
 
     private:
         friend class ForeignRefRegistry;
@@ -91,17 +86,11 @@ public:
     public:
         explicit ThreadQueue(ForeignRefRegistry& owner) noexcept : impl_(owner.impl_) {}
 
-        Node* initForeignRef(BackRefFromAssociatedObject* backRef) noexcept {
-            return impl_.Emplace(backRef);
-        }
+        Node* initForeignRef(BackRefFromAssociatedObject* backRef) noexcept { return impl_.Emplace(backRef); }
 
-        void publish() noexcept {
-            impl_.Publish();
-        }
+        void publish() noexcept { impl_.Publish(); }
 
-        void clearForTests() noexcept {
-            impl_.ClearForTests();
-        }
+        void clearForTests() noexcept { impl_.ClearForTests(); }
 
     private:
         MultiSourceQueue<Record, Mutex>::Producer impl_;
@@ -109,22 +98,16 @@ public:
 
     class RootsIterator {
     public:
-        ObjHeader* operator*() noexcept {
-            return node_->obj_;
-        }
+        ObjHeader* operator*() noexcept { return node_->obj_; }
 
         RootsIterator& operator++() noexcept {
             node_ = owner_->nextRoot(node_);
             return *this;
         }
 
-        bool operator==(const RootsIterator& rhs) const noexcept {
-            return node_ == rhs.node_;
-        }
+        bool operator==(const RootsIterator& rhs) const noexcept { return node_ == rhs.node_; }
 
-        bool operator!=(const RootsIterator& rhs) const noexcept {
-            return !(*this == rhs);
-        }
+        bool operator!=(const RootsIterator& rhs) const noexcept { return !(*this == rhs); }
 
     private:
         friend class ForeignRefRegistry;
@@ -137,13 +120,9 @@ public:
 
     class RootsIterable : private MoveOnly {
     public:
-        RootsIterator begin() noexcept {
-            return RootsIterator(owner_, owner_.nextRoot(owner_.rootsHead()));
-        }
+        RootsIterator begin() noexcept { return RootsIterator(owner_, owner_.nextRoot(owner_.rootsHead())); }
 
-        RootsIterator end() noexcept {
-            return RootsIterator(owner_, owner_.rootsTail());
-        }
+        RootsIterator end() noexcept { return RootsIterator(owner_, owner_.rootsTail()); }
 
     private:
         friend class ForeignRefRegistry;
@@ -158,9 +137,7 @@ public:
 
     static ForeignRefRegistry& instance() noexcept;
 
-    ForeignRefRegistry() noexcept {
-        rootsHead()->next_.store(rootsTail(), std::memory_order_relaxed);
-    }
+    ForeignRefRegistry() noexcept { rootsHead()->next_.store(rootsTail(), std::memory_order_relaxed); }
 
     ~ForeignRefRegistry() = default;
 

@@ -70,7 +70,7 @@ class BackRefFromAssociatedObject {
   template <ErrorPolicy errorPolicy>
   ObjHeader* ref() const;
 
-  bool isUnreferenced() const;
+  bool isReferenced() const;
 
   ObjHeader* refUnsafe() const { return obj_; }
 
