@@ -243,6 +243,7 @@ TEST_F(ForeignRefRegistryTest, StressObjCRefRetainRelease) {
         Waiter waiter;
         std::atomic<bool> canStop = false;
         std::vector<BackRefFromAssociatedObject> refs;
+        refs.reserve(kRefsCount);
         for (int i = 0; i < kRefsCount; ++i) {
             auto& ref = refs.emplace_back();
             ref.initAndAddRef(obj, true);
