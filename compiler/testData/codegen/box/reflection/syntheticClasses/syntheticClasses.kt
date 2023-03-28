@@ -74,9 +74,7 @@ fun checkJavaLambda() {
 fun box(): String {
     checkFileClass()
     checkKotlinLambda()
-
-    // TODO: fails with KotlinReflectionInternalError: Unresolved class: class JavaClass$$Lambda$1166/180251002 (kind = null)
-    // checkJavaLambda()
+    checkJavaLambda()
 
     return "OK"
 }
