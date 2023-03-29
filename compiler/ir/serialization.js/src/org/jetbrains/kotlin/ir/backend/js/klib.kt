@@ -47,7 +47,6 @@ import org.jetbrains.kotlin.js.analyze.AbstractTopDownAnalyzerFacadeForWeb
 import org.jetbrains.kotlin.js.analyzer.JsAnalysisResult
 import org.jetbrains.kotlin.js.config.ErrorTolerancePolicy
 import org.jetbrains.kotlin.js.config.JSConfigurationKeys
-import org.jetbrains.kotlin.konan.file.ZipFileSystemAccessor
 import org.jetbrains.kotlin.konan.properties.Properties
 import org.jetbrains.kotlin.konan.properties.propertyList
 import org.jetbrains.kotlin.library.*
@@ -621,7 +620,8 @@ fun serializeModuleIntoKlib(
     jsOutputName: String?,
     serializeSingleFile: (KtSourceFile) -> ProtoBuf.PackageFragment
 ) {
-    assert(files.size == moduleFragment.files.size)
+    // Will not work with K2 plugins
+//     assert(files.size == moduleFragment.files.size)
 
     val compatibilityMode = CompatibilityMode(abiVersion)
     val sourceBaseDirs = configuration[CommonConfigurationKeys.KLIB_RELATIVE_PATH_BASES] ?: emptyList()

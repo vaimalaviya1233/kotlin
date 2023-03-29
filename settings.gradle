@@ -267,7 +267,6 @@ include ":kotlinx-atomicfu-compiler-plugin",
 
 include ":kotlinx-jso-compiler-plugin",
         ":kotlinx-jso-compiler-plugin.cli",
-        ":kotlinx-jso-compiler-plugin.k1",
         ":kotlinx-jso-compiler-plugin.k2",
         ":kotlinx-jso-compiler-plugin.common",
         ":kotlinx-jso-runtime",
@@ -791,7 +790,6 @@ project(':kotlin-serialization').projectDir = file("$rootDir/libraries/tools/kot
 project(':kotlin-serialization-unshaded').projectDir = file("$rootDir/libraries/tools/kotlin-serialization-unshaded")
 
 project(':kotlinx-jso-compiler-plugin.cli').projectDir = "$rootDir/plugins/jso/jso-compiler/kotlinx-jso-compiler-plugin.cli" as File
-project(':kotlinx-jso-compiler-plugin.k1').projectDir = "$rootDir/plugins/jso/jso-compiler/kotlinx-jso-compiler-plugin.k1" as File
 project(':kotlinx-jso-compiler-plugin.k2').projectDir = "$rootDir/plugins/jso/jso-compiler/kotlinx-jso-compiler-plugin.k2" as File
 project(':kotlinx-jso-compiler-plugin.common').projectDir = "$rootDir/plugins/jso/jso-compiler/kotlinx-jso-compiler-plugin.common" as File
 project(':kotlinx-jso-compiler-plugin').projectDir = "$rootDir/plugins/jso/jso-compiler" as File

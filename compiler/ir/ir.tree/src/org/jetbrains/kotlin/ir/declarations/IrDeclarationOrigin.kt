@@ -87,10 +87,8 @@ interface IrDeclarationOrigin {
 
     object SHARED_VARIABLE_IN_EVALUATOR_FRAGMENT : IrDeclarationOriginImpl("SHARED_VARIABLE_IN_EVALUATOR_FRAGMENT", isSynthetic = true)
 
-    class GeneratedByPlugin(val pluginKey: GeneratedDeclarationKey) : IrDeclarationOrigin {
-        override fun toString(): String {
-            return "GENERATED[${pluginKey}]"
-        }
+    class GeneratedByPlugin(val pluginKey: GeneratedDeclarationKey) : IrDeclarationOriginImpl("GENERATED[${pluginKey}]") {
+        override fun toString() = name
 
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
