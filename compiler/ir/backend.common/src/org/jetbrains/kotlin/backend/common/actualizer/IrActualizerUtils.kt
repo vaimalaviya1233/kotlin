@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.ir.symbols.IrTypeParameterSymbol
 import org.jetbrains.kotlin.ir.types.IrDynamicType
 import org.jetbrains.kotlin.ir.types.classifierOrFail
 import org.jetbrains.kotlin.ir.util.hasAnnotation
+import org.jetbrains.kotlin.ir.util.isStatic
 import org.jetbrains.kotlin.ir.util.kotlinFqName
 import org.jetbrains.kotlin.ir.util.module
 import org.jetbrains.kotlin.name.FqName
@@ -27,12 +28,25 @@ fun Map<String, List<IrDeclaration>>.getMatch(
     expectActualTypesMap: Map<IrSymbol, IrSymbol>,
     expectActualTypeAliasMap: Map<FqName, FqName>
 ): IrDeclaration? {
-    val members = this[generateIrElementFullNameFromExpect(expectDeclaration, expectActualTypeAliasMap)] ?: return null
-    return if (expectDeclaration is IrFunction) {
-        members.firstNotNullOfOrNull { runIf(expectDeclaration.match(it as IrFunction, expectActualTypesMap)) { it } }
-    } else {
-        members.singleOrNull()
+    val regularMembers = this[generateIrElementFullNameFromExpect(expectDeclaration, expectActualTypeAliasMap)]
+    if (regularMembers != null) {
+        return if (expectDeclaration is IrFunction) {
+            regularMembers.firstNotNullOfOrNull { runIf(expectDeclaration.match(it as IrFunction, expectActualTypesMap)) { it } }
+        } else {
+            regularMembers.singleOrNull()
+        }
     }
+
+    // hack to support matching expect companion members to actual static members. See KT-57661
+    if (expectDeclaration is IrFunction && expectDeclaration.parent.let { it is IrClass && it.isCompanion }) {
+        val name = generateIrElementFullNameFromExpect(expectDeclaration, expectActualTypeAliasMap, skipCompanion = true)
+        val membersWithoutCompanion = this[name] ?: return null
+        return membersWithoutCompanion.firstNotNullOfOrNull {
+            runIf(expectDeclaration.match(it as IrFunction, expectActualTypesMap) && it.isStatic) { it }
+        }
+    }
+
+    return null
 }
 
 private fun IrFunction.match(actualFunction: IrFunction, expectActualTypesMap: Map<IrSymbol, IrSymbol>): Boolean {
@@ -104,15 +118,17 @@ fun generateActualIrClassOrTypeAliasFullName(declaration: IrElement) = generateI
 
 fun generateIrElementFullNameFromExpect(
     declaration: IrElement,
-    expectActualTypeAliasMap: Map<FqName, FqName>
+    expectActualTypeAliasMap: Map<FqName, FqName>,
+    skipCompanion: Boolean = false,
 ): String {
-    return buildString { appendElementFullName(declaration, this, expectActualTypeAliasMap) }
+    return buildString { appendElementFullName(declaration, this, expectActualTypeAliasMap, skipCompanion) }
 }
 
 private fun appendElementFullName(
     declaration: IrElement,
     result: StringBuilder,
-    expectActualTypeAliasMap: Map<FqName, FqName>
+    expectActualTypeAliasMap: Map<FqName, FqName>,
+    skipCompanion: Boolean = false,
 ) {
     if (declaration !is IrDeclarationBase) return
 
@@ -122,7 +138,9 @@ private fun appendElementFullName(
         if (parent is IrDeclarationWithName) {
             val parentParent = parent.parent
             if (parentParent is IrClass) {
-                parents.add(parent.name.asString())
+                if (!skipCompanion || !(parent is IrClass && parent.isCompanion)) {
+                    parents.add(parent.name.asString())
+                }
                 parent = parentParent
                 continue
             }
@@ -162,3 +180,4 @@ internal fun IrElement.containsOptionalExpectation(): Boolean {
             this.kind == ClassKind.ANNOTATION_CLASS &&
             this.hasAnnotation(OptionalAnnotationUtil.OPTIONAL_EXPECTATION_FQ_NAME)
 }
+

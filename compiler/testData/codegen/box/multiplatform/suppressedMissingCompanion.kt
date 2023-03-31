@@ -6,13 +6,16 @@
 // FILE: common.kt
 expect class Foo() {
     companion object {
-        fun bar(): String
+        fun o(): String
+        fun k(): String
     }
 }
 
-fun bar(): String {
-    return Foo.bar()
+fun o(): String {
+    return Foo.o()
 }
+
+val k = Foo::k
 
 expect class Baz {
     class Qux {
@@ -24,8 +27,11 @@ expect class Baz {
 // TARGET_PLATFORM: JVM
 // FILE: JFoo.java
 public class JFoo {
-    public static String baz() {
-        return "OK";
+    public static String o() {
+        return "O";
+    }
+    public static String k() {
+        return "K";
     }
 }
 
@@ -36,4 +42,4 @@ actual typealias Foo = JFoo
 @Suppress("NO_ACTUAL_CLASS_MEMBER_FOR_EXPECTED_CLASS")
 actual class Baz
 
-fun box() = bar()
+fun box() = o() + k()

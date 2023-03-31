@@ -7,11 +7,9 @@ package org.jetbrains.kotlin.backend.common.actualizer
 
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.declarations.*
+import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.symbols.*
-import org.jetbrains.kotlin.ir.util.DeepCopyIrTreeWithSymbols
-import org.jetbrains.kotlin.ir.util.DeepCopyTypeRemapper
-import org.jetbrains.kotlin.ir.util.SymbolRemapper
-import org.jetbrains.kotlin.ir.util.SymbolRenamer
+import org.jetbrains.kotlin.ir.util.*
 
 class ExpectActualLinker(private val expectActualMap: Map<IrSymbol, IrSymbol>) {
     private val symbolRemapper = object : SymbolRemapper {
@@ -155,6 +153,31 @@ class ExpectActualLinker(private val expectActualMap: Map<IrSymbol, IrSymbol>) {
                 it.expandedType = it.expandedType.remapType()
                 it.transformChildren(this, null)
             }
+
+        override fun visitCall(expression: IrCall): IrCall {
+            removeCompanionReceiverIfActualIsJavaAndFeelBad(expression)
+            return super.visitCall(expression)
+        }
+
+        override fun visitCallableReference(expression: IrCallableReference<*>): IrExpression {
+            removeCompanionReceiverIfActualIsJavaAndFeelBad(expression)
+            return super.visitCallableReference(expression)
+        }
+
+        // We sadly allow matching companion members to static Java methods when NO_ACTUAL_CLASS_MEMBER_FOR_EXPECTED_CLASS is suppressed.
+        // See KT-57661
+        private fun removeCompanionReceiverIfActualIsJavaAndFeelBad(call: IrMemberAccessExpression<*>) {
+            val receiver = call.dispatchReceiver as? IrGetObjectValue ?: return
+
+            val receiverSymbol = receiver.symbol
+            if (!receiverSymbol.owner.isCompanion || !receiverSymbol.owner.isExpect || receiverSymbol in expectActualMap) return
+
+            val expectParent = receiverSymbol.owner.parent as? IrSymbolOwner ?: return
+            val actualParent = expectActualMap[expectParent.symbol]?.owner
+            if (actualParent !is IrDeclaration || !actualParent.isFromJava()) return
+
+            call.dispatchReceiver = null
+        }
     }
 
     fun actualize(irElement: IrElement) = irElement.transform(actualizer, null)
