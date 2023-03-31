@@ -33017,6 +33017,12 @@ public class FirPsiBlackBoxCodegenTestGenerated extends AbstractFirPsiBlackBoxCo
             runTest("compiler/testData/codegen/box/multiplatform/starImportOfExpectEnumWithActualTypeAlias.kt");
         }
 
+        @Test
+        @TestMetadata("suppressedMissingCompanion.kt")
+        public void testSuppressedMissingCompanion() throws Exception {
+            runTest("compiler/testData/codegen/box/multiplatform/suppressedMissingCompanion.kt");
+        }
+
         @Nested
         @TestMetadata("compiler/testData/codegen/box/multiplatform/defaultArguments")
         @TestDataPath("$PROJECT_ROOT")
