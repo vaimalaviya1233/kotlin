@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirModuleResolveCompone
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.FirDesignationWithFile
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.throwUnexpectedFirElementError
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.tryCollectDesignationWithFile
+import org.jetbrains.kotlin.analysis.low.level.api.fir.file.builder.InvalidSessionException
 import org.jetbrains.kotlin.analysis.low.level.api.fir.project.structure.llFirModuleData
 import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.llFirSession
 import org.jetbrains.kotlin.analysis.low.level.api.fir.transformers.LLFirLazyTransformerExecutor
@@ -208,6 +209,10 @@ private fun handleExceptionFromResolve(
     fromPhase: FirResolvePhase,
     toPhase: FirResolvePhase?
 ): Nothing {
+    if (exception is InvalidSessionException) {
+        throw exception
+    }
+
     firDeclarationToResolve.llFirSession.invalidate()
     rethrowExceptionWithDetails(
         buildString {
