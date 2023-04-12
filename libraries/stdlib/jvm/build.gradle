@@ -1,3 +1,6 @@
+plugins {
+    id("org.spdx.sbom")
+}
 description = 'Kotlin Standard Library for JVM'
 
 apply plugin: 'kotlin-platform-jvm'
@@ -6,7 +9,38 @@ archivesBaseName = 'kotlin-stdlib'
 
 JvmToolchain.configureJvmToolchain(project, JdkMajorVersion.JDK_1_8)
 
-configurePublishing(project)
+spdxSbom {
+    targets {
+        create(name) {
+            scm {
+                uri.set("https://github.com/JetBrains/kotlin.git")
+                revision.set("v$version")
+            }
+
+            // adjust properties of the document
+            document {
+                name.set("SpdxDoc for ${project.name}")
+                // NOTE: The URI does not have to be accessible. It is only intended to provide a unique ID.
+                // In many cases, the URI will point to a Web accessible document, but this should not be assumed to be the case.
+                namespace.set("https://www.jetbrains.com/spdxdocs/${UUID.randomUUID()}")
+                creator.set("Organization: JetBrains s.r.o.")
+            }
+        }
+    }
+}
+
+configurations.maybeCreate("sbom")
+def sbomFile = layout.buildDirectory.file("spdx/${project.name}.spdx.json")
+def sbomArtifact = artifacts.add("sbom", sbomFile.get().asFile) {
+    type "sbom"
+    extension "spdx.json"
+    builtBy "spdxSbom"
+}
+
+configurePublishing(project) {
+    artifact sbomArtifact
+}
+
 configureJavadocJar()
 configureSourcesJar()
 

@@ -42,6 +42,7 @@ plugins {
     if (kotlinBuildProperties.isKotlinNativeEnabled) {
         id("kotlin.native.build-tools-conventions") apply false
     }
+    id("org.spdx.sbom") version "0.1.0" apply false
 }
 
 pill {
