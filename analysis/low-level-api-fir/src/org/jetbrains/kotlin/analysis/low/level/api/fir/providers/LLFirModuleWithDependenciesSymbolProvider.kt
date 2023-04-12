@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.analysis.low.level.api.fir.providers
 
+import org.jetbrains.kotlin.analysis.low.level.api.fir.caches.NullableCaffeineCache
 import org.jetbrains.kotlin.analysis.utils.collections.buildSmartList
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.resolve.providers.FirSymbolProvider
@@ -25,6 +26,15 @@ internal class LLFirModuleWithDependenciesSymbolProvider(
     val providers: List<FirSymbolProvider>,
     val dependencyProvider: LLFirDependenciesSymbolProvider,
 ) : FirSymbolProvider(session) {
+    /**
+     * Packages are cached at the module level because individual package caches in combined symbol providers would be unnecessarily
+     * complicated, as packages are requested rarely compared to other kinds of symbols.
+     *
+     * [LLFirDependenciesSymbolProvider] does not need its own package cache, because all requests come through
+     * [LLFirModuleWithDependenciesSymbolProvider].
+     */
+    private val packageCache = NullableCaffeineCache<FqName, FqName> { it.maximumSize(500) }
+
     override fun getClassLikeSymbolByClassId(classId: ClassId): FirClassLikeSymbol<*>? =
         getClassLikeSymbolByFqNameWithoutDependencies(classId)
             ?: dependencyProvider.getClassLikeSymbolByClassId(classId)
@@ -75,8 +85,7 @@ internal class LLFirModuleWithDependenciesSymbolProvider(
     }
 
     override fun getPackage(fqName: FqName): FqName? =
-        getPackageWithoutDependencies(fqName)
-            ?: dependencyProvider.getPackage(fqName)
+        packageCache.get(fqName) { getPackageWithoutDependencies(it) ?: dependencyProvider.getPackage(it) }
 
     fun getPackageWithoutDependencies(fqName: FqName): FqName? =
         providers.firstNotNullOfOrNull { it.getPackage(fqName) }
