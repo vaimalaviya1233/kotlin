@@ -6,9 +6,7 @@
 package org.jetbrains.kotlin.analysis.low.level.api.fir.providers
 
 import com.intellij.openapi.project.Project
-import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.analysis.low.level.api.fir.caches.NullableCaffeineCache
-import org.jetbrains.kotlin.analysis.low.level.api.fir.project.structure.llFirModuleData
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.LLFirSymbolProviderNameCache
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.project.structure.getKtModule
@@ -128,7 +126,7 @@ internal class LLFirCombinedKotlinSymbolProvider(
     companion object {
         fun merge(session: FirSession, project: Project, providers: List<LLFirProvider.SymbolProvider>): FirSymbolProvider? =
             if (providers.size > 1) {
-                val combinedScope = GlobalSearchScope.union(providers.map { it.session.llFirModuleData.ktModule.contentScope })
+                val combinedScope = providers.createCombinedScope()
                 val declarationProvider = project.createDeclarationProvider(combinedScope)
                 LLFirCombinedKotlinSymbolProvider(session, project, providers, declarationProvider)
             } else providers.singleOrNull()
