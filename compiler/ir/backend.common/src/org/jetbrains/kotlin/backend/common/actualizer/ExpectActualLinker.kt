@@ -86,7 +86,10 @@ class ExpectActualLinker(private val expectActualMap: Map<IrSymbol, IrSymbol>) {
             declaration.also { it.transformChildren(this, null) }
 
         override fun visitFile(declaration: IrFile) =
-            declaration.also { it.transformChildren(this, null) }
+            declaration.also {
+                it.transformChildren(this, null)
+                it.transformAnnotations(declaration)
+            }
 
         override fun visitScript(declaration: IrScript) =
             declaration.also {
@@ -98,6 +101,7 @@ class ExpectActualLinker(private val expectActualMap: Map<IrSymbol, IrSymbol>) {
             declaration.also {
                 it.superTypes = it.superTypes.map { superType -> superType.remapType() }
                 it.transformChildren(this, null)
+                it.transformAnnotations(declaration)
             }
 
         override fun visitSimpleFunction(declaration: IrSimpleFunction) = visitFunction(declaration) as IrSimpleFunction
@@ -108,30 +112,40 @@ class ExpectActualLinker(private val expectActualMap: Map<IrSymbol, IrSymbol>) {
             declaration.also {
                 it.returnType = it.returnType.remapType()
                 it.transformChildren(this, null)
+                it.transformAnnotations(declaration)
             }
 
         override fun visitProperty(declaration: IrProperty) =
-            declaration.also { it.transformChildren(this, null) }
+            declaration.also {
+                it.transformChildren(this, null)
+                it.transformAnnotations(declaration)
+            }
 
         override fun visitField(declaration: IrField) =
             declaration.also {
                 it.type = it.type.remapType()
                 it.transformChildren(this, null)
+                it.transformAnnotations(declaration)
             }
 
         override fun visitLocalDelegatedProperty(declaration: IrLocalDelegatedProperty) =
             declaration.also {
                 it.type = it.type.remapType()
                 it.transformChildren(this, null)
+                it.transformAnnotations(declaration)
             }
 
         override fun visitEnumEntry(declaration: IrEnumEntry) =
-            declaration.also { it.transformChildren(this, null) }
+            declaration.also {
+                it.transformChildren(this, null)
+                it.transformAnnotations(declaration)
+            }
 
         override fun visitTypeParameter(declaration: IrTypeParameter) =
             declaration.also {
                 it.superTypes = it.superTypes.map { superType -> superType.remapType() }
                 it.transformChildren(this, null)
+                it.transformAnnotations(declaration)
             }
 
         override fun visitValueParameter(declaration: IrValueParameter) =
@@ -139,21 +153,27 @@ class ExpectActualLinker(private val expectActualMap: Map<IrSymbol, IrSymbol>) {
                 it.type = it.type.remapType()
                 it.varargElementType = it.varargElementType?.remapType()
                 it.transformChildren(this, null)
+                it.transformAnnotations(declaration)
             }
 
         override fun visitAnonymousInitializer(declaration: IrAnonymousInitializer) =
-            declaration.also { it.transformChildren(this, null) }
+            declaration.also {
+                it.transformChildren(this, null)
+                it.transformAnnotations(declaration)
+            }
 
         override fun visitVariable(declaration: IrVariable) =
             declaration.also {
                 it.type = it.type.remapType()
                 it.transformChildren(this, null)
+                it.transformAnnotations(declaration)
             }
 
         override fun visitTypeAlias(declaration: IrTypeAlias) =
             declaration.also {
                 it.expandedType = it.expandedType.remapType()
                 it.transformChildren(this, null)
+                it.transformAnnotations(declaration)
             }
     }
 
