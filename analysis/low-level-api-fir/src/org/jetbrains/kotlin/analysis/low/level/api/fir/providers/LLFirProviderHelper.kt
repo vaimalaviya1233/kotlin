@@ -36,7 +36,11 @@ internal class LLFirProviderHelper(
     private val packageProvider: KotlinPackageProvider,
     canContainKotlinPackage: Boolean,
 ) {
-    private val allowKotlinPackage = canContainKotlinPackage ||
+    /**
+     * Whether the [LLFirProviderHelper] should be able to find symbols defined in `kotlin` packages. This is usually not the case for
+     * source sessions, unless the `allowKotlinPackage` flag is enabled.
+     */
+    val allowKotlinPackage: Boolean = canContainKotlinPackage ||
             firSession.languageVersionSettings.getFlag(AnalysisFlags.allowKotlinPackage)
 
     private val classifierByClassId =

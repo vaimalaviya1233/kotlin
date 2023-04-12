@@ -11,7 +11,10 @@ import org.jetbrains.kotlin.analysis.low.level.api.fir.util.LLFirSymbolProviderN
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.project.structure.getKtModule
 import org.jetbrains.kotlin.analysis.providers.KotlinDeclarationProvider
+import org.jetbrains.kotlin.analysis.providers.KotlinPackageProvider
 import org.jetbrains.kotlin.analysis.providers.createDeclarationProvider
+import org.jetbrains.kotlin.analysis.providers.createPackageProvider
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.resolve.providers.FirSymbolProvider
 import org.jetbrains.kotlin.fir.resolve.providers.FirSymbolProviderInternals
@@ -37,12 +40,17 @@ import org.jetbrains.kotlin.psi.KtFile
  *   footprint.
  *
  * [declarationProvider] must have a scope which combines the scopes of the individual [providers].
+ *
+ * [packageProviderForKotlinPackages] should be the package provider combined from all [providers] which allow `kotlin` packages (see
+ * [LLFirProvider.SymbolProvider.allowKotlinPackage]). It may be `null` if no such provider exists. See [getPackage] for a use case.
  */
 internal class LLFirCombinedKotlinSymbolProvider(
     session: FirSession,
     private val project: Project,
     private val providers: List<LLFirProvider.SymbolProvider>,
     private val declarationProvider: KotlinDeclarationProvider,
+    private val packageProvider: KotlinPackageProvider,
+    private val packageProviderForKotlinPackages: KotlinPackageProvider?,
 ) : LLFirSelectingCombinedSymbolProvider<LLFirProvider.SymbolProvider>(session, project, providers) {
     private val symbolNameCache = object : LLFirSymbolProviderNameCache(session) {
         override fun computeClassifierNames(packageFqName: FqName): Set<String>? = buildSet {
@@ -113,7 +121,19 @@ internal class LLFirCombinedKotlinSymbolProvider(
             }
     }
 
-    override fun getPackage(fqName: FqName): FqName? = providers.firstNotNullOfOrNull { it.getPackage(fqName) }
+    override fun getPackage(fqName: FqName): FqName? {
+        val hasPackage = if (fqName.startsWith(StandardNames.BUILT_INS_PACKAGE_NAME)) {
+            // If a package is a `kotlin` package, `packageProvider` might find it via the scope of an individual symbol provider that
+            // disallows `kotlin` packages. Hence, the combined `getPackage` would erroneously find a package it shouldn't be able to find,
+            // because calling that individual symbol provider directly would result in `null` (as it disallows `kotlin` packages). The
+            // `packageProviderForKotlinPackages` solves this issue by including only scopes from symbol providers which allow `kotlin`
+            // packages.
+            packageProviderForKotlinPackages?.doesKotlinOnlyPackageExist(fqName) ?: false
+        } else {
+            packageProvider.doesKotlinOnlyPackageExist(fqName)
+        }
+        return fqName.takeIf { hasPackage }
+    }
 
     override fun computePackageSetWithTopLevelCallables(): Set<String>? = null
 
@@ -128,7 +148,21 @@ internal class LLFirCombinedKotlinSymbolProvider(
             if (providers.size > 1) {
                 val combinedScope = providers.createCombinedScope()
                 val declarationProvider = project.createDeclarationProvider(combinedScope)
-                LLFirCombinedKotlinSymbolProvider(session, project, providers, declarationProvider)
+                val packageProvider = project.createPackageProvider(combinedScope)
+
+                val packageProviderForKotlinPackages = providers
+                    .filter { it.allowKotlinPackage }
+                    .takeIf { it.isNotEmpty() }
+                    ?.let { project.createPackageProvider(it.createCombinedScope()) }
+
+                LLFirCombinedKotlinSymbolProvider(
+                    session,
+                    project,
+                    providers,
+                    declarationProvider,
+                    packageProvider,
+                    packageProviderForKotlinPackages,
+                )
             } else providers.singleOrNull()
     }
 }
