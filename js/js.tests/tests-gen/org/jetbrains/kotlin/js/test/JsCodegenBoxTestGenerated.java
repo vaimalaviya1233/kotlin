@@ -23252,6 +23252,12 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
                 }
 
                 @Test
+                @TestMetadata("kt-57923.kt")
+                public void testKt_57923() throws Exception {
+                    runTest("compiler/testData/codegen/box/multiplatform/k2/basic/kt-57923.kt");
+                }
+
+                @Test
                 @TestMetadata("nonExternalEquals.kt")
                 public void testNonExternalEquals() throws Exception {
                     runTest("compiler/testData/codegen/box/multiplatform/k2/basic/nonExternalEquals.kt");

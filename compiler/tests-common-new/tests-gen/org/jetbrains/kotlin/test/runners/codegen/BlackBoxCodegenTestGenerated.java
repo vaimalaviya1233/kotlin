@@ -32046,6 +32046,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
                 }
 
                 @Test
+                @TestMetadata("kt-57923.kt")
+                public void testKt_57923() throws Exception {
+                    runTest("compiler/testData/codegen/box/multiplatform/k2/basic/kt-57923.kt");
+                }
+
+                @Test
                 @TestMetadata("noArgActualConstructor.kt")
                 public void testNoArgActualConstructor() throws Exception {
                     runTest("compiler/testData/codegen/box/multiplatform/k2/basic/noArgActualConstructor.kt");

@@ -12,7 +12,9 @@ import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.fir.FirAnnotationContainer
 import org.jetbrains.kotlin.fir.FirSession
+import org.jetbrains.kotlin.fir.analysis.checkers.toClassLikeSymbol
 import org.jetbrains.kotlin.fir.declarations.*
+import org.jetbrains.kotlin.fir.declarations.utils.isExpect
 import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.expressions.builder.*
 import org.jetbrains.kotlin.fir.render
@@ -26,6 +28,7 @@ import org.jetbrains.kotlin.ir.util.getArgumentsWithIr
 import org.jetbrains.kotlin.ir.util.hasAnnotation
 import org.jetbrains.kotlin.ir.util.parentAsClass
 import org.jetbrains.kotlin.ir.util.parentClassOrNull
+import org.jetbrains.kotlin.resolve.multiplatform.OptionalAnnotationUtil
 import org.jetbrains.kotlin.types.ConstantValueKind
 
 class ConstValueProviderImpl(
@@ -63,13 +66,6 @@ class ConstValueProviderImpl(
             else -> error("Cannot extract IR declaration for ${firAnnotationContainer.render()}")
         } ?: return firAnnotation
 
-        val correctFirContainer = when (firAnnotation.useSiteTarget) {
-            AnnotationUseSiteTarget.FIELD, AnnotationUseSiteTarget.PROPERTY_DELEGATE_FIELD -> {
-                (firAnnotationContainer as? FirProperty)?.backingField ?: return firAnnotation
-            }
-            else -> firAnnotationContainer
-        }
-
         val correctIrDeclaration = when (firAnnotation.useSiteTarget) {
             AnnotationUseSiteTarget.FIELD, AnnotationUseSiteTarget.PROPERTY_DELEGATE_FIELD -> {
                 (irDeclaration as? IrProperty)?.backingField ?: return firAnnotation
@@ -77,7 +73,7 @@ class ConstValueProviderImpl(
             else -> irDeclaration
         }
 
-        return buildNewFirAnnotationByCorrespondingIrAnnotation(correctIrDeclaration, correctFirContainer, firAnnotation)
+        return buildNewFirAnnotationByCorrespondingIrAnnotation(correctIrDeclaration, firAnnotation)
     }
 
     override fun getNewFirAnnotationWithConstantValues(
@@ -93,12 +89,11 @@ class ConstValueProviderImpl(
             else -> error("Cannot extract IR extension receiver for ${firExtensionReceiverContainer::class}")
         } ?: return firAnnotation
 
-        return buildNewFirAnnotationByCorrespondingIrAnnotation(extensionReceiver, receiverParameter, firAnnotation)
+        return buildNewFirAnnotationByCorrespondingIrAnnotation(extensionReceiver, firAnnotation)
     }
 
     private fun buildNewFirAnnotationByCorrespondingIrAnnotation(
         irDeclaration: IrDeclarationBase,
-        firAnnotationContainer: FirAnnotationContainer,
         firAnnotation: FirAnnotation
     ): FirAnnotation {
         val unwrappedIrAnnotations = irDeclaration.annotations.flatMap {
@@ -111,14 +106,20 @@ class ConstValueProviderImpl(
             (it.getValueArgument(0) as IrVararg).elements.map { repAnno -> repAnno as IrConstructorCall }
         }.filter { it.startOffset != -1 && it.endOffset != -1 }
 
-        assert(unwrappedIrAnnotations.size == firAnnotationContainer.annotations.size) {
-            "Number of annotations for IR and FIR declaration are not equal"
-        }
-
         val irArguments = unwrappedIrAnnotations
             .find { it.startOffset == firAnnotation.source?.startOffset && it.endOffset == firAnnotation.source?.endOffset }
             ?.getArgumentsWithIr()
-            ?: error("Could not find corresponding IR annotation for ${firAnnotation.render()}")
+            ?: run {
+                val annotationClassSymbol = firAnnotation.typeRef.toClassLikeSymbol(session)
+                assert(
+                    annotationClassSymbol != null &&
+                            annotationClassSymbol.hasAnnotation(OptionalAnnotationUtil.OPTIONAL_EXPECTATION, session) &&
+                            annotationClassSymbol.isExpect
+                ) {
+                    "Could not find corresponding IR annotation for ${firAnnotation.render()}"
+                }
+                return firAnnotation
+            }
 
         val annotationArgsMapping = buildAnnotationArgumentMapping {
             firAnnotation.argumentMapping.mapping.forEach { (name, firExpression) ->
