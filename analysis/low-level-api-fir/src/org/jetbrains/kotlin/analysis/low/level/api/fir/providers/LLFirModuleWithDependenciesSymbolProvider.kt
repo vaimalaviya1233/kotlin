@@ -85,7 +85,8 @@ internal class LLFirModuleWithDependenciesSymbolProvider(
     }
 
     override fun getPackage(fqName: FqName): FqName? =
-        packageCache.get(fqName) { getPackageWithoutDependencies(it) ?: dependencyProvider.getPackage(it) }
+//        packageCache.get(fqName) { getPackageWithoutDependencies(it) ?: dependencyProvider.getPackage(it) }
+        getPackageWithoutDependencies(fqName) ?: dependencyProvider.getPackage(fqName)
 
     fun getPackageWithoutDependencies(fqName: FqName): FqName? =
         providers.firstNotNullOfOrNull { it.getPackage(fqName) }
