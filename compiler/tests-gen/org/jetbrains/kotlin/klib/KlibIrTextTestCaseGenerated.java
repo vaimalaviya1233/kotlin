@@ -2010,9 +2010,9 @@ public class KlibIrTextTestCaseGenerated extends AbstractKlibIrTextTestCase {
             runTest("compiler/testData/ir/irText/firProblems/TypeParameterBounds.kt");
         }
 
-        @TestMetadata("TypeParameterInNestedDataClass.kt")
-        public void testTypeParameterInNestedDataClass() throws Exception {
-            runTest("compiler/testData/ir/irText/firProblems/TypeParameterInNestedDataClass.kt");
+        @TestMetadata("TypeParameterInNestedClass.kt")
+        public void testTypeParameterInNestedClass() throws Exception {
+            runTest("compiler/testData/ir/irText/firProblems/TypeParameterInNestedClass.kt");
         }
 
         @TestMetadata("typeVariableAfterBuildMap.kt")

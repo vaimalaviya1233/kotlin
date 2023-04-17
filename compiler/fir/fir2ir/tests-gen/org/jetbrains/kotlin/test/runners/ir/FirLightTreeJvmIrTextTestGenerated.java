@@ -2841,9 +2841,9 @@ public class FirLightTreeJvmIrTextTestGenerated extends AbstractFirLightTreeJvmI
         }
 
         @Test
-        @TestMetadata("TypeParameterInNestedDataClass.kt")
-        public void testTypeParameterInNestedDataClass() throws Exception {
-            runTest("compiler/testData/ir/irText/firProblems/TypeParameterInNestedDataClass.kt");
+        @TestMetadata("TypeParameterInNestedClass.kt")
+        public void testTypeParameterInNestedClass() throws Exception {
+            runTest("compiler/testData/ir/irText/firProblems/TypeParameterInNestedClass.kt");
         }
 
         @Test

@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.fir.declarations.builder.*
 import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertyAccessor
 import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertyGetter
 import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertySetter
+import org.jetbrains.kotlin.fir.declarations.impl.FirOuterClassTypeParameterRef
 import org.jetbrains.kotlin.fir.declarations.utils.*
 import org.jetbrains.kotlin.fir.resolve.substitution.ChainedSubstitutor
 import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
@@ -669,6 +670,9 @@ object FirFakeOverrideGenerator {
     ): Pair<List<FirTypeParameterRef>, ConeSubstitutor> {
         if (member.typeParameters.isEmpty()) return Pair(member.typeParameters, substitutor)
         val newTypeParameters = member.typeParameters.map { typeParameterRef ->
+            if (typeParameterRef !is FirTypeParameter && typeParameterRef !is FirOuterClassTypeParameterRef) {
+                return@map null
+            }
             val typeParameter = typeParameterRef.symbol.fir
             FirTypeParameterBuilder().apply {
                 source = typeParameter.source
@@ -684,14 +688,16 @@ object FirFakeOverrideGenerator {
             }
         }
 
-        val substitutionMapForNewParameters = member.typeParameters.zip(newTypeParameters).associate { (original, new) ->
-            Pair(original.symbol, ConeTypeParameterTypeImpl(new.symbol.toLookupTag(), isNullable = false))
+        val zippedParameters = newTypeParameters.zip(member.typeParameters)
+        val substitutionMapForNewParameters = zippedParameters.associate { (new, original) ->
+            Pair(original.symbol, ConeTypeParameterTypeImpl((new?.symbol ?: original.symbol).toLookupTag(), isNullable = false))
         }
 
         val additionalSubstitutor = substitutorByMap(substitutionMapForNewParameters, useSiteSession)
 
         var wereChangesInTypeParameters = forceTypeParametersRecreation
-        for ((newTypeParameter, oldTypeParameter) in newTypeParameters.zip(member.typeParameters)) {
+        for ((newTypeParameter, oldTypeParameter) in zippedParameters) {
+            if (newTypeParameter == null) continue
             val original = oldTypeParameter.symbol.fir
             for (boundTypeRef in original.symbol.resolvedBounds) {
                 val typeForBound = boundTypeRef.coneType
@@ -708,10 +714,10 @@ object FirFakeOverrideGenerator {
         }
 
         if (!wereChangesInTypeParameters) return Pair(member.typeParameters, substitutor)
-        return Pair(
-            newTypeParameters.map(FirTypeParameterBuilder::build),
-            ChainedSubstitutor(substitutor, additionalSubstitutor)
-        )
+        val newTypeParameterList = zippedParameters.map { (new, original) ->
+            new?.build() ?: original
+        }
+        return Pair(newTypeParameterList, ChainedSubstitutor(substitutor, additionalSubstitutor))
     }
 
     private fun shouldOverrideSetContainingClass(baseDeclaration: FirCallableDeclaration): Boolean {

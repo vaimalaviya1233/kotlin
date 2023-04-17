@@ -18542,6 +18542,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         }
 
         @Test
+        @TestMetadata("TypeParameterInNestedClass.kt")
+        public void testTypeParameterInNestedClass() throws Exception {
+            runTest("compiler/testData/codegen/box/fir/TypeParameterInNestedClass.kt");
+        }
+
+        @Test
         @TestMetadata("unqualifiedEnum.kt")
         public void testUnqualifiedEnum() throws Exception {
             runTest("compiler/testData/codegen/box/fir/unqualifiedEnum.kt");
