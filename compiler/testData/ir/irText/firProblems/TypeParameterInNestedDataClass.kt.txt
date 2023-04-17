@@ -1,0 +1,62 @@
+object Retry {
+  private constructor() /* primary */ {
+    super/*Any*/()
+    /* <init>() */
+
+  }
+
+  data class Builder<B : Any?> {
+    constructor(action: SuspendFunction0<B>) /* primary */ {
+      super/*Any*/()
+      /* <init>() */
+
+    }
+
+    private val action: SuspendFunction0<B>
+      field = action
+      private get
+
+    private operator fun component1(): SuspendFunction0<B> {
+      return <this>.#action
+    }
+
+    fun copy(action: SuspendFunction0<B> = <this>.#action): Builder<B> {
+      return Builder<B>(action = action)
+    }
+
+    override fun toString(): String {
+      return "Builder(" + "action=" + <this>.#action + ")"
+    }
+
+    override fun hashCode(): Int {
+      return <this>.#action.hashCode()
+    }
+
+    override operator fun equals(other: Any?): Boolean {
+      when {
+        EQEQEQ(arg0 = <this>, arg1 = other) -> return true
+      }
+      when {
+        other !is Builder<B> -> return false
+      }
+      val tmp0_other_with_cast: Builder<B> = other as Builder<B>
+      when {
+        EQEQ(arg0 = <this>.#action, arg1 = tmp0_other_with_cast.#action).not() -> return false
+      }
+      return true
+    }
+
+  }
+
+  fun <W : Any?> withExponentialBackoff(action: Function0<W>): Builder<W> {
+    return Builder<W>(action = { // BLOCK
+      local suspend fun Function0<W>.suspendConversion0(): W {
+        return callee.invoke()
+      }
+
+      action::suspendConversion0
+    })
+  }
+
+}
+

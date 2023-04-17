@@ -2307,6 +2307,12 @@ public class ClassicJsIrTextTestGenerated extends AbstractClassicJsIrTextTest {
         }
 
         @Test
+        @TestMetadata("TypeParameterInNestedDataClass.kt")
+        public void testTypeParameterInNestedDataClass() throws Exception {
+            runTest("compiler/testData/ir/irText/firProblems/TypeParameterInNestedDataClass.kt");
+        }
+
+        @Test
         @TestMetadata("typeVariableAfterBuildMap.kt")
         public void testTypeVariableAfterBuildMap() throws Exception {
             runTest("compiler/testData/ir/irText/firProblems/typeVariableAfterBuildMap.kt");
