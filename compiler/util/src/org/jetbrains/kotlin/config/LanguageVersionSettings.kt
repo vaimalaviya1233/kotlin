@@ -277,6 +277,7 @@ enum class LanguageFeature(
     NativeJsProhibitLateinitIsInitializedIntrinsicWithoutPrivateAccess(KOTLIN_1_9, kind = BUG_FIX), // KT-27002
     TakeIntoAccountEffectivelyFinalInMustBeInitializedCheck(KOTLIN_1_9, kind = OTHER), // KT-58587
     ProhibitUsingNullableTypeParameterAgainstNotNullAnnotated(sinceVersion = KOTLIN_1_9), // KT-36770
+    LightweightLambdas(KOTLIN_1_9), // KT-45375
 
     // End of 1.* language features --------------------------------------------------
 
@@ -320,7 +321,6 @@ enum class LanguageFeature(
     // Experimental features
 
     BreakContinueInInlineLambdas(null), // KT-1436
-    LightweightLambdas(null),
     JsEnableExtensionFunctionInExternals(null, kind = OTHER),
     PackagePrivateFileClassesWithAllPrivateMembers(null), // Disabled until the breaking change is approved by the committee, see KT-10884.
     BooleanElvisBoundSmartCasts(null), // see KT-26357 for details

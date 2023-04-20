@@ -11,7 +11,11 @@ fun box() {
 // EXPECTATIONS JVM JVM_IR
 // test.kt:6 box
 // test.kt:3 eval
+// EXPECTATIONS JVM
 // test.kt:7 invoke
+// EXPECTATIONS JVM_IR
+// test.kt:7 box$lambda$0
+// EXPECTATIONS JVM JVM_IR
 // test.kt:3 eval
 // test.kt:6 box
 // test.kt:9 box
