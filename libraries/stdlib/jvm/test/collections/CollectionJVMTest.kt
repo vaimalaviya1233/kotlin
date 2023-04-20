@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2023 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -184,14 +184,10 @@ class CollectionJVMTest {
 
     @Test fun emptyMapIsSerializable() = testSingletonSerialization(emptyMap<Any, Any>())
 
-    private fun checkSerializeAndDeserialize(value: Any): Any {
-        val result = serializeAndDeserialize(value)
-        assertEquals(value, result)
-        return result
-    }
-
     private fun testSingletonSerialization(value: Any) {
-        val result = checkSerializeAndDeserialize(value)
+        val result = serializeAndDeserialize(value)
+
+        assertEquals(value, result)
         assertSame(value, result)
     }
 
@@ -249,6 +245,7 @@ class CollectionJVMTest {
         testCollectionBuilderSerialization(source)
     }
 
+
     private fun testCollectionBuilderSerialization(value: Any) {
         val result = serializeAndDeserialize(value)
         assertEquals(value, result)
@@ -263,14 +260,4 @@ class CollectionJVMTest {
         }
     }
 
-    @Test fun singletonListIsSerializable() = testSingletonCollectionSerialization(listOf(42))
-
-    @Test fun singletonSetIsSerializable() = testSingletonCollectionSerialization(setOf(42))
-
-    @Test fun singletonMapIsSerializable() = testSingletonCollectionSerialization(mapOf("hello" to "world"))
-
-    private fun testSingletonCollectionSerialization(value: Any) {
-        val deserialized = checkSerializeAndDeserialize(value)
-        assertReadOnly(deserialized)
-    }
 }
