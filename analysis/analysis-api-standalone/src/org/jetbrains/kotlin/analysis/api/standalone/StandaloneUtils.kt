@@ -70,6 +70,8 @@ public fun configureApplicationEnvironment(app: MockApplication) {
  *   * [SymbolKotlinAsJavaSupport]
  *   * [ClsJavaStubByVirtualFileCache]
  *   * [KotlinModificationTrackerFactory]
+ *   * [KotlinModificationSubscriptionService]
+ *   * [KotlinGlobalModificationService]
  *   * [KotlinAnnotationsResolverFactory]
  *   * [LLfirResolveSessionService]
  *   * [FirSealedClassInheritorsProcessorFactory]
@@ -110,6 +112,16 @@ internal fun configureProjectEnvironment(
     project.registerService(
         KotlinModificationTrackerFactory::class.java,
         KotlinStaticModificationTrackerFactory()
+    )
+
+    project.registerService(
+        KotlinModificationSubscriptionService::class.java,
+        KotlinStaticModificationSubscriptionService(),
+    )
+
+    project.registerService(
+        KotlinGlobalModificationService::class.java,
+        KotlinStaticGlobalModificationService(project),
     )
 
     // FIR LC
