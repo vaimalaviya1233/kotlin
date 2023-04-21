@@ -1212,8 +1212,8 @@ public final class Char : kotlin.Comparable<kotlin.Char> {
 
     public final operator fun rangeTo(other: kotlin.Char): kotlin.ranges.CharRange
 
-    @kotlin.SinceKotlin(version = "1.7")
-    @kotlin.ExperimentalStdlibApi
+    @kotlin.SinceKotlin(version = "1.9")
+    @kotlin.WasExperimental(markerClass = {kotlin.ExperimentalStdlibApi::class})
     public final operator fun rangeUntil(other: kotlin.Char): kotlin.ranges.CharRange
 
     @kotlin.Deprecated(message = "Conversion of Char to Number is deprecated. Use Char.code property instead.", replaceWith = kotlin.ReplaceWith(expression = "this.code.toByte()", imports = {}))
