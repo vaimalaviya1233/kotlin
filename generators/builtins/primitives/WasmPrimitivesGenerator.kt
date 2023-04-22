@@ -173,7 +173,7 @@ class WasmPrimitivesGenerator(writer: PrintWriter) : BasePrimitivesGenerator(wri
         implementAsIntrinsic(thisKind, methodName)
     }
 
-    override fun MethodBuilder.modifyGeneratedConversions(thisKind: PrimitiveType) {
+    override fun MethodBuilder.modifyGeneratedConversions(thisKind: PrimitiveType, otherKind: PrimitiveType) {
         val returnTypeAsPrimitive = PrimitiveType.valueOf(returnType.uppercase())
         if (returnTypeAsPrimitive == thisKind) {
             modifySignature { isInline = true }

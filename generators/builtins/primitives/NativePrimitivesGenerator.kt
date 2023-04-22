@@ -109,7 +109,7 @@ class NativePrimitivesGenerator(writer: PrintWriter) : BasePrimitivesGenerator(w
         setAsExternal()
     }
 
-    override fun MethodBuilder.modifyGeneratedConversions(thisKind: PrimitiveType) {
+    override fun MethodBuilder.modifyGeneratedConversions(thisKind: PrimitiveType, otherKind: PrimitiveType) {
         val returnTypeAsPrimitive = PrimitiveType.valueOf(returnType.uppercase())
         when {
             returnTypeAsPrimitive == thisKind -> {

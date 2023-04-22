@@ -60,7 +60,9 @@ internal abstract class AnnotatedAndDocumented {
         }
 
         if (additionalDoc != null) {
-            appendLine("// $additionalDoc")
+            additionalDoc!!.lines().forEach { line ->
+                appendLine("// $line")
+            }
         }
     }
 
@@ -121,13 +123,13 @@ internal class FileBuilder : PrimitiveBuilder {
 internal class ClassBuilder : AnnotatedAndDocumented(), PrimitiveBuilder {
     var isFinal: Boolean = false
     var name: String = ""
-    private var constructorParam: MethodParameterBuilder? = null
+    var constructorVisibility: MethodVisibility = MethodVisibility.PRIVATE
+    private var constructorParams: MutableList<MethodParameterBuilder> = mutableListOf()
     private var companionObject: CompanionObjectBuilder? = null
     private val methods: MutableList<MethodBuilder> = mutableListOf()
 
     fun constructorParam(init: MethodParameterBuilder.() -> Unit) {
-        throwIfAlreadyInitialized(constructorParam, "constructorParam", "ClassBuilder")
-        constructorParam = MethodParameterBuilder().apply(init)
+        constructorParams += MethodParameterBuilder().apply(init)
     }
 
     fun companionObject(init: CompanionObjectBuilder.() -> Unit): CompanionObjectBuilder {
@@ -149,7 +151,7 @@ internal class ClassBuilder : AnnotatedAndDocumented(), PrimitiveBuilder {
 
             append("public ")
             if (isFinal) append("final ")
-            appendLine("class $name private constructor(${constructorParam?.build() ?: ""}) : Number(), Comparable<$name> {")
+            appendLine("class $name ${constructorVisibility.name.lowercase()} constructor(${constructorParams.joinToString(", ") { it.build() }}) : Number(), Comparable<$name> {")
 
             companionObject?.let { appendLine(it.build().shift()) }
             appendLine(methods.joinToString(separator = END_LINE + END_LINE) { it.build().shift() })
