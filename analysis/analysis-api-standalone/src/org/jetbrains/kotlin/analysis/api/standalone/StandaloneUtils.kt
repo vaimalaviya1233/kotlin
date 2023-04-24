@@ -73,7 +73,7 @@ public fun configureApplicationEnvironment(app: MockApplication) {
  *   * [KotlinModificationSubscriptionService]
  *   * [KotlinGlobalModificationService]
  *   * [KotlinAnnotationsResolverFactory]
- *   * [LLfirResolveSessionService]
+ *   * [org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirResolveSessionService]
  *   * [FirSealedClassInheritorsProcessorFactory]
  *   * [KtModuleScopeProvider]
  *   * [ProjectStructureProvider]
