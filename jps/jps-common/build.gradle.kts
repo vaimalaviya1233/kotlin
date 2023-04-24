@@ -30,7 +30,9 @@ dependencies {
     compileOnly(jpsModelSerialization())
 
     testImplementation(project(":compiler:cli-common"))
-    testImplementation(jpsModelSerialization())
+    testImplementation(jpsModelSerialization()) {
+        exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib-jdk8")
+    }
     testImplementation(commonDependency("junit:junit"))
     testImplementation(kotlin("test-junit"))
 }
