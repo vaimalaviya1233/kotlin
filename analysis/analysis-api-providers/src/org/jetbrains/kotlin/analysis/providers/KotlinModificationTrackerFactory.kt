@@ -11,7 +11,7 @@ import com.intellij.openapi.util.ModificationTracker
 /**
  * [KotlinModificationTrackerFactory] creates modification trackers for select modification events.
  *
- * Some other modification events are implemented with a subscription mechanism: [KotlinModificationSubscriptionService]. Modification
+ * Further modification tracking is implemented with a subscription mechanism: [KotlinModificationSubscriptionService]. Modification
  * trackers make the most sense when there are many, possibly short-lived objects that need to be notified of a change. In such cases,
  * listener management of the subscription-based approach adds too much overhead.
  */
