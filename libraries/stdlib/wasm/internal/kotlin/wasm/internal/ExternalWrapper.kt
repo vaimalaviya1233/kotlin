@@ -169,7 +169,10 @@ internal fun externRefToAny(ref: ExternalInterfaceType): Any? {
     //     return
     // }
     // If ref is an instance of kotlin class -- return it casted to Any
-    returnArgumentIfItIsKotlinAny(ref)
+    val refAsAnyref = ref.externAsWasmAnyref()
+    if (wasm_ref_test_null<Any>(refAsAnyref)) {
+        return wasm_ref_cast_null<Any>(refAsAnyref)
+    }
 
     // If we have Null in notNullRef -- return null
     // If we already have a box -- return it,
