@@ -6,7 +6,6 @@
 package org.jetbrains.kotlin.analysis.low.level.api.fir.resolve.extensions
 
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.analysis.api.KtAnalysisAllowanceManager
 import org.jetbrains.kotlin.analysis.api.resolve.extensions.KtResolveExtension
@@ -38,7 +37,6 @@ import java.util.concurrent.ConcurrentHashMap
  * Caches generated [KtResolveExtensionFile]s, creates [KotlinDeclarationProvider], [KotlinPackageProvider], [LLFirSymbolProviderNameCache] needed for the [org.jetbrains.kotlin.fir.resolve.providers.FirSymbolProvider].
  */
 internal abstract class LLFirResolveExtensionTool : FirSessionComponent {
-    abstract val modificationTrackers: List<ModificationTracker>
     abstract val declarationProvider: KotlinDeclarationProvider
     abstract val packageProvider: KotlinPackageProvider
     abstract val symbolNameCache: LLFirSymbolProviderNameCache
@@ -57,8 +55,6 @@ internal class LLFirNonEmptyResolveExtensionTool(
     private val fileProvider = LLFirResolveExtensionsFileProvider(extensions)
 
     private val packageFilter = LLFirResolveExtensionToolPackageFilter(extensions)
-
-    override val modificationTrackers by lazy { extensions.map { it.getModificationTracker() } }
 
     override val declarationProvider: KotlinDeclarationProvider =
         LLFirResolveExtensionToolDeclarationProvider(fileProvider, session.ktModule)
