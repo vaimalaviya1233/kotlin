@@ -379,14 +379,10 @@ enum class WasmOp(
     REF_CAST("ref.cast", 0xFB_41, HEAP_TYPE),
     REF_CAST_NULL("ref.cast null", 0xFB_49, HEAP_TYPE),
 
-    // TODO remove as soon as V8 support new instructions, see below
-    BR_ON_CAST_FAIL("br_on_cast_fail", 0xfb47, listOf(LABEL_IDX, STRUCT_TYPE_IDX)),
-
-// Not yet supported by V8
-//    BR_ON_CAST("br_on_cast", 0xFB42, listOf(LABEL_IDX, HEAP_TYPE)),
-//    BR_ON_CAST_NULL("br_on_cast null", 0xFB4A, listOf(LABEL_IDX, HEAP_TYPE)),
-//    BR_ON_CAST_FAIL("br_on_cast_fail", 0xFB43, listOf(LABEL_IDX, HEAP_TYPE)),
-//    BR_ON_CAST_FAIL_NULL("br_on_cast_fail null", 0xFB4B, listOf(LABEL_IDX, HEAP_TYPE)),
+    BR_ON_CAST("br_on_cast", 0xFB42, listOf(LABEL_IDX, HEAP_TYPE)),
+    BR_ON_CAST_NULL("br_on_cast null", 0xFB4A, listOf(LABEL_IDX, HEAP_TYPE)),
+    BR_ON_CAST_FAIL("br_on_cast_fail", 0xFB43, listOf(LABEL_IDX, HEAP_TYPE)),
+    BR_ON_CAST_FAIL_NULL("br_on_cast_fail null", 0xFB4B, listOf(LABEL_IDX, HEAP_TYPE)),
 
     EXTERN_INTERNALIZE("extern.internalize", 0xfb70), // externref -> anyref
     EXTERN_EXTERNALIZE("extern.externalize", 0xfb71), // anyref -> externref
