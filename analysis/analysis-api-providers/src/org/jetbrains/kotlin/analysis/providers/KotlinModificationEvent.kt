@@ -10,7 +10,14 @@ import org.jetbrains.kotlin.analysis.project.structure.KtModule
 /**
  * A modification event published and subscribed to via [KotlinModificationSubscriptionService].
  */
-public sealed interface KotlinModificationEvent
+public sealed interface KotlinModificationEvent {
+    /**
+     * A marker or object which signifies where the event originated. This may be used by components which subscribe to and publish
+     * modification events at the same time, allowing a modification listener to break publish-listen-publish cycles. Usually, [origin] will
+     * be `null`.
+     */
+    val origin: Any?
+}
 
 public sealed interface KotlinModuleModificationEvent : KotlinModificationEvent {
     /**
@@ -29,7 +36,10 @@ public sealed interface KotlinGlobalModificationEvent : KotlinModificationEvent 
 /**
  * This event occurs when [module]'s structure changes, when it is moved or removed, and so on.
  */
-public data class KotlinModuleStateModificationEvent(override val module: KtModule) : KotlinModuleModificationEvent
+public data class KotlinModuleStateModificationEvent(
+    override val module: KtModule,
+    override val origin: Any? = null,
+) : KotlinModuleModificationEvent
 
 /**
  * This event occurs when an out-of-block modification happens in [module]'s source code.
@@ -40,18 +50,27 @@ public data class KotlinModuleStateModificationEvent(override val module: KtModu
  * This event may be published for any and all source code changes, not just out-of-block modifications, to simplify the implementation of
  * modification detection.
  */
-public data class KotlinModuleOutOfBlockModificationEvent(override val module: KtModule) : KotlinModuleModificationEvent
+public data class KotlinModuleOutOfBlockModificationEvent(
+    override val module: KtModule,
+    override val origin: Any? = null,
+) : KotlinModuleModificationEvent
 
 /**
  * This event occurs on global modification of the module state of all [KtModule]s.
  *
  * Usually, this event is published to invalidate caches during/between tests.
  */
-public data class KotlinGlobalModuleStateModificationEvent(override val includeBinaryModules: Boolean) : KotlinGlobalModificationEvent
+public data class KotlinGlobalModuleStateModificationEvent(
+    override val includeBinaryModules: Boolean,
+    override val origin: Any? = null,
+) : KotlinGlobalModificationEvent
 
 /**
  * This event occurs on global out-of-block modification of all [KtModule]s.
  *
  * Usually, this event is published on global PSI changes, and to invalidate caches during/between tests.
  */
-public data class KotlinGlobalOutOfBlockModificationEvent(override val includeBinaryModules: Boolean) : KotlinGlobalModificationEvent
+public data class KotlinGlobalOutOfBlockModificationEvent(
+    override val includeBinaryModules: Boolean,
+    override val origin: Any? = null,
+) : KotlinGlobalModificationEvent
