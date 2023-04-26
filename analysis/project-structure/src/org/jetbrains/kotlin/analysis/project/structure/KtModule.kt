@@ -92,6 +92,10 @@ public sealed interface KtModule {
 public interface KtSourceModule : KtModule {
     public val moduleName: String
 
+    /**
+     * A stable binary name of module from the *Kotlin* point of view.
+     * Having correct module name is critical for `internal`-visibility mangling. See [org.jetbrains.kotlin.asJava.mangleInternalName]
+     */
     public val stableModuleName: String?
         get() = null
 
