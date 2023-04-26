@@ -117,7 +117,8 @@ internal abstract class SymbolLightMethodBase(
         if (containingClass is KtLightClassForFacade) return defaultName
         if (hasPublishedApiAnnotation(annotationUseSiteTarget.toFilter())) return defaultName
 
-        val moduleName = (ktModule as? KtSourceModule)?.moduleName ?: return defaultName
+        val sourceModule = ktModule as? KtSourceModule ?: return defaultName
+        val moduleName = (sourceModule.stableModuleName ?: sourceModule.moduleName).removeSurrounding("<", ">")
         return mangleInternalName(defaultName, moduleName)
     }
 

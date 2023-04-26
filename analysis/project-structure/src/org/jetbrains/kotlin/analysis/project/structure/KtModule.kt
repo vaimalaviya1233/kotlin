@@ -92,6 +92,9 @@ public sealed interface KtModule {
 public interface KtSourceModule : KtModule {
     public val moduleName: String
 
+    public val stableModuleName: String?
+        get() = null
+
     override val moduleDescription: String
         get() = "Sources of $moduleName"
 
