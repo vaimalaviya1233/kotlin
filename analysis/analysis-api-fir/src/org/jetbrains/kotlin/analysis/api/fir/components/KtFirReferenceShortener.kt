@@ -898,8 +898,8 @@ private class ElementsToShortenCollector(
         if (!canBePossibleToDropReceiver(functionCall)) return
 
         val qualifiedCallExpression = functionCall.psi as? KtDotQualifiedExpression ?: return
-        if (!qualifiedCallExpression.textRange.intersects(selection)) return
         val callExpression = qualifiedCallExpression.selectorExpression as? KtCallExpression ?: return
+        if (callExpression.calleeExpression?.textRange?.intersects(selection) != true) return
 
         val calleeReference = functionCall.calleeReference
         val calledSymbol = findUnambiguousReferencedCallableId(calleeReference) ?: return
