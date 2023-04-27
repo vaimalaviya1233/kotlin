@@ -368,12 +368,21 @@ private class ElementsToShortenCollector(
         val wholeTypeReference = resolvedTypeRef.realPsi as? KtTypeReference ?: return
         if (!wholeTypeReference.textRange.intersects(selection)) return
 
-        val wholeClassifierId = resolvedTypeRef.type.lowerBoundIfFlexible().candidateClassId ?: return
         val wholeTypeElement = wholeTypeReference.typeElement?.unwrapNullability() as? KtUserType ?: return
-
         if (wholeTypeElement.qualifier == null) return
 
-        findTypeToShorten(wholeClassifierId, wholeTypeElement)?.let(::addElementToShorten)
+        for (typeElement in wholeTypeElement.qualifiedTypesWithSelf) {
+            val typeRef = when (val fir = typeElement.getOrBuildFir(firResolveSession)) {
+                is FirPropertyAccessExpression -> fir.typeRef
+                else -> fir
+            } as? FirResolvedTypeRef
+
+            val classifierId = typeRef?.type?.lowerBoundIfFlexible()?.candidateClassId ?: continue
+            val element = findTypeToShorten(classifierId, typeElement) ?: continue
+
+            addElementToShorten(element)
+            break
+        }
     }
 
     val ConeKotlinType.candidateClassId: ClassId?
