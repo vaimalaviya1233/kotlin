@@ -3,7 +3,7 @@ class My(val v: Int) {
     var x: Int
         private set
 
-    var y: Int
+    var y: Int // fuck
         set(arg) { field = arg }
 
     <!MUST_BE_INITIALIZED!>var z: Int<!>
