@@ -776,7 +776,7 @@ class DeclarationsChecker(
                     trace.report(EXTENSION_PROPERTY_MUST_HAVE_ACCESSORS_OR_BE_ABSTRACT.on(property))
                 } else if (diagnosticSuppressor.shouldReportNoBody(propertyDescriptor)) {
                     if (containingDeclaration !is ClassDescriptor || hasAccessorImplementation) {
-                        trace.report(MUST_BE_INITIALIZED.on(property))
+                        trace.report(MUST_BE_INITIALIZED.on(property)) // here
                     } else {
                         trace.report(MUST_BE_INITIALIZED_OR_BE_ABSTRACT.on(property))
                     }
