@@ -534,6 +534,8 @@ object FirErrors {
     val MUST_BE_INITIALIZED_OR_BE_FINAL by error0<KtProperty>(SourceElementPositioningStrategies.DECLARATION_SIGNATURE)
     val MUST_BE_INITIALIZED_OR_BE_ABSTRACT by error0<KtProperty>(SourceElementPositioningStrategies.DECLARATION_SIGNATURE)
     val MUST_BE_INITIALIZED_OR_FINAL_OR_ABSTRACT by error0<KtProperty>(SourceElementPositioningStrategies.DECLARATION_SIGNATURE)
+    val MUST_BE_INITIALIZED_OR_FINAL_OR_ABSTRACT_WARNING by error0<KtProperty>(SourceElementPositioningStrategies.DECLARATION_SIGNATURE)
+    val MUST_BE_INITIALIZED_OR_BE_FINAL_WARNING by error0<KtProperty>(SourceElementPositioningStrategies.DECLARATION_SIGNATURE)
     val EXTENSION_PROPERTY_MUST_HAVE_ACCESSORS_OR_BE_ABSTRACT by error0<KtProperty>(SourceElementPositioningStrategies.DECLARATION_SIGNATURE)
     val UNNECESSARY_LATEINIT by warning0<KtProperty>(SourceElementPositioningStrategies.LATEINIT_MODIFIER)
     val BACKING_FIELD_IN_INTERFACE by error0<KtProperty>(SourceElementPositioningStrategies.DECLARATION_SIGNATURE)
