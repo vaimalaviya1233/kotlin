@@ -342,7 +342,7 @@ private class InteropLoweringPart1(val generationState: NativeGenerationState) :
         val newFunction =
             IrFunctionImpl(
                     function.startOffset, function.endOffset,
-                    IrDeclarationOrigin.DEFINED,
+                    CBridgeOrigin.C_TO_KOTLIN_BRIDGE,
                     IrSimpleFunctionSymbolImpl(),
                     ("imp:$selector").synthesizedName,
                     DescriptorVisibilities.PRIVATE,
