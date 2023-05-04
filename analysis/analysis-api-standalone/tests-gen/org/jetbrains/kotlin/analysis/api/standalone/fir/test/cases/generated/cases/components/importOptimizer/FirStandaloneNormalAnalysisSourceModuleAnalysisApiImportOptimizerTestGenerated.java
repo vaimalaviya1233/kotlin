@@ -176,6 +176,12 @@ public class FirStandaloneNormalAnalysisSourceModuleAnalysisApiImportOptimizerTe
         }
 
         @Test
+        @TestMetadata("callables_extensions.kt")
+        public void testCallables_extensions() throws Exception {
+            runTest("analysis/analysis-api/testData/components/importOptimizer/analyseImports/kdocs/callables_extensions.kt");
+        }
+
+        @Test
         @TestMetadata("callables_member.kt")
         public void testCallables_member() throws Exception {
             runTest("analysis/analysis-api/testData/components/importOptimizer/analyseImports/kdocs/callables_member.kt");
