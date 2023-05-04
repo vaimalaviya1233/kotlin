@@ -259,7 +259,7 @@ fun BuildResult.assertCompilerArgument(
  *
  * Note: Log level of output must be set to [LogLevel.DEBUG].
  *
- * @param tasksPaths tasks' paths, for which command line arguments should be checked with give assertions
+ * @param tasksPaths tasks' paths, for which command line arguments should be checked with give assertions.
  * @param toolName name of build tool
  * @param assertions assertions, with will be applied to each command line arguments of each given task
  */
@@ -270,6 +270,21 @@ fun BuildResult.assertNativeTasksCommandLineArguments(
 ) = tasksPaths.forEach { taskPath ->
     assertions(extractNativeCompilerCommandLineArguments(getOutputForTask(taskPath), toolName))
 }
+
+/**
+ * Asserts environment variables of the given K/N compiler for given tasks' paths
+ *
+ * Note: Log level of output must be set to [LogLevel.DEBUG].
+ *
+ * @param tasksPaths tasks' paths, for which command line arguments should be checked with give assertions.
+ * @param toolName name of build tool
+ * @param assertions assertions, with will be applied to each command line arguments of each given task
+ */
+fun BuildResult.assertNativeTasksCustomEnvironment(
+    vararg tasksPaths: String,
+    toolName: NativeToolKind = NativeToolKind.KONANC,
+    assertions: (Map<String, String>) -> Unit,
+) = tasksPaths.forEach { taskPath -> assertions(extractNativeCustomEnvironment(taskPath, toolName)) }
 
 /**
  * Asserts that the given list of command line arguments does not contain any of the expected arguments.
@@ -308,3 +323,10 @@ fun BuildResult.assertCommandLineArgumentsContain(
         }
     }
 }
+
+private fun BuildResult.extractNativeCustomEnvironment(taskPath: String, toolName: NativeToolKind): Map<String, String> =
+    extractNativeToolSettings(getOutputForTask(taskPath), toolName, NativeToolSettingsKind.CUSTOM_ENV_VARIABLES).map {
+        val (key, value) = it.split("=")
+        key.trim() to value.trim()
+    }.toMap()
+

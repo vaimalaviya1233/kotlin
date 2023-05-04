@@ -108,7 +108,8 @@ fun KGPBaseTest.nativeProject(
     buildJdk: File? = null,
     localRepoDir: Path? = null,
     environmentVariables: EnvironmentalVariables = EnvironmentalVariables(),
-    test: TestProject.() -> Unit = {}
+    configureSubProjects: Boolean = false,
+    test: TestProject.() -> Unit = {},
 ): TestProject {
     val project = project(
         projectName = projectName,
@@ -124,6 +125,8 @@ fun KGPBaseTest.nativeProject(
         environmentVariables = environmentVariables,
     )
     project.configureSingleNativeTarget()
+    configureSubProjects.ifTrue { project.configureSingleNativeTargetInSubFolders() }
+    project.disableKotlinNativeCaches()
     project.test()
     return project
 }
@@ -141,7 +144,7 @@ fun TestProject.build(
     enableBuildScan: Boolean = this.enableBuildScan,
     buildOptions: BuildOptions = this.buildOptions,
     environmentVariables: EnvironmentalVariables = this.environmentVariables,
-    assertions: BuildResult.() -> Unit = {}
+    assertions: BuildResult.() -> Unit = {},
 ) {
     if (enableBuildScan) agreeToBuildScanService()
 
@@ -281,12 +284,14 @@ open class GradleProject(
 
     fun classesDir(
         sourceSet: String = "main",
-        language: String = "kotlin",
-    ): Path = projectPath.resolve("build/classes/$language/$sourceSet/")
+        targetName: String? = null,
+        language: String = "kotlin"
+    ): Path = projectPath.resolve("build/classes/$language/${targetName.orEmpty()}/$sourceSet/")
 
     fun kotlinClassesDir(
         sourceSet: String = "main",
-    ): Path = classesDir(sourceSet, language = "kotlin")
+        targetName: String? = null
+    ): Path = classesDir(sourceSet, targetName, language = "kotlin")
 
     fun javaClassesDir(
         sourceSet: String = "main",
@@ -630,6 +635,16 @@ private fun TestProject.configureSingleNativeTarget(preset: String = HostManager
     buildScript.modify {
         it.replace(SINGLE_NATIVE_TARGET_PLACEHOLDER, preset)
     }
+}
+
+private fun TestProject.configureSingleNativeTargetInSubFolders(preset: String = HostManager.host.presetName) {
+    projectPath.toFile().walk()
+        .filter { it.isFile && (it.name == "build.gradle.kts" || it.name == "build.gradle") }
+        .forEach { file ->
+            file.modify {
+                it.replace(SINGLE_NATIVE_TARGET_PLACEHOLDER, preset)
+            }
+        }
 }
 
 private fun TestProject.configureLocalRepository(localRepoDir: Path) {

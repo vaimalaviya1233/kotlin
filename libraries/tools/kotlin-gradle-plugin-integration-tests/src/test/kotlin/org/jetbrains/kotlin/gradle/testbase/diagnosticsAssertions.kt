@@ -21,6 +21,14 @@ fun BaseGradleIT.CompiledProject.assertNoDiagnostic(diagnosticFactory: ToolingDi
     output.assertNoDiagnostic(diagnosticFactory)
 }
 
+fun BuildResult.assertHasDiagnostic(diagnosticFactory: ToolingDiagnosticFactory, withSubstring: String? = null) {
+    output.assertHasDiagnostic(diagnosticFactory, withSubstring)
+}
+
+fun BuildResult.assertNoDiagnostic(diagnosticFactory: ToolingDiagnosticFactory) {
+    output.assertNoDiagnostic(diagnosticFactory)
+}
+
 fun String.assertHasDiagnostic(diagnosticFactory: ToolingDiagnosticFactory, withSubstring: String? = null) {
     val diagnosticMessage = extractVerboselyRenderedDiagnostic(diagnosticFactory, this)
     assertNotNull(diagnosticMessage) { "Diagnostic with id=${diagnosticFactory.id} not found" }

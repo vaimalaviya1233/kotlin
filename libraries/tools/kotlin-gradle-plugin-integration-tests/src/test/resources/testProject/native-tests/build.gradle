@@ -44,7 +44,6 @@ kotlin {
 // Check that test events are correctly reported in CLI.
 configure([hostTest, iosTest, iosArm64Test]){
     trackEnvironment("ANDROID_HOME")
-
     testLogging {
         events "passed", "skipped", "failed"
     }
