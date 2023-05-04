@@ -4,7 +4,7 @@
  */
 
 package org.jetbrains.kotlin.resolve.jvm.diagnostics;
-TEST
+TEST2
 import com.intellij.psi.PsiElement;
 import org.jetbrains.kotlin.config.LanguageFeature;
 import org.jetbrains.kotlin.descriptors.*;
