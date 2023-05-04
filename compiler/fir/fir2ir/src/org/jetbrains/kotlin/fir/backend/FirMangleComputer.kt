@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.backend.common.serialization.mangle.collectForMangle
 import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.synthetic.FirSyntheticPropertyAccessor
+import org.jetbrains.kotlin.fir.declarations.utils.isActual
 import org.jetbrains.kotlin.fir.declarations.utils.isExpect
 import org.jetbrains.kotlin.fir.declarations.utils.isStatic
 import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
@@ -158,8 +159,16 @@ open class FirMangleComputer(
             is ConeLookupTagBasedType -> {
                 when (val symbol = type.lookupTag.toSymbol(declarationSiteSession)) {
                     is FirTypeAliasSymbol -> {
-                        mangleType(tBuilder, type.fullyExpandedType(declarationSiteSession), declarationSiteSession)
-                        return
+                        // Modules with expect declarations (common) don't have info about actual types including actual type aliases
+                        // That's why it's impossible to expand type aliases during FIR2IR common modules conversion
+                        // But signatures should be the same in common and platform modules for correct FIR2IR platform module conversion
+                        // That's why actual type aliases should remain unexpanded
+                        if (symbol.isActual) {
+                            with(copy(MangleMode.FQNAME)) { symbol.fir.visit() }
+                        } else {
+                            mangleType(tBuilder, type.fullyExpandedType(declarationSiteSession), declarationSiteSession)
+                            return
+                        }
                     }
 
                     is FirClassSymbol -> with(copy(MangleMode.FQNAME)) { symbol.fir.visit() }

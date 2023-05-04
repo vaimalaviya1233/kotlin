@@ -33244,6 +33244,12 @@ public class FirLightTreeBlackBoxCodegenTestGenerated extends AbstractFirLightTr
                 }
 
                 @Test
+                @TestMetadata("dontExpandActualTypeAliasForFir2IrSignature.kt")
+                public void testDontExpandActualTypeAliasForFir2IrSignature() throws Exception {
+                    runTest("compiler/testData/codegen/box/multiplatform/k2/basic/dontExpandActualTypeAliasForFir2IrSignature.kt");
+                }
+
+                @Test
                 @TestMetadata("enumEntryNameCall.kt")
                 public void testEnumEntryNameCall() throws Exception {
                     runTest("compiler/testData/codegen/box/multiplatform/k2/basic/enumEntryNameCall.kt");

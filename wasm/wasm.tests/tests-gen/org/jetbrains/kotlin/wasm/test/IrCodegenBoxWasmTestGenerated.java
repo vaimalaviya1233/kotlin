@@ -20773,6 +20773,11 @@ public class IrCodegenBoxWasmTestGenerated extends AbstractIrCodegenBoxWasmTest 
                     runTest("compiler/testData/codegen/box/multiplatform/k2/basic/correctParentForTypeParameter.kt");
                 }
 
+                @TestMetadata("dontExpandActualTypeAliasForFir2IrSignature.kt")
+                public void testDontExpandActualTypeAliasForFir2IrSignature() throws Exception {
+                    runTest("compiler/testData/codegen/box/multiplatform/k2/basic/dontExpandActualTypeAliasForFir2IrSignature.kt");
+                }
+
                 @TestMetadata("enumEntryNameCall.kt")
                 public void testEnumEntryNameCall() throws Exception {
                     runTest("compiler/testData/codegen/box/multiplatform/k2/basic/enumEntryNameCall.kt");
