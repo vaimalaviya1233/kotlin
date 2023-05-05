@@ -6,7 +6,6 @@
 package org.jetbrains.kotlin.gradle.native
 
 import org.gradle.api.JavaVersion
-import org.gradle.testkit.runner.BuildResult
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.testbase.*
 import org.junit.jupiter.api.DisplayName
@@ -30,7 +29,7 @@ class AppleFrameworkIT : KGPBaseTest() {
     fun shouldAssembleAppleFrameworkForXcodeForIosArm64(
         gradleVersion: GradleVersion,
         agpVersion: String,
-        jdkProvider: JdkVersions.ProvidedJdk
+        jdkProvider: JdkVersions.ProvidedJdk,
     ) {
 
         nativeProject(
@@ -78,7 +77,7 @@ class AppleFrameworkIT : KGPBaseTest() {
     fun shouldAssembleAppleFrameworkForXcodeForArm64AndX64Simulators(
         gradleVersion: GradleVersion,
         agpVersion: String,
-        jdkProvider: JdkVersions.ProvidedJdk
+        jdkProvider: JdkVersions.ProvidedJdk,
     ) {
 
         nativeProject(
@@ -114,7 +113,7 @@ class AppleFrameworkIT : KGPBaseTest() {
     fun shouldCheckThatMacOSFrameworkHasSymlinks(
         gradleVersion: GradleVersion,
         agpVersion: String,
-        jdkProvider: JdkVersions.ProvidedJdk
+        jdkProvider: JdkVersions.ProvidedJdk,
     ) {
 
         nativeProject(
@@ -148,7 +147,7 @@ class AppleFrameworkIT : KGPBaseTest() {
     fun shouldFailWithExecutingEmbedAndSignAppleFrameworkForXcode(
         gradleVersion: GradleVersion,
         agpVersion: String,
-        jdkProvider: JdkVersions.ProvidedJdk
+        jdkProvider: JdkVersions.ProvidedJdk,
     ) {
         nativeProject("sharedAppleFramework", gradleVersion, buildJdk = jdkProvider.location) {
             buildAndFail(
@@ -167,7 +166,7 @@ class AppleFrameworkIT : KGPBaseTest() {
     fun shouldCheckAllRegisteredTasksWithXcodeEnvironmentForDebugIosArm64(
         gradleVersion: GradleVersion,
         agpVersion: String,
-        jdkProvider: JdkVersions.ProvidedJdk
+        jdkProvider: JdkVersions.ProvidedJdk,
     ) {
         val buildOptions = defaultBuildOptions.copy(
             androidVersion = agpVersion
@@ -212,7 +211,7 @@ class AppleFrameworkIT : KGPBaseTest() {
     fun shouldCheckEmbedAndSignAppleFrameworkForXcodeDoesNotRequireXcodeEnv(
         gradleVersion: GradleVersion,
         agpVersion: String,
-        jdkProvider: JdkVersions.ProvidedJdk
+        jdkProvider: JdkVersions.ProvidedJdk,
     ) {
         val buildOptions = defaultBuildOptions.copy(
             androidVersion = agpVersion
@@ -264,7 +263,7 @@ class AppleFrameworkIT : KGPBaseTest() {
     fun shouldCheckThatStaticFrameworkForArm64IsBuildAndNotEmbedded(
         gradleVersion: GradleVersion,
         agpVersion: String,
-        jdkProvider: JdkVersions.ProvidedJdk
+        jdkProvider: JdkVersions.ProvidedJdk,
     ) {
 
         nativeProject(
@@ -309,7 +308,7 @@ class AppleFrameworkIT : KGPBaseTest() {
     fun shouldReportConfErrorsToXcodeWhenRequestedByEmbedAndSign(
         gradleVersion: GradleVersion,
         agpVersion: String,
-        jdkProvider: JdkVersions.ProvidedJdk
+        jdkProvider: JdkVersions.ProvidedJdk,
     ) {
         val buildOptions = defaultBuildOptions.copy(
             androidVersion = agpVersion
@@ -354,7 +353,7 @@ class AppleFrameworkIT : KGPBaseTest() {
     fun shouldReportCompilationErrorsToXcodeWhenRequestedByEmbedAndSign(
         gradleVersion: GradleVersion,
         agpVersion: String,
-        jdkProvider: JdkVersions.ProvidedJdk
+        jdkProvider: JdkVersions.ProvidedJdk,
     ) {
         val buildOptions = defaultBuildOptions.copy(
             androidVersion = agpVersion
@@ -393,7 +392,7 @@ class AppleFrameworkIT : KGPBaseTest() {
     fun shouldPrintCompilationErrorsWithGradleStyle(
         gradleVersion: GradleVersion,
         agpVersion: String,
-        jdkProvider: JdkVersions.ProvidedJdk
+        jdkProvider: JdkVersions.ProvidedJdk,
     ) {
         val buildOptions = defaultBuildOptions.copy(
             androidVersion = agpVersion
@@ -432,7 +431,7 @@ class AppleFrameworkIT : KGPBaseTest() {
     fun shouldPrintCompilationErrorsWithXcodeStyle(
         gradleVersion: GradleVersion,
         agpVersion: String,
-        jdkProvider: JdkVersions.ProvidedJdk
+        jdkProvider: JdkVersions.ProvidedJdk,
     ) {
         val buildOptions = defaultBuildOptions.copy(
             androidVersion = agpVersion
@@ -475,7 +474,7 @@ class AppleFrameworkIT : KGPBaseTest() {
     fun shouldReportErrorsToXcodeWhenEmbedAndSignRequestedAndDisableCompilerDaemon(
         gradleVersion: GradleVersion,
         agpVersion: String,
-        jdkProvider: JdkVersions.ProvidedJdk
+        jdkProvider: JdkVersions.ProvidedJdk,
     ) {
         val buildOptions = defaultBuildOptions.copy(
             androidVersion = agpVersion
@@ -525,7 +524,7 @@ class AppleFrameworkIT : KGPBaseTest() {
     @JdkVersions(versions = [JavaVersion.VERSION_11])
     fun smokeTestWithAppleGradlePlugin(
         gradleVersion: GradleVersion,
-        providedJdk: JdkVersions.ProvidedJdk
+        providedJdk: JdkVersions.ProvidedJdk,
     ) {
 
         nativeProject(
@@ -537,29 +536,21 @@ class AppleFrameworkIT : KGPBaseTest() {
                 ":iosApp:dependencyInsight", "--configuration", configuration, "--dependency", "iosLib"
             )
 
-            fun BuildResult.assertContainsVariant(variantName: String) {
-                assertOutputContains(
-                    if (gradleVersion >= GradleVersion.version(TestVersions.Gradle.G_7_5))
-                        "Variant $variantName"
-                    else "variant \"$variantName\""
-                )
-            }
-
             build(*dependencyInsight("iosAppIosX64DebugImplementation")) {
-                assertContainsVariant("mainDynamicDebugFrameworkIos")
+                assertOutputContainsVariant("mainDynamicDebugFrameworkIos", gradleVersion)
             }
 
             build(*dependencyInsight("iosAppIosX64ReleaseImplementation")) {
-                assertContainsVariant("mainDynamicReleaseFrameworkIos")
+                assertOutputContainsVariant("mainDynamicReleaseFrameworkIos", gradleVersion)
             }
 
             // NB: '0' is required at the end since dependency is added with custom attribute and it creates new configuration
             build(*dependencyInsight("iosAppIosX64DebugImplementation0"), "-PmultipleFrameworks") {
-                assertContainsVariant("mainStaticDebugFrameworkIos")
+                assertOutputContainsVariant("mainStaticDebugFrameworkIos", gradleVersion)
             }
 
             build(*dependencyInsight("iosAppIosX64ReleaseImplementation0"), "-PmultipleFrameworks") {
-                assertContainsVariant("mainStaticReleaseFrameworkIos")
+                assertOutputContainsVariant("mainStaticReleaseFrameworkIos", gradleVersion)
             }
         }
     }

@@ -1065,35 +1065,9 @@ class GeneralNativeIT : KGPBaseTest() {
     fun testCinteropConfigurationsVariantAwareResolution(gradleVersion: GradleVersion) {
         nativeProject("native-cinterop", gradleVersion, configureSubProjects = true) {
             build(":publishedLibrary:publish")
-            // TODO(Dmitrii Krasnov): change it with new method,
-            //  when branch with apple framework migration will be merged
-            fun BuildResult.assertVariantInDependencyInsight(variantName: String) {
-                val isAtLeastGradle75 = gradleVersion >= GradleVersion.version("7.5")
-                try {
-                    if (isAtLeastGradle75) {
-                        assertOutputContains("Variant $variantName")
-                    } else {
-                        assertOutputContains("variant \"$variantName\" [")
-                    }
-                } catch (originalError: AssertionError) {
-                    val regexPattern = if (isAtLeastGradle75) {
-                        "Variant (.*?):"
-                    } else {
-                        "variant \"(.*?)\" \\["
-                    }
-                    val matchedVariants = Regex(regexPattern).findAll(output).toList()
-                    throw AssertionError(
-                        "Expected variant $variantName. " +
-                                if (matchedVariants.isNotEmpty())
-                                    "Matched instead: " + matchedVariants.joinToString { it.groupValues[1] }
-                                else "No match.",
-                        originalError
-                    )
-                }
-            }
 
             build(":dependencyInsight", "--configuration", "hostTestCInterop", "--dependency", "org.example:publishedLibrary") {
-                assertVariantInDependencyInsight("hostApiElements-published")
+                assertOutputContainsVariant("hostApiElements-published", gradleVersion)
             }
 
             subProject("projectLibrary").buildGradle.appendText(
@@ -1106,10 +1080,10 @@ class GeneralNativeIT : KGPBaseTest() {
             )
 
             build(":dependencyInsight", "--configuration", "hostTestCInterop", "--dependency", ":projectLibrary") {
-                assertVariantInDependencyInsight("hostCInteropApiElements")
+                assertOutputContainsVariant("hostCInteropApiElements", gradleVersion)
             }
             build(":dependencyInsight", "--configuration", "hostCompileKlibraries", "--dependency", ":projectLibrary") {
-                assertVariantInDependencyInsight("hostApiElements")
+                assertOutputContainsVariant("hostApiElements", gradleVersion)
             }
         }
     }

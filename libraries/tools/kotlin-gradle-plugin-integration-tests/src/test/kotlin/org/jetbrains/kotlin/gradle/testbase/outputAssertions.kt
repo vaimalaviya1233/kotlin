@@ -8,13 +8,14 @@ package org.jetbrains.kotlin.gradle.testbase
 import org.gradle.api.logging.LogLevel
 import org.gradle.api.logging.configuration.WarningMode
 import org.gradle.testkit.runner.BuildResult
+import org.gradle.util.GradleVersion
 
 /**
  * Asserts Gradle output contains [expectedSubString] string.
  */
 fun BuildResult.assertOutputContains(
     expectedSubString: String,
-    message: String = "Build output does not contain \"$expectedSubString\""
+    message: String = "Build output does not contain \"$expectedSubString\"",
 ) {
     assert(output.contains(expectedSubString)) {
         printBuildOutput()
@@ -26,7 +27,7 @@ fun BuildResult.assertOutputContains(
  * Asserts Gradle output contains any of [expectedSubString] strings.
  */
 fun BuildResult.assertOutputContainsAny(
-    vararg expectedSubStrings: String
+    vararg expectedSubStrings: String,
 ) {
     assert(expectedSubStrings.any { output.contains(it) }) {
         printBuildOutput()
@@ -39,7 +40,7 @@ fun BuildResult.assertOutputContainsAny(
  */
 fun BuildResult.assertOutputContainsExactTimes(
     expectedSubString: String,
-    expectedRepetitionTimes: Int = 1
+    expectedRepetitionTimes: Int = 1,
 ) {
     var currentOffset = 0
     var count = 0
@@ -103,7 +104,7 @@ fun BuildResult.assertOutputDoesNotContain(
  * Assert build output contains one or more strings matching [expected] regex.
  */
 fun BuildResult.assertOutputContains(
-    expected: Regex
+    expected: Regex,
 ) {
     assert(output.contains(expected)) {
         printBuildOutput()
@@ -116,7 +117,7 @@ fun BuildResult.assertOutputContains(
  * Asserts build output does not contain any lines matching [regexToCheck] regex.
  */
 fun BuildResult.assertOutputDoesNotContain(
-    regexToCheck: Regex
+    regexToCheck: Regex,
 ) {
     assert(!output.contains(regexToCheck)) {
         printBuildOutput()
@@ -134,14 +135,14 @@ fun BuildResult.assertOutputDoesNotContain(
  */
 fun BuildResult.assertOutputContainsExactlyTimes(
     expected: String,
-    expectedCount: Int = 1
+    expectedCount: Int = 1,
 ) {
     assertOutputContainsExactlyTimes(expected.toRegex(RegexOption.LITERAL), expectedCount)
 }
 
 fun BuildResult.assertOutputContainsExactlyTimes(
     expected: Regex,
-    expectedCount: Int = 1
+    expectedCount: Int = 1,
 ) {
     val occurrenceCount = expected.findAll(output).count()
     assert(occurrenceCount == expectedCount) {
@@ -155,7 +156,7 @@ fun BuildResult.assertOutputContainsExactlyTimes(
  * Assert build contains no warnings.
  */
 fun BuildResult.assertNoBuildWarnings(
-    expectedWarnings: Set<String> = emptySet()
+    expectedWarnings: Set<String> = emptySet(),
 ) {
     val cleanedOutput = expectedWarnings.fold(output) { acc, s ->
         acc.replace(s, "")
@@ -176,7 +177,7 @@ fun BuildResult.assertNoBuildWarnings(
  * Asserts compilation is running via Kotlin daemon with given jvm arguments.
  */
 fun BuildResult.assertKotlinDaemonJvmOptions(
-    expectedJvmArgs: List<String>
+    expectedJvmArgs: List<String>,
 ) {
     val jvmArgsCommonMessage = "Kotlin compile daemon JVM options: "
     assertOutputContains(jvmArgsCommonMessage)
@@ -266,7 +267,7 @@ fun BuildResult.assertCompilerArgument(
 fun BuildResult.assertNativeTasksCommandLineArguments(
     vararg tasksPaths: String,
     toolName: NativeToolKind = NativeToolKind.KONANC,
-    assertions: (List<String>) -> Unit
+    assertions: (List<String>) -> Unit,
 ) = tasksPaths.forEach { taskPath ->
     assertions(extractNativeCompilerCommandLineArguments(getOutputForTask(taskPath), toolName))
 }
@@ -295,7 +296,7 @@ fun BuildResult.assertNativeTasksCustomEnvironment(
  */
 fun BuildResult.assertCommandLineArgumentsDoNotContain(
     vararg expectedArgs: String,
-    commandLineArguments: List<String>
+    commandLineArguments: List<String>,
 ) {
     expectedArgs.forEach {
         assert(!commandLineArguments.contains(it)) {
@@ -314,13 +315,46 @@ fun BuildResult.assertCommandLineArgumentsDoNotContain(
  */
 fun BuildResult.assertCommandLineArgumentsContain(
     vararg expectedArgs: String,
-    commandLineArguments: List<String>
+    commandLineArguments: List<String>,
 ) {
     expectedArgs.forEach {
         assert(commandLineArguments.contains(it)) {
             printBuildOutput()
             "There is no ${it} in actual command line arguments are: ${commandLineArguments}"
         }
+    }
+}
+
+/**
+ * Asserts that the output of a Gradle build contains a variant with the given name.
+ *
+ * @param variantName The name of the variant to look for in the output.
+ * @param gradleVersion The version of Gradle used to build the variant.
+ * @throws AssertionError if no variant with the given name and Gradle version is found in the output.
+ */
+
+fun BuildResult.assertOutputContainsVariant(variantName: String, gradleVersion: GradleVersion) {
+    val isAtLeastGradle75 = gradleVersion >= GradleVersion.version(TestVersions.Gradle.G_7_5)
+    try {
+        assertOutputContains(
+            if (isAtLeastGradle75)
+                "Variant $variantName"
+            else "variant \"$variantName\" ["
+        )
+    } catch (originalError: AssertionError) {
+        val regexPattern = if (isAtLeastGradle75) {
+            "Variant (.*?):"
+        } else {
+            "variant \"(.*?)\" \\["
+        }
+        val matchedVariants = Regex(regexPattern).findAll(output).toList()
+        throw AssertionError(
+            "Expected variant $variantName. " +
+                    if (matchedVariants.isNotEmpty())
+                        "Found instead: " + matchedVariants.joinToString { it.groupValues[1] }
+                    else "No match.",
+            originalError
+        )
     }
 }
 
