@@ -20,14 +20,19 @@ dependencies {
     implementation(project(":compiler:incremental-compilation-impl"))
 }
 
-publish {
-    pom {
-        name.set("Compose Compiler Daemon")
-        developers {
-            developer {
-                name.set("The Android Open Source Project")
+val enableComposePublish = findProperty("kotlin.build.compose.publish.enabled") as String? == "true"
+if (enableComposePublish) {
+    publish {
+        pom {
+            name.set("Compose Compiler Daemon")
+            developers {
+                developer {
+                    name.set("The Android Open Source Project")
+                }
             }
         }
     }
 }
+
+standardPublicJars()
 

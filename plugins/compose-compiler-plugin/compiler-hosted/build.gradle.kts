@@ -3,6 +3,9 @@ plugins {
     id("jps-compatible")
 }
 
+group = "org.jetbrains.kotlin.experimental.compose"
+description = "Contains the Kotlin compiler plugin for Compose used in Android Studio and IDEA"
+
 dependencies {
     implementation(project(":kotlin-stdlib"))
     implementation(project(":js:js.frontend"))
@@ -34,3 +37,19 @@ tasks.withType<org.jetbrains.kotlin.gradle.dsl.KotlinCompile<*>> {
 tasks.withType<Test> {
     useJUnitPlatform()
 }
+
+val enableComposePublish = findProperty("kotlin.build.compose.publish.enabled") as String? == "true"
+if (enableComposePublish) {
+    publish {
+        pom {
+            name.set("AndroidX Compose Hosted Compiler Plugin")
+            developers {
+                developer {
+                    name.set("The Android Open Source Project")
+                }
+            }
+        }
+    }
+}
+
+standardPublicJars()
