@@ -15,6 +15,9 @@ application {
 
 dependencies {
     implementation(project(":plugins:compose-compiler-plugin:compiler-hosted"))
+    implementation(project(":compiler:cli"))
+    implementation(project(":kotlin-build-common"))
+    implementation(project(":compiler:incremental-compilation-impl"))
 }
 
 publish {
