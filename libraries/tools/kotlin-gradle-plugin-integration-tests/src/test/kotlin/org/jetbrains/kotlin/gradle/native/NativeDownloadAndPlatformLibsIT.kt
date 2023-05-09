@@ -23,7 +23,6 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.condition.DisabledOnOs
 import org.junit.jupiter.api.condition.OS
 import kotlin.io.path.appendText
-import kotlin.test.assertTrue
 
 @DisabledOnOs(
     OS.WINDOWS, disabledReason =
@@ -190,13 +189,14 @@ class NativeDownloadAndPlatformLibsIT : KGPBaseTest() {
     fun testSettingGenerationMode(gradleVersion: GradleVersion) {
         platformLibrariesProject("linuxX64", gradleVersion = gradleVersion) {
             buildWithLightDist("tasks", "-Pkotlin.native.platform.libraries.mode=metadata") {
-                assertTrue(
+                val expectedSequentialOptions = listOf("-mode", "metadata")
+                assert(
                     extractNativeCompilerCommandLineArguments(output, toolName = NativeToolKind.GENERATE_PLATFORM_LIBRARIES)
-                        .containsSequentially(
-                            "-mode",
-                            "metadata"
-                        )
-                )
+                        .containsSequentially(*expectedSequentialOptions.toTypedArray())
+                ) {
+                    printBuildOutput()
+                    "The output of the 'tasks' task does not contain options $expectedSequentialOptions sequentially."
+                }
             }
         }
     }
@@ -237,14 +237,12 @@ class NativeDownloadAndPlatformLibsIT : KGPBaseTest() {
 
         nativeProject("native-download-maven", gradleVersion = gradleVersion) {
 
-            addPropertyToGradleProperties(
-                "kotlin.native.distribution.downloadFromMaven",
-                mapOf("true" to "true")
-            )
-
             buildGradleKts.replaceFirst("// <MavenPlaceholder>", "maven(\"${maven}\")")
 
-            build("assemble") {
+            build(
+                "assemble",
+                "-Pkotlin.native.distribution.downloadFromMaven=true"
+            ) {
                 assertOutputContains("Unpack Kotlin/Native compiler to ")
                 assertOutputDoesNotContain("Generate platform libraries for ")
             }
@@ -271,12 +269,13 @@ class NativeDownloadAndPlatformLibsIT : KGPBaseTest() {
         }
 
         nativeProject("native-download-maven", gradleVersion = gradleVersion) {
-
-            addPropertyToGradleProperties("kotlin.native.distribution.downloadFromMaven", mapOf("true" to "true"))
-
             buildGradleKts.replaceFirst("// <MavenPlaceholder>", "maven(\"${maven}\")")
 
-            build("assemble", "-Pkotlin.native.distribution.type=light") {
+            build(
+                "assemble",
+                "-Pkotlin.native.distribution.type=light",
+                "-Pkotlin.native.distribution.downloadFromMaven=true"
+            ) {
                 assertOutputContains("Unpack Kotlin/Native compiler to ")
                 assertOutputContains("Generate platform libraries for ")
             }
@@ -287,17 +286,11 @@ class NativeDownloadAndPlatformLibsIT : KGPBaseTest() {
     @GradleTest
     fun shouldFailDownloadWithNoBuildInDefaultRepos(gradleVersion: GradleVersion) {
         nativeProject("native-download-maven", gradleVersion = gradleVersion) {
-
-            addPropertyToGradleProperties(
-                "kotlin.native.version",
-                mapOf("1.8.0-dev-1234" to "1.8.0-dev-1234")
-            )
-            addPropertyToGradleProperties(
-                "kotlin.native.distribution.downloadFromMaven",
-                mapOf("true" to "true")
-            )
-
-            buildAndFail("assemble") {
+            buildAndFail(
+                "assemble",
+                "-Pkotlin.native.version=1.8.0-dev-1234",
+                "-Pkotlin.native.distribution.downloadFromMaven=true",
+            ) {
                 assertOutputContains("Could not find org.jetbrains.kotlin:kotlin-native")
             }
         }
