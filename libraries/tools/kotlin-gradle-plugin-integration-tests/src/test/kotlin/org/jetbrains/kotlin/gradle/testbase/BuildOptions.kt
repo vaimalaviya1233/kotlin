@@ -44,7 +44,7 @@ data class BuildOptions(
     val keepIncrementalCompilationCachesInMemory: Boolean? = null,
     val useDaemonFallbackStrategy: Boolean = false,
     val verboseDiagnostics: Boolean = true,
-    val nativeCacheKind: NativeCacheKind = NativeCacheKind.NONE
+    val nativeOptions: NativeOptions = NativeOptions(),
 ) {
     val safeAndroidVersion: String
         get() = androidVersion ?: error("AGP version is expected to be set")
@@ -53,7 +53,7 @@ data class BuildOptions(
         val verbose: Boolean = false,
         val incrementalKapt: Boolean = false,
         val includeCompileClasspath: Boolean = false,
-        val classLoadersCacheSize: Int? = null
+        val classLoadersCacheSize: Int? = null,
     )
 
     data class JsOptions(
@@ -62,11 +62,21 @@ data class BuildOptions(
         val incrementalJs: Boolean? = null,
         val incrementalJsKlib: Boolean? = null,
         val incrementalJsIr: Boolean? = null,
-        val compileNoWarn: Boolean = true
+        val compileNoWarn: Boolean = true,
+    )
+
+    data class NativeOptions(
+        val cacheKind: NativeCacheKind = NativeCacheKind.NONE,
+        val distributionType: String? = null,
+        val distributionDownloadFromMaven: Boolean? = null,
+        val platformLibrariesMode: String? = null,
+        val reinstall: Boolean? = null,
+        val restrictedDistribution: Boolean? = null,
+        val version: String? = null,
     )
 
     fun toArguments(
-        gradleVersion: GradleVersion
+        gradleVersion: GradleVersion,
     ): List<String> {
         val arguments = mutableListOf<String>()
         when (logLevel) {
@@ -111,6 +121,8 @@ data class BuildOptions(
         }
 
         arguments.add(if (buildCacheEnabled) "--build-cache" else "--no-build-cache")
+
+        addNativeOptionsToArguments(arguments)
 
         if (kaptOptions != null) {
             arguments.add("-Pkapt.verbose=${kaptOptions.verbose}")
@@ -172,17 +184,42 @@ data class BuildOptions(
             arguments.add("-Pkotlin.internal.verboseDiagnostics=$verboseDiagnostics")
         }
 
-        arguments.add("-Pkotlin.native.cacheKind=${nativeCacheKind.name.lowercase()}")
-
         arguments.addAll(freeArgs)
 
         return arguments.toList()
+    }
+
+    private fun addNativeOptionsToArguments(
+        arguments: MutableList<String>,
+    ) {
+
+        arguments.add("-Pkotlin.native.cacheKind=${nativeOptions.cacheKind.name.lowercase()}")
+
+        nativeOptions.distributionDownloadFromMaven?.let {
+            arguments.add("-Pkotlin.native.distribution.downloadFromMaven=${it}")
+        }
+        nativeOptions.distributionType?.let {
+            arguments.add("-Pkotlin.native.distribution.type=${it}")
+        }
+        nativeOptions.platformLibrariesMode?.let {
+            arguments.add("-Pkotlin.native.platform.libraries.mode=${it}")
+        }
+        nativeOptions.reinstall?.let {
+            arguments.add("-Pkotlin.native.reinstall=${it}")
+        }
+        nativeOptions.restrictedDistribution?.let {
+            arguments.add("-Pkotlin.native.restrictedDistribution=${it}")
+        }
+        nativeOptions.version?.let {
+            arguments.add("-Pkotlin.native.version=${it}")
+        }
+
     }
 }
 
 fun BuildOptions.suppressDeprecationWarningsOn(
     @Suppress("UNUSED_PARAMETER") reason: String, // just to require specifying a reason for suppressing
-    predicate: (BuildOptions) -> Boolean
+    predicate: (BuildOptions) -> Boolean,
 ) = if (predicate(this)) {
     copy(warningMode = WarningMode.Summary)
 } else {
@@ -192,7 +229,7 @@ fun BuildOptions.suppressDeprecationWarningsOn(
 fun BuildOptions.suppressDeprecationWarningsSinceGradleVersion(
     gradleVersion: String,
     currentGradleVersion: GradleVersion,
-    reason: String
+    reason: String,
 ) = suppressDeprecationWarningsOn(reason) {
     currentGradleVersion >= GradleVersion.version(gradleVersion)
 }

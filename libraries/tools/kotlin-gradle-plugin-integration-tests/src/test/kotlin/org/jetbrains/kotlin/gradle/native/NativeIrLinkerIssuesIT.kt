@@ -332,7 +332,7 @@ internal class NativeIrLinkerIssuesIT : KGPBaseTest() {
         nativeProject(
             directoryPrefix + "/" + projectName,
             gradleVersion = gradleVersion,
-            buildOptions = defaultBuildOptions.copy(nativeCacheKind = nativeCacheKind),
+            buildOptions = defaultBuildOptions.copy(nativeOptions = BuildOptions.NativeOptions(cacheKind = nativeCacheKind)),
             localRepoDir = localRepo
         ) {
             block()
