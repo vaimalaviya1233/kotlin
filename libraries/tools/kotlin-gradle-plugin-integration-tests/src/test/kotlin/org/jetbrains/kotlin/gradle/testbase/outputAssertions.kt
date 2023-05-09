@@ -24,7 +24,7 @@ fun BuildResult.assertOutputContains(
 }
 
 /**
- * Asserts Gradle output contains any of [expectedSubString] strings.
+ * Asserts Gradle output contains any of [expectedSubStrings] strings.
  */
 fun BuildResult.assertOutputContainsAny(
     vararg expectedSubStrings: String,
@@ -256,9 +256,25 @@ fun BuildResult.assertCompilerArgument(
 }
 
 /**
- * Asserts command line arguments of the given K/N compiler for given tasks' paths
+ * Asserts classpath of the given K/N compiler tool for given tasks' paths.
  *
  * Note: Log level of output must be set to [LogLevel.DEBUG].
+ *
+ * @param tasksPaths tasks' paths, for which classpath should be checked with give assertions
+ * @param toolName name of build tool
+ * @param assertions assertions, with will be applied to each classpath of each given task
+ */
+fun BuildResult.assertNativeTasksClasspath(
+    vararg tasksPaths: String,
+    toolName: NativeToolKind = NativeToolKind.KONANC,
+    assertions: (List<String>) -> Unit
+) = tasksPaths.forEach { taskPath -> assertions(extractNativeCompilerClasspath(getOutputForTask(taskPath, infoLog = true), toolName)) }
+
+
+/**
+ * Asserts command line arguments of the given K/N compiler for given tasks' paths
+ *
+ * Note: Log level of output must be set to [LogLevel.INFO].
  *
  * @param tasksPaths tasks' paths, for which command line arguments should be checked with give assertions.
  * @param toolName name of build tool
@@ -269,7 +285,12 @@ fun BuildResult.assertNativeTasksCommandLineArguments(
     toolName: NativeToolKind = NativeToolKind.KONANC,
     assertions: (List<String>) -> Unit,
 ) = tasksPaths.forEach { taskPath ->
-    assertions(extractNativeCompilerCommandLineArguments(getOutputForTask(taskPath), toolName))
+    assertions(
+        extractNativeCompilerCommandLineArguments(
+            getOutputForTask(taskPath, infoLog = true),
+            toolName
+        )
+    )
 }
 
 /**
@@ -359,7 +380,7 @@ fun BuildResult.assertOutputContainsNativeFrameworkVariant(variantName: String, 
 }
 
 private fun BuildResult.extractNativeCustomEnvironment(taskPath: String, toolName: NativeToolKind): Map<String, String> =
-    extractNativeToolSettings(getOutputForTask(taskPath), toolName, NativeToolSettingsKind.CUSTOM_ENV_VARIABLES).map {
+    extractNativeToolSettings(getOutputForTask(taskPath, infoLog = true), toolName, NativeToolSettingsKind.CUSTOM_ENV_VARIABLES).map {
         val (key, value) = it.split("=")
         key.trim() to value.trim()
     }.toMap()

@@ -133,7 +133,7 @@ class ExplicitApiIT : KGPBaseTest() {
                 else -> null
             }
             if (nativeTaskName != null) {
-                build(nativeTaskName) {
+                build(nativeTaskName, buildOptions = this.buildOptions.copy(logLevel = LogLevel.INFO)) {
                     assertTasksExecuted(nativeTaskName)
                     assertNativeTasksCommandLineArguments(nativeTaskName) {
                         assertCommandLineArgumentsContain("-Xexplicit-api=warning", commandLineArguments = it)
