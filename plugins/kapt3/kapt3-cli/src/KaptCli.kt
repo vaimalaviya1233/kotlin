@@ -104,10 +104,10 @@ private fun transformKaptToolArgs(args: List<String>, messageCollector: MessageC
         transformed += kaptArg(option.pluginOption, transformedOption)
     }
 
-    val isK2 = "-Xuse-k2" in transformed ||
+    val isK2 = "-Xdisable-kapt-fallback-mode" in transformed && ("-Xuse-k2" in transformed ||
             transformed.any { it.startsWith("-language-version=2") } ||
             transformed.indexOf("-language-version").takeIf { it >= 0 && it < transformed.size - 1 }
-                ?.let { transformed[it + 1].startsWith('2') } == true
+                ?.let { transformed[it + 1].startsWith('2') } == true)
 
     if (!isTest) {
         val kaptCompilerPluginFile = findKaptCompilerPlugin(isK2)

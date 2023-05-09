@@ -57,6 +57,7 @@ fun CompilerConfiguration.setupCommonArguments(
 }
 
 fun switchToFallbackModeIfNecessary(arguments: CommonCompilerArguments, messageCollector: MessageCollector) {
+    if (arguments.disableKaptFallbackMode) return
     val isK2 = arguments.useK2 || (arguments.languageVersion?.startsWith('2') ?: (LanguageVersion.LATEST_STABLE >= LanguageVersion.KOTLIN_2_0))
     if (isK2) {
         val isKaptUsed = arguments.pluginOptions?.any { it.startsWith("plugin:org.jetbrains.kotlin.kapt3") } == true
