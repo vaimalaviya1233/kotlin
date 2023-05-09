@@ -51,8 +51,11 @@ val libraries by configurations.creating {
 val librariesStripVersion by configurations.creating
 
 // Compiler plugins should be copied without `kotlin-` prefix
-val compilerPlugins by configurations.creating  {
+val compilerPlugins by configurations.creating {
     exclude("org.jetbrains.kotlin", "kotlin-stdlib-common")
+
+    isCanBeConsumed = false
+    isCanBeResolved = true
 }
 
 val sources by configurations.creating {
@@ -119,6 +122,9 @@ val distCompilerPluginProjects = listOf(
     ":kotlin-lombok-compiler-plugin",
     ":kotlin-assignment-compiler-plugin"
 )
+val distCompilerPluginProjectsCompat = listOf(
+    ":kotlinx-serialization-compiler-plugin",
+)
 
 val distSourcesProjects = listOfNotNull(
     ":kotlin-annotations-jvm",
@@ -167,6 +173,16 @@ dependencies {
 
     distCompilerPluginProjects.forEach {
         compilerPlugins(project(it)) { isTransitive = false }
+    }
+    distCompilerPluginProjectsCompat.forEach {
+        compilerPlugins(
+            project(
+                mapOf(
+                    "path" to it,
+                    "configuration" to "distCompat"
+                )
+            )
+        )
     }
 
     distSourcesProjects.forEach {
