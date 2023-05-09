@@ -126,7 +126,6 @@ fun KGPBaseTest.nativeProject(
     )
     project.configureSingleNativeTarget()
     configureSubProjects.ifTrue { project.configureSingleNativeTargetInSubFolders() }
-    project.disableKotlinNativeCaches()
     project.test()
     return project
 }

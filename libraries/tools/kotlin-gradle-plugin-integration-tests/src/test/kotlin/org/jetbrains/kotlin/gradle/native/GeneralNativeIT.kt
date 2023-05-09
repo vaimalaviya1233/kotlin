@@ -30,7 +30,6 @@ import org.jetbrains.kotlin.konan.target.presetName
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.condition.DisabledOnOs
-import org.junit.jupiter.api.condition.EnabledOnOs
 import org.junit.jupiter.api.condition.OS
 import java.io.File
 import java.nio.file.Files
@@ -213,7 +212,7 @@ class GeneralNativeIT : KGPBaseTest() {
         }
     }
 
-    @EnabledOnOs(OS.MAC)
+    @OsCondition(supportedOn = [OS.MAC], enabledOnCI = [OS.MAC])
     @DisplayName("Can provide native framework artifact")
     @GradleTest
     fun testCanProvideNativeFrameworkArtifact(gradleVersion: GradleVersion) {
@@ -289,7 +288,7 @@ class GeneralNativeIT : KGPBaseTest() {
         }
     }
 
-    @EnabledOnOs(OS.MAC)
+    @OsCondition(supportedOn = [OS.MAC], enabledOnCI = [OS.MAC])
     @DisplayName("Can provide native framework")
     @GradleTest
     fun testCanProduceNativeFrameworks(gradleVersion: GradleVersion) {
@@ -420,7 +419,7 @@ class GeneralNativeIT : KGPBaseTest() {
         )
     }
 
-    @EnabledOnOs(OS.MAC)
+    @OsCondition(supportedOn = [OS.MAC], enabledOnCI = [OS.MAC])
     @DisplayName("Checks exporting non api framework")
     @GradleTest
     fun testExportApiOnlyToFrameworks(gradleVersion: GradleVersion) {
