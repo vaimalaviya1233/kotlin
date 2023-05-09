@@ -160,7 +160,6 @@ internal abstract class SourceBasedCompilation<A : TestCompilationArtifact>(
     }
 
     override fun applyDependencies(argsBuilder: ArgsBuilder): Unit = with(argsBuilder) {
-        addFlattened(dependencies.libraries) { library -> listOf("-l", library.path) }
         dependencies.friends.takeIf(Collection<*>::isNotEmpty)?.let { friends ->
             add("-friend-modules", friends.joinToString(File.pathSeparator) { friend -> friend.path })
         }
@@ -202,13 +201,28 @@ internal class LibraryCompilation(
     dependencies = CategorizedDependencies(dependencies),
     expectedArtifact = expectedArtifact
 ) {
+
+    private val headerKlibsMode: HeaderKlibsMode = settings.get()
     override val binaryOptions get() = BinaryOptions.RuntimeAssertionsMode.defaultForTesting
 
+    override fun applyDependencies(argsBuilder: ArgsBuilder) = with(argsBuilder) {
+        addFlattened(dependencies.libraries) { library -> listOf("-l", library.header.takeIf {
+                headerKlibsMode == HeaderKlibsMode.ENABLED && library.hasHeader
+                        &&
+                    println("using header: ${expectedArtifact.header}").let { true }
+            } ?: library.path)
+        }
+        super.applyDependencies(argsBuilder)
+    }
     override fun applySpecificArgs(argsBuilder: ArgsBuilder) = with(argsBuilder) {
         add(
             "-produce", "library",
-            "-output", expectedArtifact.path
+            "-output", expectedArtifact.path,
         )
+        if (headerKlibsMode == HeaderKlibsMode.ENABLED) {
+            add("-Xheader-klib=${expectedArtifact.header}")
+            expectedArtifact.hasHeader = true
+        }
         super.applySpecificArgs(argsBuilder)
     }
 }
@@ -356,6 +370,7 @@ internal class ExecutableCompilation(
 
     override fun applyDependencies(argsBuilder: ArgsBuilder): Unit = with(argsBuilder) {
         super.applyDependencies(argsBuilder)
+        addFlattened(dependencies.libraries) { library -> listOf("-l", library.path) }
         cacheMode.staticCacheForDistributionLibrariesRootDir?.let { cacheRootDir -> add("-Xcache-directory=$cacheRootDir") }
         add(dependencies.uniqueCacheDirs) { libraryCacheDir -> "-Xcache-directory=${libraryCacheDir.path}" }
     }

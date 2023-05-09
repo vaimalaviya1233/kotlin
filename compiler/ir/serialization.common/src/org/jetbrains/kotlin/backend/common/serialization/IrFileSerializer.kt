@@ -27,8 +27,11 @@ import org.jetbrains.kotlin.library.impl.IrMemoryArrayWriter
 import org.jetbrains.kotlin.library.impl.IrMemoryDeclarationWriter
 import org.jetbrains.kotlin.library.impl.IrMemoryStringWriter
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.resolve.descriptorUtil.isEffectivelyPrivateApi
+import org.jetbrains.kotlin.resolve.descriptorUtil.isEffectivelyPublicApi
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.utils.filterIsInstanceAnd
+import org.jetbrains.kotlin.utils.addToStdlib.applyIf
 import java.io.File
 import org.jetbrains.kotlin.backend.common.serialization.proto.AccessorIdSignature as ProtoAccessorIdSignature
 import org.jetbrains.kotlin.backend.common.serialization.proto.Actual as ProtoActual
@@ -121,6 +124,7 @@ open class IrFileSerializer(
     private val compatibilityMode: CompatibilityMode,
     private val languageVersionSettings: LanguageVersionSettings,
     private val bodiesOnlyForInlines: Boolean = false,
+    private val skipPrivateApi: Boolean = false,
     private val skipExpects: Boolean = false,
     private val addDebugInfo: Boolean = true,
     private val normalizeAbsolutePaths: Boolean = false,
@@ -1348,9 +1352,9 @@ open class IrFileSerializer(
 
 // ---------- Top level ------------------------------------------------------
 
-    private fun serializeFileEntry(entry: IrFileEntry): ProtoFileEntry = ProtoFileEntry.newBuilder()
+    private fun serializeFileEntry(entry: IrFileEntry, includeLineStartOffsets: Boolean = true): ProtoFileEntry = ProtoFileEntry.newBuilder()
         .setName(entry.matchAndNormalizeFilePath())
-        .addAllLineStartOffset(entry.lineStartOffsets.asIterable())
+        .applyIf(includeLineStartOffsets) { addAllLineStartOffset(entry.lineStartOffsets.asIterable()) }
         .build()
 
     open fun backendSpecificExplicitRoot(node: IrAnnotationContainer): Boolean = false
@@ -1363,6 +1367,10 @@ open class IrFileSerializer(
         if (backendSpecificSerializeAllMembers(parent)) return true
         if (bodiesOnlyForInlines && member is IrAnonymousInitializer && parent.visibility != DescriptorVisibilities.LOCAL)
             return false
+        val descriptor = member.descriptor
+        if (skipPrivateApi && descriptor is DeclarationDescriptorWithVisibility && !descriptor.isEffectivelyPublicApi) {
+            return false
+        }
 
         return (!member.isFakeOverride)
     }
@@ -1419,12 +1427,17 @@ open class IrFileSerializer(
         val topLevelDeclarations = mutableListOf<SerializedDeclaration>()
 
         val proto = ProtoFile.newBuilder()
-            .setFileEntry(serializeFileEntry(file.fileEntry))
+            .setFileEntry(serializeFileEntry(file.fileEntry, includeLineStartOffsets = !skipPrivateApi))
             .addAllFqName(serializeFqName(file.fqName.asString()))
             .addAllAnnotation(serializeAnnotations(file.annotations))
 
         file.declarations.forEach {
-            if (skipExpects && it.descriptor.isExpectMember && !it.descriptor.isSerializableExpectClass) {
+            val descriptor = it.descriptor
+            if (skipPrivateApi && descriptor is DeclarationDescriptorWithVisibility && !descriptor.isEffectivelyPublicApi) {
+                topLevelDeclarations.add(SkippedDeclaration)
+                return@forEach
+            }
+            if (skipExpects && descriptor.isExpectMember && !descriptor.isSerializableExpectClass) {
                 topLevelDeclarations.add(SkippedDeclaration)
                 return@forEach
             }

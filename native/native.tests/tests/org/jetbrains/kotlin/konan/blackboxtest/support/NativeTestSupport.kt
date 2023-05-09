@@ -208,6 +208,7 @@ private object NativeTestSupport {
         output += computeUsedPartialLinkageConfig(enclosingTestClass)
         output += computeCompilerOutputInterceptor(enforcedProperties)
         output += computeBinariesDirs(getOrCreateTestProcessSettings().get(), nativeTargets, enclosingTestClass)
+        output += computeHeaderKlibsMode(enforcedProperties)
 
         return nativeTargets
     }
@@ -236,6 +237,13 @@ private object NativeTestSupport {
             enforcedProperties,
             CompilerOutputInterceptor.values(),
             default = CompilerOutputInterceptor.DEFAULT
+        )
+
+    private fun computeHeaderKlibsMode(enforcedProperties: EnforcedProperties): HeaderKlibsMode =
+        ClassLevelProperty.HEADER_KLIB_MODE.readValue(
+            enforcedProperties,
+            HeaderKlibsMode.values(),
+            default = HeaderKlibsMode.DISABLED
         )
 
     private fun computeGCType(enforcedProperties: EnforcedProperties): GCType =

@@ -73,6 +73,8 @@ class KonanConfigKeys {
                 = CompilerConfigurationKey.create("provide manifest addend file")
         val METADATA_KLIB: CompilerConfigurationKey<Boolean>
                 = CompilerConfigurationKey.create("metadata klib")
+        val HEADER_KLIB: CompilerConfigurationKey<String?>
+                = CompilerConfigurationKey.create("header klib")
         val MODULE_NAME: CompilerConfigurationKey<String?>
                 = CompilerConfigurationKey.create("module name")
         val NATIVE_LIBRARY_FILES: CompilerConfigurationKey<List<String>>
@@ -164,6 +166,7 @@ class KonanConfigKeys {
         val SERIALIZED_DEPENDENCIES: CompilerConfigurationKey<String?> = CompilerConfigurationKey.create("path to serialized dependencies for native linking")
         val SAVE_DEPENDENCIES_PATH: CompilerConfigurationKey<String?> = CompilerConfigurationKey.create("path to save serialized dependencies to")
         val SAVE_LLVM_IR_DIRECTORY: CompilerConfigurationKey<String?> = CompilerConfigurationKey.create("directory to store LLVM IR from phases")
+
     }
 }
 
