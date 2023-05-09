@@ -5,7 +5,7 @@ plugins {
 kotlin.jvmToolchain(11)
 
 dependencies {
-    api(project(":plugins:compose-compiler-plugin:compiler-hosted"))
+    compileOnly(project(":plugins:compose-compiler-plugin:compiler-hosted"))
 }
 
 description = "Compiler plugin that enables Compose"
@@ -25,4 +25,10 @@ if (enableComposePublish) {
     }
 }
 
-standardPublicJars()
+runtimeJarWithRelocation {
+    configurations = listOf(project.configurations.compileClasspath.get())
+    relocate("com.intellij", "org.jetbrains.kotlin.com.intellij")
+}
+
+sourcesJar()
+javadocJar()
