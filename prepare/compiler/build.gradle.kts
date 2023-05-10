@@ -57,6 +57,12 @@ val compilerPlugins by configurations.creating {
     isCanBeConsumed = false
     isCanBeResolved = true
 }
+val compilerPluginsCompat by configurations.creating {
+    exclude("org.jetbrains.kotlin", "kotlin-stdlib-common")
+
+    isCanBeConsumed = false
+    isCanBeResolved = true
+}
 
 val sources by configurations.creating {
     exclude("org.jetbrains.kotlin", "kotlin-stdlib-common")
@@ -175,7 +181,7 @@ dependencies {
         compilerPlugins(project(it)) { isTransitive = false }
     }
     distCompilerPluginProjectsCompat.forEach {
-        compilerPlugins(
+        compilerPluginsCompat(
             project(
                 mapOf(
                     "path" to it,
@@ -381,6 +387,7 @@ val distKotlinc = distTask<Sync>("distKotlinc") {
     val librariesStripVersionFiles = files(librariesStripVersion)
     val sourcesFiles = files(sources)
     val compilerPluginsFiles = files(compilerPlugins)
+    val compilerPluginsCompatFiles = files(compilerPluginsCompat)
     into("lib") {
         from(jarFiles) { rename { "$compilerBaseName.jar" } }
         from(librariesFiles)
@@ -391,6 +398,9 @@ val distKotlinc = distTask<Sync>("distKotlinc") {
         }
         from(sourcesFiles)
         from(compilerPluginsFiles) {
+            rename { it.removePrefix("kotlin-") }
+        }
+        from(compilerPluginsCompatFiles) {
             rename { it.removePrefix("kotlin-") }
         }
     }
