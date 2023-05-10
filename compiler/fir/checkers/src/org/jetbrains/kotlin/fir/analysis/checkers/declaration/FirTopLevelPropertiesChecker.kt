@@ -8,6 +8,8 @@ package org.jetbrains.kotlin.fir.analysis.checkers.declaration
 import org.jetbrains.kotlin.KtFakeSourceElementKind
 import org.jetbrains.kotlin.KtSourceElement
 import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.config.LanguageVersionSettings
+import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.diagnostics.reportOn
@@ -134,7 +136,8 @@ internal fun checkPropertyInitializer(
             val propertySource = property.source ?: return
             val isExternal = property.isEffectivelyExternal(containingClass, context)
             val isCorrectlyInitialized =
-                property.initializer != null || isDefinitelyAssignedInConstructor && !property.hasSetterAccessorImplementation && !property.isOpen
+                property.initializer != null || isDefinitelyAssignedInConstructor && !property.hasSetterAccessorImplementation &&
+                        property.getEffectiveModality(containingClass, context.languageVersionSettings) != Modality.OPEN
             if (
                 backingFieldRequired &&
                 !inInterface &&
@@ -176,3 +179,9 @@ private val FirProperty.hasSetterAccessorImplementation: Boolean
 private val FirProperty.hasAnyAccessorImplementation: Boolean
     get() = getter.hasImplementation || setter.hasImplementation
 
+private fun FirProperty.getEffectiveModality(containingClass: FirClass?, languageVersionSettings: LanguageVersionSettings): Modality? =
+    when (languageVersionSettings.supportsFeature(LanguageFeature.TakeIntoAccountEffectivelyFinalInMustBeInitializedCheck) &&
+            status.modality == Modality.OPEN && containingClass?.status?.modality == Modality.FINAL) {
+        true -> Modality.FINAL
+        false -> status.modality
+    }
