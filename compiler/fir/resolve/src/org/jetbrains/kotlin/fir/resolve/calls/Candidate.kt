@@ -5,8 +5,12 @@
 
 package org.jetbrains.kotlin.fir.resolve.calls
 
+import org.jetbrains.kotlin.KtFakeSourceElementKind
+import org.jetbrains.kotlin.fakeElement
 import org.jetbrains.kotlin.fir.declarations.FirValueParameter
 import org.jetbrains.kotlin.fir.expressions.FirExpression
+import org.jetbrains.kotlin.fir.expressions.FirThisReceiverExpression
+import org.jetbrains.kotlin.fir.expressions.builder.buildThisReceiverExpressionCopy
 import org.jetbrains.kotlin.fir.expressions.impl.FirExpressionStub
 import org.jetbrains.kotlin.fir.expressions.impl.FirNoReceiverExpression
 import org.jetbrains.kotlin.fir.resolve.inference.InferenceComponents
@@ -105,14 +109,29 @@ class Candidate(
 
     // FirExpressionStub can be located here in case of callable reference resolution
     fun dispatchReceiverExpression(): FirExpression =
-        dispatchReceiver?.takeIf { it !is FirExpressionStub } ?: FirNoReceiverExpression
+        dispatchReceiver
+            ?.takeIf { it !is FirExpressionStub }
+            ?.let(::applyImplicitReceiverSourceIfNecessary)
+            ?: FirNoReceiverExpression
 
     // FirExpressionStub can be located here in case of callable reference resolution
     fun chosenExtensionReceiverExpression(): FirExpression =
-        chosenExtensionReceiver?.takeIf { it !is FirExpressionStub } ?: FirNoReceiverExpression
+        chosenExtensionReceiver
+            ?.takeIf { it !is FirExpressionStub }
+            ?.let(::applyImplicitReceiverSourceIfNecessary)
+            ?: FirNoReceiverExpression
 
     fun contextReceiverArguments(): List<FirExpression> =
-        contextReceiverArguments ?: emptyList()
+        contextReceiverArguments?.map(::applyImplicitReceiverSourceIfNecessary) ?: emptyList()
+
+    private fun applyImplicitReceiverSourceIfNecessary(it: FirExpression): FirExpression {
+        if (it is FirThisReceiverExpression && it.isImplicit) {
+            return buildThisReceiverExpressionCopy(it) {
+                source = callInfo.callSite.source?.fakeElement(KtFakeSourceElementKind.ImplicitReceiver)
+            }
+        }
+        return it
+    }
 
     var hasVisibleBackingField = false
 
