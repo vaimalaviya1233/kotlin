@@ -333,7 +333,7 @@ fun BuildResult.assertCommandLineArgumentsContain(
  * @throws AssertionError if no variant with the given name and Gradle version is found in the output.
  */
 
-fun BuildResult.assertOutputContainsVariant(variantName: String, gradleVersion: GradleVersion) {
+fun BuildResult.assertOutputContainsNativeFrameworkVariant(variantName: String, gradleVersion: GradleVersion) {
     val isAtLeastGradle75 = gradleVersion >= GradleVersion.version(TestVersions.Gradle.G_7_5)
     try {
         assertOutputContains(

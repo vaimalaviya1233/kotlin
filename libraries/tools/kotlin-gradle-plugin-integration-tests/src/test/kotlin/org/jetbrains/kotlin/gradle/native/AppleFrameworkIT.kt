@@ -537,20 +537,20 @@ class AppleFrameworkIT : KGPBaseTest() {
             )
 
             build(*dependencyInsight("iosAppIosX64DebugImplementation")) {
-                assertOutputContainsVariant("mainDynamicDebugFrameworkIos", gradleVersion)
+                assertOutputContainsNativeFrameworkVariant("mainDynamicDebugFrameworkIos", gradleVersion)
             }
 
             build(*dependencyInsight("iosAppIosX64ReleaseImplementation")) {
-                assertOutputContainsVariant("mainDynamicReleaseFrameworkIos", gradleVersion)
+                assertOutputContainsNativeFrameworkVariant("mainDynamicReleaseFrameworkIos", gradleVersion)
             }
 
             // NB: '0' is required at the end since dependency is added with custom attribute and it creates new configuration
             build(*dependencyInsight("iosAppIosX64DebugImplementation0"), "-PmultipleFrameworks") {
-                assertOutputContainsVariant("mainStaticDebugFrameworkIos", gradleVersion)
+                assertOutputContainsNativeFrameworkVariant("mainStaticDebugFrameworkIos", gradleVersion)
             }
 
             build(*dependencyInsight("iosAppIosX64ReleaseImplementation0"), "-PmultipleFrameworks") {
-                assertOutputContainsVariant("mainStaticReleaseFrameworkIos", gradleVersion)
+                assertOutputContainsNativeFrameworkVariant("mainStaticReleaseFrameworkIos", gradleVersion)
             }
         }
     }
