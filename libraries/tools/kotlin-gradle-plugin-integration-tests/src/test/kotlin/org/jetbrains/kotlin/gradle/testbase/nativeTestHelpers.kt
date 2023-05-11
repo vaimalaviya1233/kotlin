@@ -70,3 +70,21 @@ fun extractNativeToolSettings(
     else
         settings.drop(1).map { it.trim() }.takeWhile { it != "]" }
 }
+
+internal object MPPNativeTargets {
+    val current = when {
+        HostManager.hostIsMingw -> "mingw64"
+        HostManager.hostIsLinux -> "linux64"
+        HostManager.hostIsMac -> "macos64"
+        else -> error("Unknown host")
+    }
+
+    val unsupported = when {
+        HostManager.hostIsMingw -> listOf("macos64")
+        HostManager.hostIsLinux -> listOf("macos64", "mingw64")
+        HostManager.hostIsMac -> listOf("linuxMipsel32")
+        else -> error("Unknown host")
+    }
+
+    val supported = listOf("linux64", "macos64", "mingw64").filter { !unsupported.contains(it) }
+}

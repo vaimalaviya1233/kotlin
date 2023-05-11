@@ -41,24 +41,6 @@ import kotlin.io.path.readText
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-internal object MPPNativeTargets {
-    val current = when {
-        HostManager.hostIsMingw -> "mingw64"
-        HostManager.hostIsLinux -> "linux64"
-        HostManager.hostIsMac -> "macos64"
-        else -> error("Unknown host")
-    }
-
-    val unsupported = when {
-        HostManager.hostIsMingw -> listOf("macos64")
-        HostManager.hostIsLinux -> listOf("macos64", "mingw64")
-        HostManager.hostIsMac -> listOf("linuxMipsel32")
-        else -> error("Unknown host")
-    }
-
-    val supported = listOf("linux64", "macos64", "mingw64").filter { !unsupported.contains(it) }
-}
-
 internal fun BaseGradleIT.transformNativeTestProject(
     projectName: String,
     wrapperVersion: GradleVersionRequired = defaultGradleVersion,
@@ -350,7 +332,7 @@ class GeneralNativeIT : KGPBaseTest() {
                 headerPaths.forEach { assertFileInProjectExists(it) }
                 frameworkPaths.forEach { assertDirectoryInProjectExists(it) }
 
-                assertTrue(projectPath.resolve(headerPaths[0]).readText().contains("+ (int32_t)exported"))
+                assertFileInProjectContains(headerPaths[0], "+ (int32_t)exported")
                 val xcodeMajorVersion = Xcode!!.currentVersion.split(".")[0].toInt()
 
                 // Check that by default release frameworks have bitcode embedded.
