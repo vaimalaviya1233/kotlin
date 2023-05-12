@@ -258,7 +258,7 @@ fun BuildResult.assertCompilerArgument(
 /**
  * Asserts classpath of the given K/N compiler tool for given tasks' paths.
  *
- * Note: Log level of output must be set to [LogLevel.DEBUG].
+ * Note: Log level of output must be set to [LogLevel.INFO].
  *
  * @param tasksPaths tasks' paths, for which classpath should be checked with give assertions
  * @param toolName name of build tool
@@ -296,7 +296,7 @@ fun BuildResult.assertNativeTasksCommandLineArguments(
 /**
  * Asserts environment variables of the given K/N compiler for given tasks' paths
  *
- * Note: Log level of output must be set to [LogLevel.DEBUG].
+ * Note: Log level of output must be set to [LogLevel.INFO].
  *
  * @param tasksPaths tasks' paths, for which command line arguments should be checked with give assertions.
  * @param toolName name of build tool
