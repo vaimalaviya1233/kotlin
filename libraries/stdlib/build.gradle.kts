@@ -184,7 +184,8 @@ kotlin {
         }
     }
     jsV1Target = js("jsV1", LEGACY) {
-        browser {
+        if (!kotlinBuildProperties.isTeamcityBuild) {
+            browser {}
         }
         nodejs {
             testTask {
@@ -231,7 +232,9 @@ kotlin {
         }
     }
     jsIrTarget = js(IR) {
-        browser {}
+        if (!kotlinBuildProperties.isTeamcityBuild) {
+            browser {}
+        }
         nodejs {
             testTask {
                 useMocha {
