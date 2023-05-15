@@ -56,9 +56,9 @@ internal class KtModuleProviderImpl(
             return builtinsModule
         }
 
-        return mainModules.first { module ->
+        return mainModules.firstOrNull { module ->
             containingFileAsVirtualFile in module.contentScope
-        }
+        } ?: builtinsModule
     }
 
     internal val binaryModules: List<KtBinaryModule> by lazy {
