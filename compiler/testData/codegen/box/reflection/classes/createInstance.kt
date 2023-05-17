@@ -1,4 +1,4 @@
-// TARGET_BACKEND: JVM
+// IGNORE_BACKEND: JS, NATIVE, WASM
 // WITH_REFLECT
 
 import kotlin.reflect.full.createInstance
@@ -38,6 +38,8 @@ class SeveralDefaultSecondaries {
 }
 class PrivateConstructor private constructor()
 object Object
+interface Interface
+enum class EnumFoo { A, B }
 
 // -----------
 
@@ -69,6 +71,8 @@ fun box(): String {
     testFail<SeveralDefaultSecondaries>()
     testFail<PrivateConstructor>()
     testFail<Object>()
+    testFail<Interface>()
+    testFail<EnumFoo>()
 
     return "OK"
 }
