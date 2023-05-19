@@ -1,5 +1,6 @@
 // IGNORE_BACKEND: JS, NATIVE, WASM
 // WITH_REFLECT
+// WITH_STDLIB
 
 import kotlin.reflect.full.createInstance
 import kotlin.test.assertTrue
