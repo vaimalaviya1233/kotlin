@@ -9,7 +9,6 @@ import groovy.json.StringEscapeUtils
 import org.gradle.api.logging.LogLevel.INFO
 import org.gradle.internal.os.OperatingSystem
 import org.jetbrains.kotlin.commonizer.CommonizerTarget
-import org.jetbrains.kotlin.gradle.testbase.TestVersions
 import org.jetbrains.kotlin.gradle.util.reportSourceSetCommonizerDependencies
 import org.jetbrains.kotlin.incremental.testingUtils.assertEqualDirectories
 import org.jetbrains.kotlin.konan.target.HostManager

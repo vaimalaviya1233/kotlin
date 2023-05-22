@@ -38,7 +38,6 @@ open class KotlinJsPlugin: Plugin<Project> {
 
         kotlinExtension.apply {
             irPreset = KotlinJsIrSingleTargetPreset(project)
-            legacyPreset = KotlinJsSingleTargetPreset(project)
         }
 
         project.runProjectConfigurationHealthCheckWhenEvaluated {

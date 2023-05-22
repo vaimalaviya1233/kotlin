@@ -6,15 +6,12 @@
 package org.jetbrains.kotlin.gradle
 
 import org.gradle.util.GradleVersion
-import org.jetbrains.kotlin.gradle.plugin.KotlinJsCompilerType
 import org.jetbrains.kotlin.gradle.testbase.*
 import org.junit.jupiter.api.DisplayName
 
 abstract class AbstractJsConfigurationCacheIT(protected val irBackend: Boolean) : KGPBaseTest() {
     @Suppress("DEPRECATION")
     private val defaultJsOptions = BuildOptions.JsOptions(
-        useIrBackend = irBackend,
-        jsCompilerType = if (irBackend) KotlinJsCompilerType.IR else KotlinJsCompilerType.LEGACY,
     )
 
     final override val defaultBuildOptions =
@@ -151,9 +148,6 @@ abstract class AbstractJsConfigurationCacheIT(protected val irBackend: Boolean) 
         }
     }
 }
-
-@JsGradlePluginTests
-class JsConfigurationCacheIT : AbstractJsConfigurationCacheIT(irBackend = false)
 
 @JsGradlePluginTests
 class JsIrConfigurationCacheIT : AbstractJsConfigurationCacheIT(irBackend = true)
