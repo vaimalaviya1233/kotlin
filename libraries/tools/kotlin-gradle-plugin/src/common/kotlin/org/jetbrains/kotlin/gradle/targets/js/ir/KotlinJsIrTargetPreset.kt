@@ -73,10 +73,7 @@ open class KotlinJsIrTargetPreset(
         KotlinJsIrCompilationFactory(forTarget)
 
     companion object {
-        val JS_PRESET_NAME = lowerCamelCaseName(
-            "js",
-            KotlinJsCompilerType.IR.lowerName
-        )
+        val JS_PRESET_NAME = "js"
     }
 }
 
