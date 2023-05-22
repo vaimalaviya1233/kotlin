@@ -55,8 +55,7 @@ internal class AndroidCompilationSourceSetsContainerFactory(
 internal object JsCompilationSourceSetsContainerFactory : KotlinCompilationImplFactory.KotlinCompilationSourceSetsContainerFactory {
     override fun create(target: KotlinTarget, compilationName: String): KotlinCompilationSourceSetsContainer {
         val defaultSourceSetName = lowerCamelCaseName(
-            if (target is KotlinJsTarget && target.irTarget != null) target.disambiguationClassifierInPlatform
-            else target.disambiguationClassifier,
+            target.disambiguationClassifier,
             compilationName
         )
 

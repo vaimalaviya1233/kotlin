@@ -50,9 +50,6 @@ constructor(
     open var isMpp: Boolean? = null
         internal set
 
-    var legacyTarget: KotlinJsTarget? = null
-        internal set
-
     override var moduleName: String? = null
         set(value) {
             check(!isBrowserConfigured && !isNodejsConfigured) {

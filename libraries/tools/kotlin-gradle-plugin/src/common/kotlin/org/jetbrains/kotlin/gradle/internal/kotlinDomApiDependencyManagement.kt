@@ -79,10 +79,6 @@ private fun KotlinTarget.addKotlinDomApiDependency(
     dependencies: DependencyHandler,
     coreLibrariesVersion: Provider<String>
 ) {
-    if (this is KotlinJsTarget) {
-        irTarget?.addKotlinDomApiDependency(configurations, dependencies, coreLibrariesVersion)
-    }
-
     compilations.configureEach { compilation ->
         if (compilation.platformType != KotlinPlatformType.js) return@configureEach
         if (compilation !is KotlinJsIrCompilation) return@configureEach

@@ -231,8 +231,6 @@ abstract class KotlinJsProjectExtension(project: Project) :
     KotlinJsCompilerTypeHolder {
     lateinit var irPreset: KotlinJsIrSingleTargetPreset
 
-    lateinit var legacyPreset: KotlinJsSingleTargetPreset
-
     private val targetSetObservers = mutableListOf<(KotlinJsTargetDsl?) -> Unit>()
 
     // target is public property
@@ -307,7 +305,7 @@ abstract class KotlinJsProjectExtension(project: Project) :
     @Suppress("DEPRECATION")
     private fun jsInternal(
         compiler: KotlinJsCompilerType? = null,
-        body: KotlinJsTargetDsl.() -> Unit
+        body: KotlinJsTargetDsl.() -> Unit,
     ): KotlinJsTargetDsl {
         if (_target != null) {
             val previousCompilerType = _target!!.calculateJsCompilerType()
@@ -321,31 +319,11 @@ abstract class KotlinJsProjectExtension(project: Project) :
             val compilerOrDefault = compilerOrFromProperties ?: defaultJsCompilerType
             reportJsCompilerMode(compilerOrDefault)
             warnAboutDeprecatedCompiler(project, compilerOrDefault)
-            val target: KotlinJsTargetDsl = when (compilerOrDefault) {
-                KotlinJsCompilerType.LEGACY -> legacyPreset
-                    .also {
-                        it.irPreset = null
-                    }
-                    .createTarget("js")
-
-                KotlinJsCompilerType.IR -> irPreset
-                    .also {
-                        it.mixedMode = false
-                    }
-                    .createTarget("js")
-
-                KotlinJsCompilerType.BOTH -> legacyPreset
-                    .also {
-                        irPreset.mixedMode = true
-                        it.irPreset = irPreset
-                    }
-                    .createTarget(
-                        lowerCamelCaseName(
-                            "js",
-                            LEGACY.lowerName
-                        )
-                    )
-            }
+            val target: KotlinJsTargetDsl = irPreset
+                .also {
+                    it.mixedMode = false
+                }
+                .createTarget("js")
 
             this._target = target
 
@@ -359,19 +337,19 @@ abstract class KotlinJsProjectExtension(project: Project) :
 
     fun js(
         compiler: KotlinJsCompilerType = defaultJsCompilerType,
-        body: KotlinJsTargetDsl.() -> Unit = { }
+        body: KotlinJsTargetDsl.() -> Unit = { },
     ): KotlinJsTargetDsl = jsInternal(compiler, body)
 
     fun js(
         compiler: String,
-        body: KotlinJsTargetDsl.() -> Unit = { }
+        body: KotlinJsTargetDsl.() -> Unit = { },
     ): KotlinJsTargetDsl = js(
         KotlinJsCompilerType.byArgument(compiler),
         body
     )
 
     fun js(
-        body: KotlinJsTargetDsl.() -> Unit = { }
+        body: KotlinJsTargetDsl.() -> Unit = { },
     ) = jsInternal(body = body)
 
     fun js() = js { }
@@ -410,7 +388,7 @@ abstract class KotlinCommonProjectExtension(project: Project) : KotlinSingleJava
         internal set
 
     open fun target(
-        body: KotlinWithJavaTarget<KotlinMultiplatformCommonOptions, KotlinMultiplatformCommonCompilerOptions>.() -> Unit
+        body: KotlinWithJavaTarget<KotlinMultiplatformCommonOptions, KotlinMultiplatformCommonCompilerOptions>.() -> Unit,
     ) = target.run(body)
 }
 

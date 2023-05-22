@@ -73,15 +73,6 @@ class KotlinProjectNpmResolver(
                     addCompilation(compilation)
                 }
             }
-
-            // Hack for mixed mode, when target is JS and contain JS-IR
-            if (target is KotlinJsTarget) {
-                target.irTarget?.compilations?.all { compilation ->
-                    if (compilation is KotlinJsCompilation) {
-                        addCompilation(compilation)
-                    }
-                }
-            }
         }
     }
 

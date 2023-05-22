@@ -82,22 +82,7 @@ constructor(
             return compilation.binaries.executableIrInternal(compilation)
         }
 
-        if (target is KotlinJsTarget) {
-            target.irTarget
-                ?.let { throw IllegalStateException("Can't use `executable()` with 'both' compiler type") }
-
-            target.whenBrowserConfigured {
-                (this as KotlinJsSubTarget).produceExecutable()
-            }
-
-            target.whenNodejsConfigured {
-                (this as KotlinJsSubTarget).produceExecutable()
-            }
-
-            return compilation.binaries.executableLegacyInternal(compilation)
-        }
-
-        throw GradleException("Target should be either KotlinJsTarget or KotlinJsIrTarget, but found $target")
+        throw GradleException("Target should KotlinJsIrTarget, but found $target")
     }
 
     internal fun executableIrInternal(compilation: KotlinJsCompilation): List<JsBinary> = createBinaries(
