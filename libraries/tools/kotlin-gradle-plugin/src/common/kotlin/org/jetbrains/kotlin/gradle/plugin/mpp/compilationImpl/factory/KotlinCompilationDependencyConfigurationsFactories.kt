@@ -15,7 +15,6 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.compilationImpl.KotlinCompilationC
 import org.jetbrains.kotlin.gradle.plugin.mpp.javaSourceSets
 import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.util.copyAttributes
 import org.jetbrains.kotlin.gradle.plugin.sources.METADATA_CONFIGURATION_NAME_SUFFIX
-import org.jetbrains.kotlin.gradle.targets.js.KotlinJsTarget
 import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrTarget
 import org.jetbrains.kotlin.gradle.utils.*
 
@@ -103,7 +102,6 @@ private fun interface ConfigurationNaming {
 
         private val KotlinTarget.disambiguationClassifierInPlatform: String?
             get() = when (this) {
-                is KotlinJsTarget -> disambiguationClassifierInPlatform
                 is KotlinJsIrTarget -> disambiguationClassifierInPlatform
                 else -> error("Unexpected target type of $this")
             }
