@@ -25,6 +25,17 @@ repositories {
     }
 }
 
+dependencies {
+    implicitDependencies("google:build-tools:r29.0.3:windows@zip")
+    implicitDependencies("google:build-tools:r29.0.3:linux@zip")
+    implicitDependencies("google:build-tools:r28.0.3:windows@zip")
+    implicitDependencies("google:build-tools:r28.0.3:linux@zip")
+    implicitDependencies("google:platform-tools:r28.0.1:linux@zip")
+    implicitDependencies("google:platform-tools:r28.0.1:windows@zip")
+    implicitDependencies("google:sdk-tools-windows:4333796@zip")
+    implicitDependencies("google:sdk-tools-linux:4333796@zip")
+}
+
 val androidSdk by configurations.creating
 val androidJar by configurations.creating
 val androidPlatform by configurations.creating
