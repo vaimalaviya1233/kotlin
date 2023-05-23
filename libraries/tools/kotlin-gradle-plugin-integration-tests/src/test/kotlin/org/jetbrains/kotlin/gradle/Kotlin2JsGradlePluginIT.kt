@@ -1614,16 +1614,6 @@ abstract class AbstractKotlin2JsGradlePluginIT(protected val irBackend: Boolean)
 
 @JsGradlePluginTests
 class GeneralKotlin2JsGradlePluginIT : KGPBaseTest() {
-    @DisplayName("js with both backends mode builds successfully")
-    @GradleTest
-    fun testJsBothModeWithTests(gradleVersion: GradleVersion) {
-        project("kotlin-js-both-mode-with-tests", gradleVersion) {
-            build("build") {
-                assertNoBuildWarnings(setOf("w: 'kotlin-js' Gradle plugin is deprecated and will be removed in the future."))
-            }
-        }
-    }
-
     @DisplayName("nodejs up-to-date check works")
     @GradleTest
     fun testNodeJsAndYarnDownload(gradleVersion: GradleVersion) {

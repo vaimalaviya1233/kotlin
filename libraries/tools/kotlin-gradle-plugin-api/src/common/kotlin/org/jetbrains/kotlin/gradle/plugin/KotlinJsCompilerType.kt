@@ -5,8 +5,6 @@
 
 package org.jetbrains.kotlin.gradle.plugin
 
-import java.util.*
-
 enum class KotlinJsCompilerType {
     IR;
 
@@ -22,16 +20,4 @@ enum class KotlinJsCompilerType {
                     "Unable to find $argument setting. Use [${values().toList().joinToString()}]"
                 )
     }
-}
-
-val KotlinJsCompilerType.lowerName
-    get() = name.toLowerCase(Locale.ENGLISH)
-
-fun String.removeJsCompilerSuffix(compilerType: KotlinJsCompilerType): String {
-    val truncatedString = removeSuffix(compilerType.lowerName)
-    if (this != truncatedString) {
-        return truncatedString
-    }
-
-    return removeSuffix(compilerType.lowerName.capitalize(Locale.ENGLISH))
 }
