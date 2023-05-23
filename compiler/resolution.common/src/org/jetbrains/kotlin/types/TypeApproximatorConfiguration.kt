@@ -56,6 +56,8 @@ open class TypeApproximatorConfiguration {
         override val errorType: Boolean get() = true
         override val integerLiteralConstantType: Boolean get() = true
         override val intersectionTypesInContravariantPositions: Boolean get() = true
+
+        override val typeVariable: (TypeVariableTypeConstructorMarker) -> Boolean get() = { true }
     }
 
     open class PublicDeclaration(override val localTypes: Boolean, override val anonymous: Boolean) : AllFlexibleSameValue() {
@@ -64,6 +66,8 @@ open class TypeApproximatorConfiguration {
         override val definitelyNotNullType: Boolean get() = false
         override val integerLiteralConstantType: Boolean get() = true
         override val intersectionTypesInContravariantPositions: Boolean get() = true
+
+        override val typeVariable: (TypeVariableTypeConstructorMarker) -> Boolean get() = { true }
 
         object SaveAnonymousTypes : PublicDeclaration(localTypes = false, anonymous = false)
         object ApproximateAnonymousTypes : PublicDeclaration(localTypes = false, anonymous = true)
