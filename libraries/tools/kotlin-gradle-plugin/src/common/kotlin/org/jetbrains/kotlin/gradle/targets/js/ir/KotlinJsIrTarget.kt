@@ -34,7 +34,6 @@ abstract class KotlinJsIrTarget
 constructor(
     project: Project,
     platformType: KotlinPlatformType,
-    internal val mixedMode: Boolean
 ) :
     KotlinTargetWithBinaries<KotlinJsIrCompilation, KotlinJsBinaryContainer>(project, platformType),
     KotlinTargetWithTests<JsAggregatingExecutionSource, KotlinJsReportAggregatingTestRun>,
@@ -60,7 +59,7 @@ constructor(
     override fun createUsageContexts(producingCompilation: KotlinCompilation<*>): Set<DefaultKotlinUsageContext> {
         val usageContexts = super.createUsageContexts(producingCompilation)
 
-        if (isMpp!! || mixedMode) return usageContexts
+        if (isMpp!!) return usageContexts
 
         return usageContexts +
                 DefaultKotlinUsageContext(
@@ -73,19 +72,9 @@ constructor(
 
     internal val commonFakeApiElementsConfigurationName: String
         get() = lowerCamelCaseName(
-            if (mixedMode)
-                disambiguationClassifierInPlatform
-            else
-                disambiguationClassifier,
+            disambiguationClassifier,
             "commonFakeApiElements"
         )
-
-    val disambiguationClassifierInPlatform: String?
-        get() = if (mixedMode) {
-            disambiguationClassifier?.removeJsCompilerSuffix(KotlinJsCompilerType.IR)
-        } else {
-            disambiguationClassifier
-        }
 
     override val binaries: KotlinJsBinaryContainer
         get() = compilations.withType(KotlinJsIrCompilation::class.java)

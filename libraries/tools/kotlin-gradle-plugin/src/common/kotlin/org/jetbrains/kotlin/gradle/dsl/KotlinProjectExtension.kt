@@ -270,9 +270,6 @@ abstract class KotlinJsProjectExtension(project: Project) :
             val compilerOrDefault = compiler ?: defaultJsCompilerType
             reportJsCompilerMode(compilerOrDefault)
             val target: KotlinJsTargetDsl = irPreset
-                .also {
-                    it.mixedMode = false
-                }
                 .createTarget("js")
 
             this._target = target

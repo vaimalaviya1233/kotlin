@@ -251,9 +251,6 @@ internal class PropertiesProvider private constructor(private val project: Proje
     val wasmStabilityNoWarn: Boolean
         get() = booleanProperty("kotlin.wasm.stability.nowarn") ?: false
 
-    val jsCompilerNoWarn: Boolean
-        get() = booleanProperty("$jsCompilerProperty.nowarn") ?: false
-
     val ignoreDisabledNativeTargets: Boolean?
         get() = booleanProperty(DisabledNativeTargetsReporter.DISABLE_WARNING_PROPERTY_NAME)
 
@@ -455,12 +452,6 @@ internal class PropertiesProvider private constructor(private val project: Proje
 
     val errorJsGenerateExternals: Boolean?
         get() = booleanProperty("kotlin.js.generate.externals")
-
-    /**
-     * Use Kotlin/JS backend compiler type
-     */
-    val jsCompiler: KotlinJsCompilerType?
-        get() = this.property(jsCompilerProperty)?.let { KotlinJsCompilerType.byArgumentOrNull(it) }
 
     /**
      * Use Kotlin/JS backend compiler publishing attribute
