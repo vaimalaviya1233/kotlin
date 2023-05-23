@@ -49,14 +49,3 @@ internal class AndroidCompilationSourceSetsContainerFactory(
         return KotlinCompilationSourceSetsContainer(target.project.kotlinExtension.sourceSets.maybeCreate(sourceSetName))
     }
 }
-
-internal object JsIrCompilationSourceSetsContainerFactory : KotlinCompilationImplFactory.KotlinCompilationSourceSetsContainerFactory {
-    override fun create(target: KotlinTarget, compilationName: String): KotlinCompilationSourceSetsContainer {
-        val defaultSourceSetName = lowerCamelCaseName(
-            target.disambiguationClassifier,
-            compilationName
-        )
-
-        return KotlinCompilationSourceSetsContainer(target.project.kotlinExtension.sourceSets.maybeCreate(defaultSourceSetName))
-    }
-}
