@@ -938,7 +938,8 @@ open class NewMultiplatformIT : BaseGradleIT() {
         )
         @Suppress("DEPRECATION")
         libProject.build(
-            "publish"
+            "publish",
+            options = buildOptions
         ) {
             assertSuccessful()
         }
