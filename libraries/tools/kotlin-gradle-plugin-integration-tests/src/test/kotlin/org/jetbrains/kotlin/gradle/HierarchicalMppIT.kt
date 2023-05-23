@@ -287,12 +287,12 @@ open class HierarchicalMppIT : KGPBaseTest() {
 
     @GradleTest
     @DisplayName("Works with published JS library")
-    fun testHmppWithPublishedJsBothDependency(gradleVersion: GradleVersion, @TempDir tempDir: Path) {
+    fun testHmppWithPublishedJsIrDependency(gradleVersion: GradleVersion, @TempDir tempDir: Path) {
         @Suppress("DEPRECATION")
         publishThirdPartyLib(
             projectName = "hierarchical-mpp-with-js-published-modules/third-party-lib",
             withGranularMetadata = true,
-            jsCompilerType = KotlinJsCompilerType.BOTH,
+            jsCompilerType = KotlinJsCompilerType.IR,
             gradleVersion = gradleVersion,
             localRepoDir = tempDir
         )

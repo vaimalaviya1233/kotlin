@@ -14,7 +14,7 @@ abstract class AbstractJsConfigurationCacheIT(protected val irBackend: Boolean) 
     @Suppress("DEPRECATION")
     private val defaultJsOptions = BuildOptions.JsOptions(
         useIrBackend = irBackend,
-        jsCompilerType = if (irBackend) KotlinJsCompilerType.IR else KotlinJsCompilerType.LEGACY,
+        jsCompilerType = KotlinJsCompilerType.IR,
     )
 
     final override val defaultBuildOptions =
@@ -151,9 +151,6 @@ abstract class AbstractJsConfigurationCacheIT(protected val irBackend: Boolean) 
         }
     }
 }
-
-@JsGradlePluginTests
-class JsConfigurationCacheIT : AbstractJsConfigurationCacheIT(irBackend = false)
 
 @JsGradlePluginTests
 class JsIrConfigurationCacheIT : AbstractJsConfigurationCacheIT(irBackend = true)

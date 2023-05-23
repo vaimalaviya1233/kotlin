@@ -30,18 +30,13 @@ class KotlinJsFirIncrementalGradlePluginIT : KotlinJsIr10IncrementalGradlePlugin
 }
 
 @JsGradlePluginTests
-open class KotlinJsLegacy10IncrementalGradlePluginIT : AbstractKotlinJsIncrementalGradlePluginIT(
-    irBackend = false
-)
-
-@JsGradlePluginTests
 abstract class AbstractKotlinJsIncrementalGradlePluginIT(
     protected val irBackend: Boolean
 ) : KGPBaseTest() {
     @Suppress("DEPRECATION")
     private val defaultJsOptions = BuildOptions.JsOptions(
         useIrBackend = irBackend,
-        jsCompilerType = if (irBackend) KotlinJsCompilerType.IR else KotlinJsCompilerType.LEGACY
+        jsCompilerType = KotlinJsCompilerType.IR
     )
 
     override val defaultBuildOptions =
