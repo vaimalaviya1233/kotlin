@@ -26,8 +26,8 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinUsages
 import org.jetbrains.kotlin.gradle.plugin.mpp.NativeBuildType
 import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.util.targets
 import org.jetbrains.kotlin.gradle.targets.js.KotlinJsCompilerAttribute
-import org.jetbrains.kotlin.gradle.targets.js.KotlinJsTarget
 import org.jetbrains.kotlin.gradle.targets.js.dsl.ExperimentalWasmDsl
+import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrTarget
 import org.jetbrains.kotlin.gradle.util.*
 import org.jetbrains.kotlin.gradle.utils.toMap
 import java.util.*
@@ -232,10 +232,9 @@ class ConfigurationsTest : MultiplatformExtensionTest() {
     fun `test js IR compilation dependencies`() {
         val project = buildProjectWithMPP {
             kotlin {
-                @Suppress("DEPRECATION")
-                js(BOTH)
-                targets.withType<KotlinJsTarget> {
-                    irTarget!!.compilations.getByName("main").dependencies {
+                js(IR)
+                targets.withType<KotlinJsIrTarget> {
+                    compilations.getByName("main").dependencies {
                         api("test:compilation-dependency")
                     }
                 }
