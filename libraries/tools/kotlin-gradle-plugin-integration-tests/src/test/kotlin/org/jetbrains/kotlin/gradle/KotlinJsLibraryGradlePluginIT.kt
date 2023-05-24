@@ -21,7 +21,6 @@ abstract class KotlinJsIrLibraryGradlePluginITBase : KGPBaseTest() {
 
     override val defaultBuildOptions = super.defaultBuildOptions.copy(
         jsOptions = BuildOptions.JsOptions(
-            useIrBackend = true,
             jsCompilerType = KotlinJsCompilerType.IR
         )
     )

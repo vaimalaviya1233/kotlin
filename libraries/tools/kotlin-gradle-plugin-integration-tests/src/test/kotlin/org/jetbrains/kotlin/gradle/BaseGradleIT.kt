@@ -248,13 +248,12 @@ abstract class BaseGradleIT {
     }
 
     // the second parameter is for using with ToolingAPI, that do not like --daemon/--no-daemon  options at all
-    data class BuildOptions constructor(
+    data class BuildOptions(
         val withDaemon: Boolean = false,
         val daemonOptionSupported: Boolean = true,
         val incremental: Boolean? = null,
         val incrementalJs: Boolean? = null,
         val incrementalJsKlib: Boolean? = null,
-        val jsIrBackend: Boolean? = null,
         val androidHome: File? = null,
         val javaHome: File? = null,
         val gradleUserHome: File? = null,
@@ -873,9 +872,6 @@ abstract class BaseGradleIT {
             }
             options.incrementalJs?.let { add("-Pkotlin.incremental.js=$it") }
             options.incrementalJsKlib?.let { add("-Pkotlin.incremental.js.klib=$it") }
-            options.jsIrBackend?.let { add("-Pkotlin.js.useIrBackend=$it") }
-            // because we have legacy compiler tests, we need nowarn for compiler testing
-            add("-Pkotlin.js.compiler.nowarn=true")
             options.usePreciseJavaTracking?.let { add("-Pkotlin.incremental.usePreciseJavaTracking=$it") }
             options.useClasspathSnapshot?.let { add("-P${COMPILE_INCREMENTAL_WITH_ARTIFACT_TRANSFORM.property}=$it") }
             options.androidGradlePluginVersion?.let { add("-Pandroid_tools_version=$it") }

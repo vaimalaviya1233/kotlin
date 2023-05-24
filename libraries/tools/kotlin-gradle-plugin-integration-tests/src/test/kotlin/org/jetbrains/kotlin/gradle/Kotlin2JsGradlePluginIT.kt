@@ -22,8 +22,6 @@ import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnLockCopyTask.Companion.YA
 import org.jetbrains.kotlin.gradle.tasks.USING_JS_IR_BACKEND_MESSAGE
 import org.jetbrains.kotlin.gradle.testbase.*
 import org.jetbrains.kotlin.gradle.testbase.TestVersions.Gradle.G_7_6
-import org.jetbrains.kotlin.gradle.util.jsCompilerType
-import org.jetbrains.kotlin.gradle.util.normalizePath
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.condition.DisabledIf
 import java.nio.file.Files
@@ -625,7 +623,6 @@ class Kotlin2JsIrGradlePluginIT : AbstractKotlin2JsGradlePluginIT(true) {
 abstract class AbstractKotlin2JsGradlePluginIT(protected val irBackend: Boolean) : KGPBaseTest() {
     @Suppress("DEPRECATION")
     private val defaultJsOptions = BuildOptions.JsOptions(
-        useIrBackend = irBackend,
         jsCompilerType = KotlinJsCompilerType.IR,
     )
 

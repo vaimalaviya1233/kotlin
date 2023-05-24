@@ -14,7 +14,6 @@ import org.junit.jupiter.api.DisplayName
 class KotlinJsDomApiDependencyIT : KGPBaseTest() {
 
     private val defaultJsOptions = BuildOptions.JsOptions(
-        useIrBackend = true,
         jsCompilerType = KotlinJsCompilerType.IR
     )
 

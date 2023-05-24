@@ -6,8 +6,6 @@
 package org.jetbrains.kotlin.gradle
 
 import org.gradle.util.GradleVersion
-import org.jetbrains.kotlin.gradle.plugin.KotlinJsCompilerType
-import org.jetbrains.kotlin.gradle.testbase.TestVersions
 import org.jetbrains.kotlin.gradle.util.*
 import org.junit.Test
 import kotlin.test.assertTrue

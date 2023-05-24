@@ -35,7 +35,6 @@ abstract class AbstractKotlinJsIncrementalGradlePluginIT(
 ) : KGPBaseTest() {
     @Suppress("DEPRECATION")
     private val defaultJsOptions = BuildOptions.JsOptions(
-        useIrBackend = irBackend,
         jsCompilerType = KotlinJsCompilerType.IR
     )
 
