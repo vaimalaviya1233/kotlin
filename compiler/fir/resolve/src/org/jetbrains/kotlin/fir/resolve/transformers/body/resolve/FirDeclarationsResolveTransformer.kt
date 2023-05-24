@@ -476,10 +476,19 @@ open class FirDeclarationsResolveTransformer(
                 } else {
                     returnTypeRef
                 }
-                val resolutionMode = if (owner.delegate == null || expectedReturnTypeRef.coneTypeSafe<ConeKotlinType>()?.isUnit == true) {
-                    ResolutionMode.ContextIndependent
-                } else {
-                    withExpectedType(expectedReturnTypeRef)
+                val resolutionMode = when {
+                    owner.delegate == null -> {
+                        ResolutionMode.ContextIndependent
+                    }
+                    expectedReturnTypeRef !is FirResolvedTypeRef -> {
+                        ResolutionMode.ContextDependentDelegate
+                    }
+                    expectedReturnTypeRef.coneType.isUnit -> {
+                        ResolutionMode.ContextIndependent
+                    }
+                    else -> {
+                        withExpectedType(expectedReturnTypeRef)
+                    }
                 }
 
                 transformFunctionWithGivenSignature(accessor, resolutionMode)
