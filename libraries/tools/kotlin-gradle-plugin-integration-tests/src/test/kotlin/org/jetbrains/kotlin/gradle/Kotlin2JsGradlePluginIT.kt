@@ -1097,59 +1097,31 @@ abstract class AbstractKotlin2JsGradlePluginIT(protected val irBackend: Boolean)
         project("kotlin-js-browser-project", gradleVersion) {
             buildGradleKts.modify(::transformBuildScriptWithPluginsDsl)
 
-            if (irBackend) {
-                gradleProperties.appendText(jsCompilerType(KotlinJsCompilerType.IR))
-            }
-
-            if (irBackend) {
-                build("compileProductionExecutableKotlinJs") {
-                    assertTasksExecuted(":app:compileProductionExecutableKotlinJs")
-                    assert(task(":kotlinNpmInstall") == null) {
-                        printBuildOutput()
-                        "NPM install should not be run"
-                    }
+            build("compileProductionExecutableKotlinJs") {
+                assertTasksExecuted(":app:compileProductionExecutableKotlinJs")
+                assert(task(":kotlinNpmInstall") == null) {
+                    printBuildOutput()
+                    "NPM install should not be run"
                 }
             }
 
             build("assemble") {
                 assertTasksExecuted(":app:browserProductionWebpack")
 
-                assertDirectoryInProjectExists("build/js/packages/kotlin-js-browser-base-js-ir")
-                assertDirectoryInProjectExists("build/js/packages/kotlin-js-browser-base-js-legacy")
+                assertDirectoryInProjectExists("build/js/packages/kotlin-js-browser-base")
                 assertDirectoryInProjectExists("build/js/packages/kotlin-js-browser-lib")
                 assertDirectoryInProjectExists("build/js/packages/kotlin-js-browser-app")
 
-                if (irBackend) {
-                    assertFileInProjectExists("app/build/${Distribution.DIST}/js/productionExecutable/app.js")
-                } else {
-                    assertFileInProjectExists("app/build/distributions/app.js")
-                }
-
-                if (!irBackend) {
-                    assertTasksExecuted(":app:processDceKotlinJs")
-
-                    assertDirectoryInProjectExists("build/js/packages/kotlin-js-browser-app/kotlin-dce")
-
-                    assertFileInProjectExists("build/js/packages/kotlin-js-browser-app/kotlin-dce/kotlin.js")
-                    assertFileInProjectExists("build/js/packages/kotlin-js-browser-app/kotlin-dce/kotlin-js-browser-app.js")
-                    assertFileInProjectExists("build/js/packages/kotlin-js-browser-app/kotlin-dce/kotlin-js-browser-lib.js")
-                    assertFileInProjectExists("build/js/packages/kotlin-js-browser-app/kotlin-dce/kotlin-js-browser-base-js-legacy.js")
-
-                    assertFileInProjectExists("app/build/distributions/app.js.map")
-                }
+                assertFileInProjectExists("app/build/${Distribution.DIST}/js/productionExecutable/app.js")
             }
 
             build("clean", "browserDistribution") {
                 assertTasksExecuted(
                     ":app:processResources",
-                    if (irBackend) ":app:browserProductionExecutableDistributeResources" else ":app:browserDistributeResources"
+                    ":app:browserProductionExecutableDistributeResources"
                 )
 
-                if (irBackend) {
-                    assertFileInProjectExists("app/build/${Distribution.DIST}/js/productionExecutable/index.html")
-                } else {
-                    assertFileInProjectExists("app/build/distributions/index.html")
-                }
+                assertFileInProjectExists("app/build/${Distribution.DIST}/js/productionExecutable/index.html")
             }
         }
     }
@@ -1174,22 +1146,6 @@ abstract class AbstractKotlin2JsGradlePluginIT(protected val irBackend: Boolean)
                 assertEquals(JsonNull.INSTANCE, jso.get("customField2").asJsonNull)
                 assertEquals(JsonNull.INSTANCE, jso.get("customField3").asJsonNull)
                 assertEquals(JsonNull.INSTANCE, jso.get("customField4").asJsonObject.get("foo").asJsonNull)
-            }
-        }
-    }
-
-    @DisplayName("kotlin/js compiler warning")
-    @GradleTest
-    fun testKotlinJsCompilerWarn(gradleVersion: GradleVersion) {
-        project(
-            "kotlin-js-compiler-warn",
-            gradleVersion,
-            buildOptions = defaultBuildOptions.copy(jsOptions = defaultJsOptions.copy(compileNoWarn = false, jsCompilerType = null))
-        ) {
-            buildGradleKts.modify(::transformBuildScriptWithPluginsDsl)
-
-            build("assemble") {
-                assertOutputDoesNotContain("This project currently uses the Kotlin/JS Legacy")
             }
         }
     }
