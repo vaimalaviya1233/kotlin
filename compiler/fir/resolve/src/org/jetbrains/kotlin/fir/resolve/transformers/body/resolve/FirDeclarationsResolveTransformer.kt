@@ -634,6 +634,25 @@ open class FirDeclarationsResolveTransformer(
         if (result.returnTypeRef is FirImplicitTypeRef) {
             val simpleFunction = function as? FirSimpleFunction
             val returnExpression = (body?.statements?.single() as? FirReturnExpression)?.result
+
+            if (resolutionMode is ResolutionMode.ContextDependentDelegate && returnExpression is FirResolvable) {
+                val calleeReference = returnExpression.calleeReference
+                if (calleeReference is FirNamedReferenceWithCandidate) {
+                    val system = calleeReference.candidate.system
+                    system.notFixedTypeVariables.forEach {
+                        system.markPostponedVariable(it.value.typeVariable)
+                    }
+                    val typeVariableTypeToStubType = context.inferenceSession.createSyntheticStubTypes(system)
+
+                    val substitutor = createTypeSubstitutorByTypeConstructor(
+                        typeVariableTypeToStubType, session.typeContext, approximateIntegerLiterals = true
+                    )
+                    val delegateExpressionTypeRef = returnExpression.typeRef
+                    val stubTypeSubstituted = substitutor.substituteOrNull(delegateExpressionTypeRef.coneType)
+                    returnExpression.replaceTypeRef(delegateExpressionTypeRef.withReplacedConeType(stubTypeSubstituted))
+                }
+            }
+
             val returnTypeRef = if (returnExpression?.typeRef is FirResolvedTypeRef) {
                 returnExpression.resultType.approximateDeclarationType(
                     session,
