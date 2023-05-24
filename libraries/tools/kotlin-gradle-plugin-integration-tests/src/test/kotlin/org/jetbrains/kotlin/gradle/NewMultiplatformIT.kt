@@ -981,24 +981,6 @@ open class NewMultiplatformIT : BaseGradleIT() {
                     }
                 """.trimIndent()
             )
-
-            build(
-                "printMetadataFiles"
-            ) {
-                // After introducing Resolvable Metadata Dependencies configuration
-                // resolving nodeJsMainResolvableDependenciesMetadata is expected to fail for dependencies that have published
-                // both Legacy and IR klibs.
-                // Previously these Metadata Dependencies Configurations got resolved into platform artifacts which is incorrect
-                // and is just result of gradle's attempt to resolve to anything.
-                // TODO: Remove this test after removing Resolvable Metadata Dependencies for platform source sets.
-                assertFailed()
-
-                assertContains(
-                    "However we cannot choose between the following variants of com.example:sample-lib-nodejs:1.0:",
-                    "- nodeJsIrApiElements-published",
-                    "- nodeJsLegacyApiElements-published",
-                )
-            }
         }
     }
 
