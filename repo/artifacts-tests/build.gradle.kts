@@ -6,10 +6,11 @@ plugins {
 }
 
 dependencies {
-    testApi(kotlinStdlib("jdk8"))
+    testImplementation(kotlinStdlib("jdk8"))
     testImplementation(project(":kotlin-test:kotlin-test-junit5"))
     testApiJUnit5()
-    testImplementation("org.apache.maven:maven-model:3.8.7")
+    testImplementation("org.apache.maven:maven-model:3.9.0")
+    testImplementation(projectTests(":compiler:tests-common-new"))
 }
 
 projectTest(jUnitMode = JUnitMode.JUnit5) {
@@ -22,5 +23,3 @@ projectTest(jUnitMode = JUnitMode.JUnit5) {
         systemProperty("kotlin.version", version)
     }
 }
-
-testsJar()

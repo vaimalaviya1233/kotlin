@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.code
 import org.apache.maven.model.Dependency
 import org.apache.maven.model.Model
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader
+import org.jetbrains.kotlin.test.services.JUnit5Assertions.assertEqualsToFile
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -18,7 +19,7 @@ import kotlin.test.Test
 import kotlin.test.assertTrue
 import kotlin.test.fail
 
-typealias PomFilter = (Path, BasicFileAttributes) -> Boolean
+private typealias PomFilter = (Path, BasicFileAttributes) -> Boolean
 
 class ArtifactsTest {
 
@@ -27,6 +28,24 @@ class ArtifactsTest {
     private val kotlinVersion = System.getProperty("kotlin.version")
     private val mavenLocal = System.getProperty("maven.repo.local")
     private val localRepoPath = Paths.get(mavenLocal, "org", "jetbrains", "kotlin")
+
+    @Test
+    fun verifyArtifactFiles() {
+        val versionRegex = "-\\d+\\.\\d+\\.\\d+(-SNAPSHOT)?".toRegex()
+        val expectedPoms = Files.find(expectedRepoPath, Integer.MAX_VALUE, pomFilter)
+            .collect(Collectors.toMap({ it.fileName.toString() }, { it }))
+        val actualPoms = Files.find(localRepoPath, Integer.MAX_VALUE, pomFilterWithVersion)
+            .collect(Collectors.toMap({ it.fileName.toString().replace(versionRegex, "") }, { it }))
+
+        actualPoms.forEach { actual ->
+            val expectedPomPath = expectedPoms[actual.key]!! // TODO: handle
+            val sanitizer: (String) -> String = { str: String ->
+                str.replace(kotlinVersion, "") // TODO: handle
+            }
+            val actualString = actual.value.toFile().readText()
+            assertEqualsToFile(expectedPomPath, actualString, sanitizer)
+        }
+    }
 
     @Test
     fun verifyArtifacts() {
@@ -180,6 +199,6 @@ class ArtifactsTest {
     }
 
     @JvmInline
-    value class ArtifactId(val artifactId: String)
-    data class PomPathWithModel(val path: Path, val model: Model)
+    private value class ArtifactId(val artifactId: String)
+    private data class PomPathWithModel(val path: Path, val model: Model)
 }
