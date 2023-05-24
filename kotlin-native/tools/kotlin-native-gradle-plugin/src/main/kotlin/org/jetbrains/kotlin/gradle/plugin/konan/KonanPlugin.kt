@@ -45,8 +45,8 @@ import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.konan.target.buildDistribution
 import org.jetbrains.kotlin.konan.target.customerDistribution
-import org.jetbrains.kotlin.konan.util.DependencyProcessor
 import org.jetbrains.kotlin.*
+import org.jetbrains.kotlin.konan.util.DependencyDirectories
 import java.io.File
 import javax.inject.Inject
 
@@ -98,6 +98,9 @@ internal val Project.konanVersion: String
     get() = project.findProperty(KonanPlugin.ProjectProperty.KONAN_VERSION)
         ?.toString()
         ?: project.version.toString()
+
+internal val Project.konanDataDir: String?
+    get() = project.findProperty(KonanPlugin.ProjectProperty.KONAN_DATA_DIR)?.toString()
 
 internal val Project.konanBuildRoot          get() = buildDir.resolve("konan")
 internal val Project.konanBinBaseDir         get() = konanBuildRoot.resolve("bin")
@@ -169,7 +172,9 @@ internal fun Project.konanCompilerName(): String =
         "kotlin-native-${project.simpleOsName}-${project.konanVersion}"
 
 internal fun Project.konanCompilerDownloadDir(): String =
-        DependencyProcessor.localKonanDir.resolve(project.konanCompilerName()).absolutePath
+        (project.konanDataDir?.let { File(it) }
+                ?: DependencyDirectories.localKonanDir)
+                .resolve(project.konanCompilerName()).absolutePath
 
 // region Useful extensions and functions ---------------------------------------
 
@@ -299,6 +304,7 @@ class KonanPlugin @Inject constructor(private val registry: ToolingModelBuilderR
         KONAN_JVM_LAUNCHER             ("konan.javaLauncher"),
         KONAN_USE_ENVIRONMENT_VARIABLES("konan.useEnvironmentVariables"),
         DOWNLOAD_COMPILER              ("download.compiler"),
+        KONAN_DATA_DIR                 ("konan.data.dir"),
 
         // Properties used instead of env vars until https://github.com/gradle/gradle/issues/3468 is fixed.
         // TODO: Remove them when an API for env vars is provided.

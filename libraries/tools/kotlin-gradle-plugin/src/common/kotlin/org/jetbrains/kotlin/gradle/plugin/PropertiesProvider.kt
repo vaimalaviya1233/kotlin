@@ -546,6 +546,13 @@ internal class PropertiesProvider private constructor(private val project: Proje
         get() = property(PropertyNames.KOTLIN_SUPPRESS_GRADLE_PLUGIN_ERRORS)?.split(",").orEmpty()
 
     /**
+     * Allows the user to specify a custom location for the Kotlin/Native distribution.
+     * This property takes precedence over the 'KONAN_DATA_DIR' environment variable.
+     */
+    val konanDataDir: String?
+        get() = property(PropertyNames.KONAN_DATA_DIR)
+
+    /**
      * Retrieves a comma-separated list of browsers to use when running karma tests for [target]
      * @see KOTLIN_JS_KARMA_BROWSERS
      */
@@ -565,7 +572,7 @@ internal class PropertiesProvider private constructor(private val project: Proje
 
     private inline fun <reified T : Enum<T>> enumProperty(
         propName: String,
-        defaultValue: T
+        defaultValue: T,
     ): T = this.property(propName)?.let { enumValueOf<T>(it.toUpperCaseAsciiOnly()) } ?: defaultValue
 
     /**
@@ -639,6 +646,7 @@ internal class PropertiesProvider private constructor(private val project: Proje
         const val KOTLIN_INTERNAL_VERBOSE_DIAGNOSTICS = "kotlin.internal.verboseDiagnostics"
         const val KOTLIN_SUPPRESS_GRADLE_PLUGIN_WARNINGS = "kotlin.suppressGradlePluginWarnings"
         const val KOTLIN_SUPPRESS_GRADLE_PLUGIN_ERRORS = "kotlin.internal.suppressGradlePluginErrors"
+        const val KONAN_DATA_DIR = "konan.data.dir"
     }
 
     companion object {

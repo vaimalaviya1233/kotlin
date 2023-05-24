@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.konan.properties.Properties
 import org.jetbrains.kotlin.konan.properties.keepOnlyDefaultProfiles
 import org.jetbrains.kotlin.konan.properties.loadProperties
 import org.jetbrains.kotlin.konan.util.DependencyDirectories
+import org.jetbrains.kotlin.konan.util.DependencyDirectories.KONAN_DATA_DIR_PROPERTY_NAME
 
 class Distribution private constructor(private val serialized: Serialized) : java.io.Serializable {
     constructor(
@@ -24,7 +25,7 @@ class Distribution private constructor(private val serialized: Serialized) : jav
     private val runtimeFileOverride by serialized::runtimeFileOverride
     private val propertyOverrides by serialized::propertyOverrides
 
-    val localKonanDir = DependencyDirectories.localKonanDir
+    val localKonanDir = DependencyDirectories.getLocalKonanDir(propertyOverrides?.get(KONAN_DATA_DIR_PROPERTY_NAME))
 
     val konanSubdir = "$konanHome/konan"
     val mainPropertyFileName = "$konanSubdir/konan.properties"
@@ -99,7 +100,9 @@ class Distribution private constructor(private val serialized: Serialized) : jav
 
     val launcherFiles = listOf("launcher.bc")
 
-    val dependenciesDir = DependencyDirectories.defaultDependenciesRoot.absolutePath
+    val dependenciesDir = DependencyDirectories
+        .getDependenciesRoot(propertyOverrides?.get(KONAN_DATA_DIR_PROPERTY_NAME))
+        .absolutePath
 
     val subTargetProvider = object: SubTargetProvider {
         override fun availableSubTarget(genericName: String) =

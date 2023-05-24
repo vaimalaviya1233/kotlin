@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.konan.file.File
 import org.jetbrains.kotlin.konan.library.KonanLibrary
 import org.jetbrains.kotlin.konan.properties.loadProperties
 import org.jetbrains.kotlin.konan.target.*
+import org.jetbrains.kotlin.konan.util.DependencyDirectories.KONAN_DATA_DIR_PROPERTY_NAME
 import org.jetbrains.kotlin.konan.util.KonanHomeProvider
 import org.jetbrains.kotlin.konan.util.visibleName
 import org.jetbrains.kotlin.library.metadata.resolver.TopologicalLibraryOrder
@@ -35,6 +36,9 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
             configuration.get(KonanConfigKeys.OVERRIDE_KONAN_PROPERTIES)?.let(this::putAll)
             configuration.get(KonanConfigKeys.LLVM_VARIANT)?.getKonanPropertiesEntry()?.let { (key, value) ->
                 put(key, value)
+            }
+            configuration.get(KonanConfigKeys.KONAN_DATA_DIR)?.let {
+                put(KONAN_DATA_DIR_PROPERTY_NAME, it)
             }
         }
 

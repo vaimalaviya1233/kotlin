@@ -353,6 +353,9 @@ internal constructor(
     @get:Internal // these sources are normally a subset of `source` ones which are already tracked
     val commonSources: ConfigurableFileCollection = project.files()
 
+    @get:Input
+    val konanDataDir: String? = project.konanDataDir
+
     @get:Nested
     override val multiplatformStructure: K2MultiplatformStructure = objectFactory.newInstance()
 
@@ -464,6 +467,9 @@ internal constructor(
             KotlinNativeCompilerOptionsHelper.fillCompilerArguments(compilerOptions, args)
 
             explicitApiMode.orNull?.run { args.explicitApi = toCompilerValue() }
+
+            // TODO(Dmitrii Krasnov): I'm not sure about correctness of passing gradle property to konan args here
+            konanDataDir?.let { args.konanDataDir = it }
         }
 
         pluginClasspath { args ->

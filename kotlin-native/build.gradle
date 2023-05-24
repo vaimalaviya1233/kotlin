@@ -54,7 +54,8 @@ apply plugin: "kotlin.native.build-tools-conventions"
 
 ext {
     distDir = UtilsKt.getKotlinNativeDist(project)
-    dependenciesDir = DependencyProcessor.defaultDependenciesRoot
+    // TODO(Dmitrii Krasnov): is it possible to properly use getDependenciesRoot here?
+    dependenciesDir = DependencyDirectories.defaultDependenciesRoot
     experimentalEnabled = project.hasProperty("org.jetbrains.kotlin.native.experimentalTargets")
     platformManager = new PlatformManager(DistributionKt.buildDistribution(projectDir.absolutePath),
             ext.experimentalEnabled)

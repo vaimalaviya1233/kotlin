@@ -16,9 +16,10 @@
 
 package org.jetbrains.kotlin.konan.target
 
-import org.jetbrains.kotlin.konan.util.DependencyProcessor
+import org.jetbrains.kotlin.konan.util.DependencyDirectories
+import org.jetbrains.kotlin.konan.util.DependencyDirectories.KONAN_DATA_DIR_PROPERTY_NAME
 
-class Platform(val configurables: Configurables) 
+class Platform(val configurables: Configurables)
     : Configurables by configurables {
 
     val clang: ClangArgs.Native by lazy {
@@ -43,7 +44,11 @@ class PlatformManager private constructor(private val serialized: Serialized) :
     private val distribution by serialized::distribution
 
     private val loaders = enabled.map {
-        it to loadConfigurables(it, distribution.properties, DependencyProcessor.defaultDependenciesRoot.absolutePath)
+        val konanDataDir = distribution.properties.get(KONAN_DATA_DIR_PROPERTY_NAME)?.toString()
+        it to loadConfigurables(
+            it,
+            distribution.properties, DependencyDirectories.getDependenciesRoot(konanDataDir).absolutePath
+        )
     }.toMap()
 
     private val platforms = loaders.map {

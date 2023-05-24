@@ -37,6 +37,9 @@ internal val Project.konanVersion: String
     get() = PropertiesProvider(this).nativeVersion
         ?: NativeCompilerDownloader.DEFAULT_KONAN_VERSION
 
+internal val Project.konanDataDir: String?
+    get() = PropertiesProvider(this).konanDataDir
+
 internal fun Project.getKonanCacheKind(target: KonanTarget): NativeCacheKind {
     val commonCacheKind = PropertiesProvider(this).nativeCacheKind
     val targetCacheKind = PropertiesProvider(this).nativeCacheKindForTarget(target)
@@ -78,7 +81,8 @@ internal abstract class KotlinNativeToolRunner(
         val konanPropertiesFile: File,
         val useXcodeMessageStyle: Boolean,
         val jvmArgs: List<String>,
-        val classpath: FileCollection
+        val classpath: FileCollection,
+        val konanDataDir: String?,
     ) {
         companion object {
             fun fromProject(project: Project) = Settings(
@@ -87,7 +91,8 @@ internal abstract class KotlinNativeToolRunner(
                 konanPropertiesFile = project.file("${project.konanHome}/konan/konan.properties"),
                 useXcodeMessageStyle = project.useXcodeMessageStyle,
                 jvmArgs = project.jvmArgs,
-                classpath = project.files(project.kotlinNativeCompilerJar, "${project.konanHome}/konan/lib/trove4j.jar")
+                classpath = project.files(project.kotlinNativeCompilerJar, "${project.konanHome}/konan/lib/trove4j.jar"),
+                konanDataDir = project.konanDataDir
             )
         }
     }
@@ -160,7 +165,7 @@ internal abstract class AbstractKotlinNativeCInteropRunner(
             }
 
             konanProperties.resolvablePropertyString("llvmHome.mingw_x64")?.let { toolchainDir ->
-                DependencyDirectories.defaultDependenciesRoot
+                DependencyDirectories.getDependenciesRoot(settings.konanDataDir)
                     .resolve("$toolchainDir/bin")
                     .absolutePath
             }

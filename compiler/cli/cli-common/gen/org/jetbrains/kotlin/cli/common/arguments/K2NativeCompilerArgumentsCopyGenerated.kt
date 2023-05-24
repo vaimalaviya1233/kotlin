@@ -101,6 +101,7 @@ fun copyK2NativeCompilerArguments(from: K2NativeCompilerArguments, to: K2NativeC
     to.verifyCompiler = from.verifyCompiler
     to.verifyIr = from.verifyIr
     to.workerExceptionHandling = from.workerExceptionHandling
+    to.konanDataDir = from.konanDataDir
 
     return to
 }
