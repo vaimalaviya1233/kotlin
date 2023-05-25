@@ -1118,6 +1118,27 @@ open class RawFirBuilder(
                         is KtScriptInitializer -> {
                             declaration.body?.let { statements.add(it.toFirStatement()) }
                         }
+                        is KtDestructuringDeclaration -> {
+                            val destructuringContainerVar = generateTemporaryVariable(
+                                baseModuleData,
+                                declaration.toFirSourceElement(KtFakeSourceElementKind.DestructuringDeclarationContainerVariable),
+                                "destruct",
+                                declaration.initializer.toFirExpression { ConeSyntaxDiagnostic("Initializer required for destructuring declaration") },
+                                extractAnnotationsTo = { extractAnnotationsTo(it) }
+                            )
+                            val destructuringBlock = generateDestructuringBlock(
+                                baseModuleData,
+                                declaration,
+                                destructuringContainerVar,
+                                tmpVariable = false,
+                                localEntries = false,
+                                extractAnnotationsTo = { extractAnnotationsTo(it) },
+                            ) {
+                                toFirOrImplicitType()
+                            }
+                            statements.add(destructuringContainerVar)
+                            statements.addAll(destructuringBlock.statements)
+                        }
                         else -> {
                             statements.add(declaration.toFirStatement())
                         }
@@ -1612,7 +1633,7 @@ open class RawFirBuilder(
                     valueParameters += if (multiDeclaration != null) {
                         val name = SpecialNames.DESTRUCT
                         val multiParameter = buildValueParameter {
-                            source = valueParameter.toFirSourceElement()
+                            source = valueParameter.toFirSourceElement(KtFakeSourceElementKind.DestructuringDeclarationContainerVariable)
                             containingFunctionSymbol = this@buildAnonymousFunction.symbol
                             moduleData = baseModuleData
                             origin = FirDeclarationOrigin.Source
@@ -1630,6 +1651,7 @@ open class RawFirBuilder(
                             multiDeclaration,
                             multiParameter,
                             tmpVariable = false,
+                            localEntries = true,
                             extractAnnotationsTo = { extractAnnotationsTo(it) },
                         ) { toFirOrImplicitType() }.statements
                         multiParameter
@@ -2414,7 +2436,8 @@ open class RawFirBuilder(
                     if (ktParameter != null) {
                         val multiDeclaration = ktParameter.destructuringDeclaration
                         val firLoopParameter = generateTemporaryVariable(
-                            moduleData = baseModuleData, source = expression.loopParameter?.toFirSourceElement(),
+                            moduleData = baseModuleData,
+                            source = expression.loopParameter?.toFirSourceElement(KtFakeSourceElementKind.DestructuringDeclarationContainerVariable),
                             name = if (multiDeclaration != null) SpecialNames.DESTRUCT else ktParameter.nameAsSafeName,
                             initializer = buildFunctionCall {
                                 source = fakeSource
@@ -2432,6 +2455,7 @@ open class RawFirBuilder(
                                 multiDeclaration = multiDeclaration,
                                 container = firLoopParameter,
                                 tmpVariable = true,
+                                localEntries = true,
                                 extractAnnotationsTo = { extractAnnotationsTo(it) },
                             ) { toFirOrImplicitType() }
                             blockBuilder.statements.addAll(destructuringBlock.statements)
@@ -2784,7 +2808,7 @@ open class RawFirBuilder(
         override fun visitDestructuringDeclaration(multiDeclaration: KtDestructuringDeclaration, data: FirElement?): FirElement {
             val baseVariable = generateTemporaryVariable(
                 baseModuleData,
-                multiDeclaration.toFirSourceElement(),
+                multiDeclaration.toFirSourceElement(KtFakeSourceElementKind.DestructuringDeclarationContainerVariable),
                 "destruct",
                 multiDeclaration.initializer.toFirExpression { ConeSyntaxDiagnostic("Initializer required for destructuring declaration") },
                 extractAnnotationsTo = { extractAnnotationsTo(it) }
@@ -2794,6 +2818,7 @@ open class RawFirBuilder(
                 multiDeclaration,
                 baseVariable,
                 tmpVariable = true,
+                localEntries = true,
                 extractAnnotationsTo = { extractAnnotationsTo(it) },
             ) {
                 toFirOrImplicitType()
