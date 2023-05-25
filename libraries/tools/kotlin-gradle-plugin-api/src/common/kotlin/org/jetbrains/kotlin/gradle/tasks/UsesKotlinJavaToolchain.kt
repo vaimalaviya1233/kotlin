@@ -12,39 +12,71 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Nested
 import org.gradle.jvm.toolchain.JavaLauncher
-import org.gradle.util.GradleVersion
 import java.io.File
 
+/**
+ * Marker interface indicating Kotlin task is using [Gradle JDK toolchain](https://docs.gradle.org/current/userguide/toolchains.html)
+ * feature. The Gradle JDK toolchain feature allows configuring and using specific JDK versions on task execution.
+ */
 interface UsesKotlinJavaToolchain : Task {
+
+    /**
+     * Kotlin task configured JDK toolchain.
+     *
+     * Never returns `null`.
+     */
     @get:Nested
     val kotlinJavaToolchainProvider: Provider<out KotlinJavaToolchain>
 
+    /**
+     * Helper shortcut to get [KotlinJavaToolchain] from [kotlinJavaToolchainProvider] without calling `.get()` method.
+     */
     @get:Internal
     val kotlinJavaToolchain: KotlinJavaToolchain
         get() = kotlinJavaToolchainProvider.get()
 }
 
+/**
+ * Kotlin JDK toolchain.
+ *
+ * Contains configured JDK which is used in related Kotlin task and provides ways to configure it.
+ */
 interface KotlinJavaToolchain {
+
+    /**
+     * Configured JDK toolchain [JavaVersion].
+     *
+     * This property represents the configured JDK toolchain [JavaVersion] used for the task.
+     * If toolchain does not explicitly set, it defaults to the version of the JDK with which Gradle is running.
+     */
     @get:Input
     val javaVersion: Provider<JavaVersion>
 
+    /**
+     * Provides access to the [JdkSetter] to configure JDK toolchain for the task using explicit JDK location.
+     */
     @get:Internal
     val jdk: JdkSetter
 
+    /**
+     * Provides access to the [JavaToolchainSetter] to configure JDK toolchain for the task
+     * using [Gradle JDK toolchain](https://docs.gradle.org/current/userguide/toolchains.html).
+     */
     @get:Internal
     val toolchain: JavaToolchainSetter
 
+    /**
+     * Provides methods to configure task using explicit JDK location.
+     */
     interface JdkSetter {
         /**
-         * Set JDK to use for Kotlin compilation.
-         *
-         * Major JDK version is considered as compile task input.
-         *
-         * @param jdkHomeLocation path to the JDK
+         * Configures JDK toolchain to use JDK located under [jdkHomeLocation] path. Major JDK version from [javaVersion] is considered
+         * as compile task input to avoid Gradle remote build cache hits for different versions.
          *
          * *Note*: project build will fail on providing here JRE instead of JDK!
          *
-         * @param jdkVersion provided JDK version
+         * @param jdkHomeLocation path to JDK location on the machine
+         * @param jdkVersion JDK version located under [jdkHomeLocation] path
          */
         fun use(
             jdkHomeLocation: File,
@@ -52,13 +84,13 @@ interface KotlinJavaToolchain {
         )
 
         /**
-         * Set JDK to use for Kotlin compilation.
+         * Configures JDK toolchain to use JDK located under [jdkHomeLocation] path. Major JDK version from [javaVersion] is considered
+         * as compile task input to avoid Gradle remote build cache hits for different versions.
          *
-         * @param jdkHomeLocation path to the JDK
+         * *Note*: project build will fail on providing here JRE instead of JDK!
          *
-         * **Note**: project build will fail on providing here JRE instead of JDK!
-         *
-         * @param jdkVersion any type that is accepted by [JavaVersion.toVersion]
+         * @param jdkHomeLocation path to JDK location on the machine
+         * @param jdkVersion JDK version located under [jdkHomeLocation] path, accepts any type accepted by [JavaVersion.toVersion]
          */
         fun use(
             jdkHomeLocation: String,
@@ -66,9 +98,13 @@ interface KotlinJavaToolchain {
         ) = use(File(jdkHomeLocation), JavaVersion.toVersion(jdkVersion))
     }
 
+    /**
+     * Provides methods to configure task using [Gradle JDK toolchain](https://docs.gradle.org/current/userguide/toolchains.html).
+     */
     interface JavaToolchainSetter {
         /**
-         * Set JDK obtained from [org.gradle.jvm.toolchain.JavaToolchainService] to use for Kotlin compilation.
+         * Configures JDK toolchain for a task using a [JavaLauncher] obtained from [org.gradle.jvm.toolchain.JavaToolchainService] via
+         * [org.gradle.api.plugins.JavaPluginExtension] extension.
          */
         fun use(
             javaLauncher: Provider<JavaLauncher>
