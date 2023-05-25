@@ -69,7 +69,6 @@ internal abstract class FirBaseTowerResolveTask(
 
     private val handler: TowerLevelHandler = TowerLevelHandler()
 
-    open fun interceptTowerGroup(towerGroup: TowerGroup) = towerGroup
     open fun onSuccessfulLevel(towerGroup: TowerGroup) {}
 
     protected suspend inline fun processLevel(
@@ -177,19 +176,19 @@ internal abstract class FirBaseTowerResolveTask(
         group: TowerGroup,
         explicitReceiverKind: ExplicitReceiverKind
     ): Boolean {
-        val finalGroup = interceptTowerGroup(group)
-        manager.requestGroup(finalGroup)
-
+        manager.requestGroup(group)
 
         val result = handler.handleLevel(
             collector,
             candidateFactory,
             callInfo,
             explicitReceiverKind,
-            finalGroup,
+            group,
             towerLevel
         )
-        if (collector.isSuccess) onSuccessfulLevel(finalGroup)
+
+        if (collector.isSuccess) onSuccessfulLevel(group)
+
         return result == ProcessResult.SCOPE_EMPTY
     }
 }

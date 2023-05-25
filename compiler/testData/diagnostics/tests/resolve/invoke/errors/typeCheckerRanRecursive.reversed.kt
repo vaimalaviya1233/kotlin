@@ -13,9 +13,9 @@ abstract class KotlinIndex : JavaIndex() {
 class MyKotlinIndex : KotlinIndex() {
     val INDEXER = indexer(1)
 
-    override fun getIndexer() = <!TYPECHECKER_HAS_RUN_INTO_RECURSIVE_PROBLEM!>INDEXER<!>
+    override fun getIndexer() = INDEXER
 }
 
 fun main() {
-    <!TYPECHECKER_HAS_RUN_INTO_RECURSIVE_PROBLEM!>MyKotlinIndex().getIndexer()<!>.<!UNRESOLVED_REFERENCE!>length<!>
+    MyKotlinIndex().getIndexer().length
 }
