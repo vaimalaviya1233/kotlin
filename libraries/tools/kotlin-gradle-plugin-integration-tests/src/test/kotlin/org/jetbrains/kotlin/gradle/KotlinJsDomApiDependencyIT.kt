@@ -6,7 +6,6 @@
 package org.jetbrains.kotlin.gradle
 
 import org.gradle.util.GradleVersion
-import org.jetbrains.kotlin.gradle.plugin.KotlinJsCompilerType
 import org.jetbrains.kotlin.gradle.testbase.*
 import org.junit.jupiter.api.DisplayName
 
@@ -14,7 +13,6 @@ import org.junit.jupiter.api.DisplayName
 class KotlinJsDomApiDependencyIT : KGPBaseTest() {
 
     private val defaultJsOptions = BuildOptions.JsOptions(
-        jsCompilerType = KotlinJsCompilerType.IR
     )
 
     override val defaultBuildOptions =

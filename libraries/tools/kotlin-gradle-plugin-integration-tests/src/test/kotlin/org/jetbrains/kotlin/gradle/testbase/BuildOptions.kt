@@ -11,7 +11,6 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.cli.common.CompilerSystemProperties.COMPILE_INCREMENTAL_WITH_ARTIFACT_TRANSFORM
 import org.jetbrains.kotlin.gradle.BaseGradleIT
 import org.jetbrains.kotlin.gradle.dsl.NativeCacheKind
-import org.jetbrains.kotlin.gradle.plugin.KotlinJsCompilerType
 import org.jetbrains.kotlin.gradle.report.BuildReportType
 import org.junit.jupiter.api.condition.OS
 import java.util.*
@@ -57,7 +56,6 @@ data class BuildOptions(
     )
 
     data class JsOptions(
-        val jsCompilerType: KotlinJsCompilerType? = null,
         val incrementalJs: Boolean? = null,
         val incrementalJsKlib: Boolean? = null,
         val incrementalJsIr: Boolean? = null
@@ -123,7 +121,6 @@ data class BuildOptions(
             jsOptions.incrementalJs?.let { arguments.add("-Pkotlin.incremental.js=$it") }
             jsOptions.incrementalJsKlib?.let { arguments.add("-Pkotlin.incremental.js.klib=$it") }
             jsOptions.incrementalJsIr?.let { arguments.add("-Pkotlin.incremental.js.ir=$it") }
-            jsOptions.jsCompilerType?.let { arguments.add("-Pkotlin.js.compiler=$it") }
         }
 
         if (androidVersion != null) {

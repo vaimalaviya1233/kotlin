@@ -13,7 +13,6 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.cli.common.CompilerSystemProperties.COMPILE_INCREMENTAL_WITH_ARTIFACT_TRANSFORM
 import org.jetbrains.kotlin.gradle.model.ModelContainer
 import org.jetbrains.kotlin.gradle.model.ModelFetcherBuildAction
-import org.jetbrains.kotlin.gradle.plugin.KotlinJsCompilerType
 import org.jetbrains.kotlin.gradle.report.BuildReportType
 import org.jetbrains.kotlin.gradle.testbase.*
 import org.jetbrains.kotlin.gradle.util.*
@@ -268,7 +267,6 @@ abstract class BaseGradleIT {
         val withBuildCache: Boolean = false,
         val kaptOptions: KaptOptions? = null,
         val parallelTasksInProject: Boolean = false,
-        val jsCompilerType: KotlinJsCompilerType? = null,
         val configurationCache: Boolean = false,
         val configurationCacheProblems: ConfigurationCacheProblems = ConfigurationCacheProblems.FAIL,
         val warningMode: WarningMode = WarningMode.Fail,
@@ -902,10 +900,6 @@ abstract class BaseGradleIT {
             }
 
             if (options.parallelTasksInProject) add("--parallel") else add("--no-parallel")
-
-            options.jsCompilerType?.let {
-                add("-Pkotlin.js.compiler=$it")
-            }
 
             if (options.dryRun) {
                 add("--dry-run")

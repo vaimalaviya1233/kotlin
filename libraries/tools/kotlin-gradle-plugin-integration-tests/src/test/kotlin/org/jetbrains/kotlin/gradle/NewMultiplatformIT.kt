@@ -14,7 +14,6 @@ import org.jetbrains.kotlin.gradle.native.*
 import org.jetbrains.kotlin.gradle.native.MPPNativeTargets
 import org.jetbrains.kotlin.gradle.native.transformNativeTestProject
 import org.jetbrains.kotlin.gradle.native.transformNativeTestProjectWithPluginDsl
-import org.jetbrains.kotlin.gradle.plugin.KotlinJsCompilerType
 import org.jetbrains.kotlin.gradle.plugin.ProjectLocalConfigurations
 import org.jetbrains.kotlin.gradle.plugin.diagnostics.KotlinToolingDiagnostics
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinMultiplatformPlugin
@@ -262,20 +261,17 @@ open class NewMultiplatformIT : BaseGradleIT() {
     fun testLibAndAppJsIr() = doTestLibAndAppJsBothCompilers(
         "sample-lib",
         "sample-app",
-        KotlinJsCompilerType.IR
     )
 
     @Test
     fun testLibAndAppWithGradleKotlinDslJsIr() = doTestLibAndAppJsBothCompilers(
         "sample-lib-gradle-kotlin-dsl",
         "sample-app-gradle-kotlin-dsl",
-        KotlinJsCompilerType.IR
     )
 
     private fun doTestLibAndAppJsBothCompilers(
         libProjectName: String,
         appProjectName: String,
-        jsCompilerType: KotlinJsCompilerType
     ) {
         val libProject = transformProjectWithPluginsDsl(libProjectName, directoryPrefix = "both-js-lib-and-app")
         val appProject = transformProjectWithPluginsDsl(appProjectName, directoryPrefix = "both-js-lib-and-app")
@@ -292,7 +288,7 @@ open class NewMultiplatformIT : BaseGradleIT() {
             )
             build(
                 "publish",
-                options = defaultBuildOptions().copy(jsCompilerType = jsCompilerType)
+                options = defaultBuildOptions()
             ) {
                 assertSuccessful()
                 assertTasksNotExecuted(":compileCommonMainKotlinMetadata")
@@ -343,21 +339,17 @@ open class NewMultiplatformIT : BaseGradleIT() {
             // we use `maven { setUrl(...) }` because this syntax actually works both for Groovy and Kotlin DSLs in Gradle
             gradleBuildScript().appendText("\nrepositories { maven { setUrl(\"$libLocalRepoUri\") } }")
 
-            fun CompiledProject.checkAppBuild(compilerType: KotlinJsCompilerType) {
+            fun CompiledProject.checkAppBuild() {
                 assertSuccessful()
-                val compileTaskNames = if (jsCompilerType == compilerType) {
-                    compileTasksNames.toTypedArray()
-                } else {
-                    arrayOf(":compileKotlinNodeJs")
-                }
-                assertTasksExecuted(*compileTaskNames)
+
+                assertTasksExecuted(compileTasksNames)
             }
 
             build(
                 "assemble",
-                options = defaultBuildOptions().copy(jsCompilerType = jsCompilerType)
+                options = defaultBuildOptions()
             ) {
-                checkAppBuild(jsCompilerType)
+                checkAppBuild()
             }
 
             // Now run again with a project dependency instead of a module one:
@@ -373,9 +365,9 @@ open class NewMultiplatformIT : BaseGradleIT() {
                 "clean",
                 "assemble",
                 "--rerun-tasks",
-                options = defaultBuildOptions().copy(jsCompilerType = jsCompilerType)
+                options = defaultBuildOptions()
             ) {
-                checkAppBuild(jsCompilerType)
+                checkAppBuild()
             }
         }
     }

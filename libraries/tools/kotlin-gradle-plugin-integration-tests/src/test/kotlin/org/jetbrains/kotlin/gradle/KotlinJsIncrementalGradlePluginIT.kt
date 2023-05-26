@@ -8,13 +8,10 @@ package org.jetbrains.kotlin.gradle
 import org.gradle.api.logging.LogLevel
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.util.GradleVersion
-import org.jetbrains.kotlin.gradle.plugin.KotlinJsCompilerType
 import org.jetbrains.kotlin.gradle.tasks.USING_JS_INCREMENTAL_COMPILATION_MESSAGE
 import org.jetbrains.kotlin.gradle.tasks.USING_JS_IR_BACKEND_MESSAGE
 import org.jetbrains.kotlin.gradle.testbase.*
 import org.junit.jupiter.api.DisplayName
-import kotlin.io.path.*
-import kotlin.test.*
 
 @JsGradlePluginTests
 open class KotlinJsIr10IncrementalGradlePluginIT : AbstractKotlinJsIncrementalGradlePluginIT(
@@ -35,7 +32,6 @@ abstract class AbstractKotlinJsIncrementalGradlePluginIT(
 ) : KGPBaseTest() {
     @Suppress("DEPRECATION")
     private val defaultJsOptions = BuildOptions.JsOptions(
-        jsCompilerType = KotlinJsCompilerType.IR
     )
 
     override val defaultBuildOptions =

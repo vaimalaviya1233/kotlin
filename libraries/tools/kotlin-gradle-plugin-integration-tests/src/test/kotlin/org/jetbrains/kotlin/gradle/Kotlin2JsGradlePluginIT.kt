@@ -10,7 +10,6 @@ import com.google.gson.JsonNull
 import com.google.gson.JsonObject
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.util.GradleVersion
-import org.jetbrains.kotlin.gradle.plugin.KotlinJsCompilerType
 import org.jetbrains.kotlin.gradle.targets.js.dsl.Distribution
 import org.jetbrains.kotlin.gradle.targets.js.ir.KLIB_TYPE
 import org.jetbrains.kotlin.gradle.targets.js.npm.NpmProject
@@ -621,15 +620,6 @@ class Kotlin2JsIrGradlePluginIT : AbstractKotlin2JsGradlePluginIT(true) {
 
 @JsGradlePluginTests
 abstract class AbstractKotlin2JsGradlePluginIT(protected val irBackend: Boolean) : KGPBaseTest() {
-    @Suppress("DEPRECATION")
-    private val defaultJsOptions = BuildOptions.JsOptions(
-        jsCompilerType = KotlinJsCompilerType.IR,
-    )
-
-    final override val defaultBuildOptions =
-        super.defaultBuildOptions.copy(
-            jsOptions = defaultJsOptions,
-        )
 
     protected fun BuildResult.checkIrCompilationMessage() {
         if (irBackend) {
