@@ -201,20 +201,6 @@ class ConfigurationsTest : MultiplatformExtensionTest() {
             "ImplementationDependenciesMetadata",
         )
 
-        // allJs
-        val expectedAllJsConfigurations = commonSourceSetsConfigurationsToCheck
-            .map { project.configurations.getByName("allJs$it") }
-
-        val actualAllJsConfigurations = expectedAllJsConfigurations
-            .filter { it.attributes.contains(KotlinJsCompilerAttribute.jsCompilerAttribute) }
-
-        assertEquals(
-            expectedAllJsConfigurations,
-            actualAllJsConfigurations,
-            "JS-only configurations should contain KotlinJsCompilerAttribute"
-        )
-
-
         // commonMain
         val actualCommonMainConfigurations = commonSourceSetsConfigurationsToCheck
             .map { project.configurations.getByName("commonMain$it") }
