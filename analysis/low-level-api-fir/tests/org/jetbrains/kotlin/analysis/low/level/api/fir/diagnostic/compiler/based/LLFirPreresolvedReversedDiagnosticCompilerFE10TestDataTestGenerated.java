@@ -27252,6 +27252,18 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
                 }
 
                 @Test
+                @TestMetadata("closeInvokesFarVariable.kt")
+                public void testCloseInvokesFarVariable() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/resolve/invoke/closeInvokesFarVariable.kt");
+                }
+
+                @Test
+                @TestMetadata("closerVariableMatterMore.kt")
+                public void testCloserVariableMatterMore() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/resolve/invoke/closerVariableMatterMore.kt");
+                }
+
+                @Test
                 @TestMetadata("completePropertyBeforeInvoke.kt")
                 public void testCompletePropertyBeforeInvoke() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/resolve/invoke/completePropertyBeforeInvoke.kt");
@@ -27444,6 +27456,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
                     @TestMetadata("receiverPresenceErrorForInvoke.kt")
                     public void testReceiverPresenceErrorForInvoke() throws Exception {
                         runTest("compiler/testData/diagnostics/tests/resolve/invoke/errors/receiverPresenceErrorForInvoke.kt");
+                    }
+
+                    @Test
+                    @TestMetadata("typeCheckerRanRecursive.kt")
+                    public void testTypeCheckerRanRecursive() throws Exception {
+                        runTest("compiler/testData/diagnostics/tests/resolve/invoke/errors/typeCheckerRanRecursive.kt");
                     }
 
                     @Test
