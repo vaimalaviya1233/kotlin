@@ -459,15 +459,6 @@ internal class PropertiesProvider private constructor(private val project: Proje
     val publishJsCompilerAttribute: Boolean
         get() = this.booleanProperty("$jsCompilerProperty.publish.attribute") ?: true
 
-    /**
-     * Use Kotlin/JS backend compiler type
-     */
-    val jsGenerateExecutableDefault: Boolean
-        get() = (booleanProperty("kotlin.js.generate.executable.default") ?: true).also {
-            KotlinBuildStatsService.getInstance()
-                ?.report(StringMetrics.JS_GENERATE_EXECUTABLE_DEFAULT, it.toString())
-        }
-
     val stdlibDefaultDependency: Boolean
         get() = booleanProperty(KOTLIN_STDLIB_DEFAULT_DEPENDENCY) ?: true
 
