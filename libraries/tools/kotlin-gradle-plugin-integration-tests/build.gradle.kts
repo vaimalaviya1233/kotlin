@@ -104,11 +104,19 @@ dependencies {
 }
 
 // Aapt2 from Android Gradle Plugin 3.2 and below does not handle long paths on Windows.
-val shortenTempRootName = project.providers.systemProperty("os.name").forUseAtConfigurationTime().get().contains("Windows")
+val shortenTempRootName = project.providers.systemProperty("os.name").get().contains("Windows")
 
 val splitGradleIntegrationTestTasks =
-    project.providers.gradleProperty("gradle.integration.tests.split.tasks").forUseAtConfigurationTime().orNull?.toBoolean()
+    project.providers.gradleProperty("gradle.integration.tests.split.tasks").orNull?.toBoolean()
         ?: project.kotlinBuildProperties.isTeamcityBuild
+
+fun Test.setupGradleVersionMode() {
+    val versionModeProperty = "gradle.integration.tests.gradle.version.mode"
+    val versionMode = project.providers.gradleProperty(versionModeProperty)
+    if (versionMode.isPresent) {
+        systemProperty(versionModeProperty, versionMode.get())
+    }
+}
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
     kotlinOptions.freeCompilerArgs += "-opt-in=kotlin.io.path.ExperimentalPathApi"
@@ -386,6 +394,7 @@ tasks.withType<Test> {
         useJUnitPlatform {
             includeEngines("junit-vintage")
         }
+        setupGradleVersionMode()
     }
 
     testLogging {

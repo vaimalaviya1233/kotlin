@@ -52,10 +52,19 @@ inline fun <reified T : Annotation> findAnnotation(context: ExtensionContext): T
             .first() as T
 }
 
+enum class TestGradleVersionMode {
+    ALL,
+    LATEST,
+    REST
+}
+
 open class GradleArgumentsProvider : ArgumentsProvider {
     override fun provideArguments(
         context: ExtensionContext
     ): Stream<out Arguments> {
+        val versionMode: TestGradleVersionMode = context.getConfigurationParameter("gradle.integration.tests.gradle.version.mode")
+            .map { TestGradleVersionMode.valueOf(it) }.orElse(TestGradleVersionMode.ALL)
+
         val versionsAnnotation = findAnnotation<GradleTestVersions>(context)
 
         fun max(a: GradleVersion, b: GradleVersion) = if (a >= b) a else b
@@ -72,7 +81,13 @@ open class GradleArgumentsProvider : ArgumentsProvider {
             }
         }
 
-        return setOf(minGradleVersion, *additionalGradleVersions.toTypedArray(), maxGradleVersion)
+        val gradleVersions = when (versionMode) {
+            TestGradleVersionMode.ALL -> setOf(minGradleVersion, *additionalGradleVersions.toTypedArray(), maxGradleVersion)
+            TestGradleVersionMode.LATEST -> setOf(maxGradleVersion)
+            TestGradleVersionMode.REST -> setOf(minGradleVersion, *additionalGradleVersions.toTypedArray())
+        }
+
+        return gradleVersions
             .asSequence()
             .map { Arguments.of(it) }
             .asStream()
