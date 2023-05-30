@@ -437,10 +437,6 @@ public class UShort private constructor(private val value: UShort) : Comparable<
     public override fun equals(other: Any?): Boolean =
         other is UShort && wasm_i32_eq(this.toInt(), other.toInt())
 
-    @kotlin.internal.IntrinsicConstEvaluation
-    @WasmOp(WasmOp.I32_EQ)
-    public fun equals(other: UShort): Boolean = implementedAsIntrinsic
-
     @PublishedApi
     @WasmNoOpCast
     internal fun reinterpretAsUInt(): UInt = implementedAsIntrinsic

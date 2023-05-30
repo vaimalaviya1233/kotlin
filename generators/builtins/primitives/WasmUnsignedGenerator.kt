@@ -50,7 +50,6 @@ private class WasmSingleUnsignedGenerator(type: UnsignedType, out: PrintWriter) 
         generateUnsignedNumberConstructor()
         generateHashCode()
         generateEquals()
-        generateCustomEquals()
 
         when (type) {
             UnsignedType.ULONG -> generateReinterpret(PrimitiveType.LONG.capitalized)
@@ -263,22 +262,6 @@ private class WasmSingleUnsignedGenerator(type: UnsignedType, out: PrintWriter) 
             }
 
             "$parameterName is ${type.capitalized} && $additionalCheck".addAsSingleLineBody(bodyOnNewLine = true)
-        }
-    }
-
-    private fun ClassBuilder.generateCustomEquals() {
-        method {
-            signature {
-                methodName = "equals"
-                parameter {
-                    name = "other"
-                    type = this@WasmSingleUnsignedGenerator.type.capitalized
-                }
-                returnType = PrimitiveType.BOOLEAN.capitalized
-            }
-
-            asIntrinsicConstEvaluation()
-            asIntrinsic("${type.asSigned.prefixUppercase}_EQ")
         }
     }
 

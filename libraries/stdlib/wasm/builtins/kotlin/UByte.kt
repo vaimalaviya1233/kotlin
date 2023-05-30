@@ -436,10 +436,6 @@ public class UByte private constructor(private val value: UByte) : Comparable<UB
     public override fun equals(other: Any?): Boolean =
         other is UByte && wasm_i32_eq(this.toInt(), other.toInt())
 
-    @kotlin.internal.IntrinsicConstEvaluation
-    @WasmOp(WasmOp.I32_EQ)
-    public fun equals(other: UByte): Boolean = implementedAsIntrinsic
-
     @PublishedApi
     @WasmNoOpCast
     internal fun reinterpretAsUInt(): UInt = implementedAsIntrinsic

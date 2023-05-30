@@ -461,10 +461,6 @@ public class ULong private constructor(private val value: ULong) : Comparable<UL
     public override fun equals(other: Any?): Boolean =
         other is ULong && wasm_i64_eq(this.toLong(), other.toLong())
 
-    @kotlin.internal.IntrinsicConstEvaluation
-    @WasmOp(WasmOp.I64_EQ)
-    public fun equals(other: ULong): Boolean = implementedAsIntrinsic
-
     @PublishedApi
     @WasmNoOpCast
     internal fun reinterpretAsLong(): Long = implementedAsIntrinsic

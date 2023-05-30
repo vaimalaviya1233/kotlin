@@ -151,14 +151,20 @@ class WasmSymbols(
     fun findVoidConsumer(type: IrType): IrSimpleFunctionSymbol =
         consumePrimitiveIntoVoid[type] ?: consumeAnyIntoVoid
 
-    val equalityFunctions = mapOf(
-        context.irBuiltIns.booleanType to getInternalFunction("wasm_i32_eq"),
-        context.irBuiltIns.byteType to getInternalFunction("wasm_i32_eq"),
-        context.irBuiltIns.shortType to getInternalFunction("wasm_i32_eq"),
-        context.irBuiltIns.charType to getInternalFunction("wasm_i32_eq"),
-        context.irBuiltIns.intType to getInternalFunction("wasm_i32_eq"),
-        context.irBuiltIns.longType to getInternalFunction("wasm_i64_eq")
-    )
+    val equalityFunctions by lazy {
+        mapOf(
+            context.irBuiltIns.booleanType to getInternalFunction("wasm_i32_eq"),
+            context.irBuiltIns.byteType to getInternalFunction("wasm_i32_eq"),
+            context.irBuiltIns.shortType to getInternalFunction("wasm_i32_eq"),
+            context.wasmSymbols.uByteType to getInternalFunction("wasm_i32_eq"),
+            context.wasmSymbols.uShortType to getInternalFunction("wasm_i32_eq"),
+            context.irBuiltIns.charType to getInternalFunction("wasm_i32_eq"),
+            context.irBuiltIns.intType to getInternalFunction("wasm_i32_eq"),
+            context.wasmSymbols.uIntType to getInternalFunction("wasm_i32_eq"),
+            context.irBuiltIns.longType to getInternalFunction("wasm_i64_eq"),
+            context.wasmSymbols.uLongType to getInternalFunction("wasm_i64_eq")
+        )
+    }
 
     val floatEqualityFunctions = mapOf(
         context.irBuiltIns.floatType to getInternalFunction("wasm_f32_eq"),
