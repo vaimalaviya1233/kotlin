@@ -353,6 +353,7 @@ internal constructor(
     @get:Internal // these sources are normally a subset of `source` ones which are already tracked
     val commonSources: ConfigurableFileCollection = project.files()
 
+    @Optional
     @get:Input
     val konanDataDir: String? = project.konanDataDir
 
