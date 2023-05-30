@@ -5,6 +5,11 @@
 
 package org.jetbrains.kotlin.gradle.targets.js
 
-import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrTarget
+import org.jetbrains.kotlin.gradle.plugin.KotlinTarget
+import org.jetbrains.kotlin.gradle.plugin.mpp.InternalKotlinTarget
 
-typealias KotlinJsTarget = KotlinJsIrTarget
+@Deprecated("Only for compatibility")
+abstract class KotlinJsTarget : KotlinTarget, InternalKotlinTarget {
+    @Deprecated("Only for compatibility")
+    val irTarget = null
+}
