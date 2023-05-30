@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.analysis.low.level.api.fir.stubBased.deserialization
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.analysis.low.level.api.fir.providers.LLFirKotlinSymbolProvider
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.LLFirKotlinSymbolNamesProvider
@@ -140,30 +141,41 @@ internal open class JvmStubBasedFirDeserializedSymbolProvider(
         foundFunctions: Collection<KtNamedFunction>?,
     ): List<FirNamedFunctionSymbol> {
         val topLevelFunctions = foundFunctions ?: declarationProvider.getTopLevelFunctions(callableId)
-        return topLevelFunctions
-            .mapNotNull { function ->
+
+        return buildList {
+            for (function in topLevelFunctions) {
                 val file = function.containingKtFile
-                val virtualFile = file.virtualFile
-                if (virtualFile.extension == MetadataPackageFragment.METADATA_FILE_EXTENSION) return@mapNotNull null
-                if (initialOrigin != FirDeclarationOrigin.BuiltIns && file.packageFqName.asString()
-                        .replace(".", "/") + "/" + virtualFile.nameWithoutExtension in KotlinBuiltins
-                ) return@mapNotNull null
+                val virtualFile = file.virtualFile.takeIf { it.extension != MetadataPackageFragment.METADATA_FILE_EXTENSION } ?: continue
+                val facadeClassName = computeFacadeClassName(file, virtualFile)
+
+                if (initialOrigin != FirDeclarationOrigin.BuiltIns && facadeClassName.internalName in KotlinBuiltins) continue
+
                 val symbol = FirNamedFunctionSymbol(callableId)
-                val rootContext =
-                    StubBasedFirDeserializationContext.createRootContext(session, moduleData, callableId, function, symbol, initialOrigin)
-                rootContext.memberDeserializer.loadFunction(function, null, session, symbol).symbol
+                val rootContext = StubBasedFirDeserializationContext
+                    .createRootContext(session, moduleData, callableId, function, symbol, initialOrigin)
+
+                add(rootContext.memberDeserializer.loadFunction(function, null, session, symbol).symbol)
             }
+        }
     }
 
     private fun loadPropertiesByCallableId(callableId: CallableId, foundProperties: Collection<KtProperty>?): List<FirPropertySymbol> {
         val topLevelProperties = foundProperties ?: declarationProvider.getTopLevelProperties(callableId)
-        return topLevelProperties
-            .map { property ->
+
+        return buildList {
+            for (property in topLevelProperties) {
                 val symbol = FirPropertySymbol(callableId)
-                val rootContext =
-                    StubBasedFirDeserializationContext.createRootContext(session, moduleData, callableId, property, symbol, initialOrigin)
-                rootContext.memberDeserializer.loadProperty(property, null, symbol).symbol
+                val rootContext = StubBasedFirDeserializationContext
+                    .createRootContext(session, moduleData, callableId, property, symbol, initialOrigin)
+
+                add(rootContext.memberDeserializer.loadProperty(property, null, symbol).symbol)
             }
+        }
+    }
+
+    private fun computeFacadeClassName(file: KtFile, virtualFile: VirtualFile = file.virtualFile): JvmClassName {
+        val internalName = file.packageFqName.asString().replace(".", "/") + "/" + virtualFile.nameWithoutExtension
+        return JvmClassName.byInternalName(internalName)
     }
 
     private fun getClass(
