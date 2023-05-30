@@ -104,8 +104,9 @@ public actual interface KClass<T : Any> : KDeclarationContainer, KAnnotatedEleme
     public val isSealed: Boolean
 
     /**
-     * `true` if this class is a data class.
-     * See the [Kotlin language documentation](https://kotlinlang.org/docs/reference/data-classes.html)
+     * `true` if this class or object has the `data` keyword.
+     * See [data class Kotlin language documentation](https://kotlinlang.org/docs/reference/data-classes.html)
+     * and [data object Kotlin language documentation](https://kotlinlang.org/docs/object-declarations.html#data-objects)
      * for more information.
      */
     @SinceKotlin("1.1")
