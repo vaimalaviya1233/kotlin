@@ -14,7 +14,6 @@ import org.jetbrains.kotlin.cli.common.fir.FirDiagnosticsCompilerResultsReporter
 import org.jetbrains.kotlin.cli.common.messages.AnalyzerWithCompilerReport
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
-import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.languageVersionSettings
 import org.jetbrains.kotlin.constant.EvaluatedConstTracker
 import org.jetbrains.kotlin.descriptors.impl.ModuleDescriptorImpl
@@ -258,7 +257,8 @@ private class Fir2KlibSerializer(
             FirKLibSerializerExtension(
                 session, metadataVersion,
                 ConstValueProviderImpl(fir2IrActualizedResult.components),
-                allowErrorTypes = false, exportKDoc = false
+                allowErrorTypes = false, exportKDoc = false,
+                fir2IrActualizedResult.components.annotationsFromPluginRegistrar.createMetadataAnnotationsProvider()
             ),
             languageVersionSettings,
         )

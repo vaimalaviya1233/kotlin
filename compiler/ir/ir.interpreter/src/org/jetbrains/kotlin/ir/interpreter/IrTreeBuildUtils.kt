@@ -184,7 +184,7 @@ internal fun IrBuiltIns.emptyArrayConstructor(arrayType: IrType): IrConstructorC
     return constructorCall
 }
 
-internal fun IrConst<*>.toConstantValue(): ConstantValue<*> {
+fun IrConst<*>.toConstantValue(): ConstantValue<*> {
     val constType = this.type.makeNotNull().removeAnnotations()
     return when (this.type.getPrimitiveType()) {
         PrimitiveType.BOOLEAN -> BooleanValue(this.value as Boolean)
