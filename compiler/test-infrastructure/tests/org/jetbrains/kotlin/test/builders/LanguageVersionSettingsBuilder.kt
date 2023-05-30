@@ -10,8 +10,8 @@ import org.jetbrains.kotlin.test.TargetBackend
 import org.jetbrains.kotlin.test.directives.LanguageSettingsDirectives
 import org.jetbrains.kotlin.test.directives.model.RegisteredDirectives
 import org.jetbrains.kotlin.test.directives.model.singleOrZeroValue
-import org.jetbrains.kotlin.test.services.DefaultsDsl
 import org.jetbrains.kotlin.test.services.AbstractEnvironmentConfigurator
+import org.jetbrains.kotlin.test.services.DefaultsDsl
 import org.jetbrains.kotlin.test.util.LANGUAGE_FEATURE_PATTERN
 import org.jetbrains.kotlin.utils.addToStdlib.runIf
 
@@ -108,7 +108,6 @@ class LanguageVersionSettingsBuilder {
             analysisFlag(JvmAnalysisFlags.inheritMultifileParts, trueOrNull(LanguageSettingsDirectives.INHERIT_MULTIFILE_PARTS in directives)),
             analysisFlag(JvmAnalysisFlags.sanitizeParentheses, trueOrNull(LanguageSettingsDirectives.SANITIZE_PARENTHESES in directives)),
             analysisFlag(JvmAnalysisFlags.enableJvmPreview, trueOrNull(LanguageSettingsDirectives.ENABLE_JVM_PREVIEW in directives)),
-            analysisFlag(JvmAnalysisFlags.useIR, targetBackend?.isIR != false),
 
             analysisFlag(AnalysisFlags.explicitApiVersion, trueOrNull(apiVersion != null)),
 

@@ -5,7 +5,6 @@
 
 package org.jetbrains.kotlin.resolve.jvm.checkers
 
-import org.jetbrains.kotlin.config.JvmAnalysisFlags
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
@@ -21,6 +20,8 @@ import org.jetbrains.kotlin.resolve.source.getPsi
 
 class SuspendInFunInterfaceChecker : DeclarationChecker {
     override fun check(declaration: KtDeclaration, descriptor: DeclarationDescriptor, context: DeclarationCheckerContext) {
+        if (context.languageVersionSettings.supportsFeature(LanguageFeature.SuspendFunctionsInFunInterfaces)) return
+
         if (declaration !is KtClass) return
         if (descriptor !is ClassDescriptor || !descriptor.isFun) return
 
@@ -28,10 +29,6 @@ class SuspendInFunInterfaceChecker : DeclarationChecker {
 
         val abstractMember = getSingleAbstractMethodOrNull(descriptor) ?: return
         if (!abstractMember.isSuspend) return
-
-        if (context.languageVersionSettings.supportsFeature(LanguageFeature.SuspendFunctionsInFunInterfaces) &&
-            context.languageVersionSettings.getFlag(JvmAnalysisFlags.useIR)
-        ) return
 
         val ktFunction = abstractMember.source.getPsi() as? KtNamedFunction
         val reportOn = ktFunction?.modifierList?.getModifier(KtTokens.SUSPEND_KEYWORD) ?: funKeyword
