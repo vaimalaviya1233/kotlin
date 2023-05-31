@@ -105,9 +105,9 @@ public actual interface KClass<T : Any> : KDeclarationContainer, KAnnotatedEleme
 
     /**
      * `true` if this class or object has the `data` keyword.
-     * See [data class Kotlin language documentation](https://kotlinlang.org/docs/reference/data-classes.html)
-     * and [data object Kotlin language documentation](https://kotlinlang.org/docs/object-declarations.html#data-objects)
-     * for more information.
+     * For more information, see [data class](https://kotlinlang.org/docs/reference/data-classes.html) and
+     * [data object](https://kotlinlang.org/docs/object-declarations.html#data-objects)
+     * in Kotlin language documentation.
      */
     @SinceKotlin("1.1")
     public val isData: Boolean
