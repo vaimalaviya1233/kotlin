@@ -392,6 +392,7 @@ internal fun SymbolLightClassBase.createField(
     result: MutableList<KtLightField>
 ) {
     if (!hasBackingField(declaration)) return
+    if (declaration.name.isSpecial) return
 
     val isDelegated = (declaration as? KtKotlinPropertySymbol)?.isDelegatedProperty == true
     val fieldName = nameGenerator.generateUniqueFieldName(
