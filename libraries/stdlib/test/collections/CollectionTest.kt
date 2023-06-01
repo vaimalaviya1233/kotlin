@@ -5,9 +5,7 @@
 
 package test.collections
 
-import test.assertIsNegativeZero
-import test.assertIsPositiveZero
-import test.assertStaticAndRuntimeTypeIs
+import test.*
 import kotlin.test.*
 import test.collections.behaviors.*
 import test.comparisons.STRING_CASE_INSENSITIVE_ORDER
@@ -1254,6 +1252,11 @@ class CollectionTest {
         assertTrue("toArray1" in coll.invocations || "toArray2" in coll.invocations)
 
         val arr2: Array<String> = coll.toArray(Array(coll.size + 1) { "" })
-        assertEquals(data + listOf(null), arr2.asList())
+        testOnlyOn(TestPlatform.Jvm) {
+            assertEquals(data + listOf(null), arr2.asList())
+        }
+        testExceptOn(TestPlatform.Jvm) {
+            assertEquals(data + listOf(""), arr2.asList())
+        }
     }
 }

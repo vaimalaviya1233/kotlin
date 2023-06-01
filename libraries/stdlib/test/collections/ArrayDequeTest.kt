@@ -5,9 +5,11 @@
 
 package test.collections
 
+import test.TestPlatform
 import test.collections.behaviors.iteratorBehavior
 import test.collections.behaviors.listIteratorBehavior
 import test.collections.behaviors.listIteratorProperties
+import test.current
 import kotlin.random.Random
 import kotlin.random.nextInt
 import kotlin.test.*
@@ -661,12 +663,20 @@ class ArrayDequeTest {
 
             val dest = Array(expected.size + 2) { it + 100 }
 
-            @Suppress("UNCHECKED_CAST")
-            val nullTerminatedExpected = (expected as Array<Any?>) + null + (expected.size + 101)
+            val expectedDest = buildList {
+                addAll(expected)
+                if (TestPlatform.current == TestPlatform.Jvm) {
+                    add(null)
+                } else {
+                    add(expected.size + 100)
+                }
+                add(expected.size + 101)
+            }.toTypedArray()
+
             val actual = deque.testToArray(dest)
             assertTrue(
-                nullTerminatedExpected contentEquals actual,
-                message = "Expected: ${nullTerminatedExpected.contentToString()}, Actual: ${actual.contentToString()}"
+                expectedDest contentEquals actual,
+                message = "Expected: ${expectedDest.contentToString()}, Actual: ${actual.contentToString()}"
             )
         }
 
