@@ -19,8 +19,16 @@ package org.jetbrains.kotlin.fir.backend
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.constant.EvaluatedConstTracker
 
+/**
+ * @param allowSuddenDeclarations
+ *  Normally, FIR-to-IR caches all declarations it meets in a compiled module.
+ *  It means asking for an IR element of a non-cached declaration is a sign of inconsistent state.
+ *  Code generation in the IDE is trickier, though, as declarations from any module can be potentially referenced.
+ *  For such a scenario, there is a flag that relaxes consistency checks.
+ */
 data class Fir2IrConfiguration(
     val languageVersionSettings: LanguageVersionSettings,
     val linkViaSignatures: Boolean,
     val evaluatedConstTracker: EvaluatedConstTracker,
+    val allowSuddenDeclarations: Boolean = false,
 )
