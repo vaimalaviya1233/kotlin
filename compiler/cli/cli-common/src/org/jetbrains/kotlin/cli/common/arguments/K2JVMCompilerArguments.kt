@@ -584,6 +584,15 @@ Also sets `-jvm-target` value equal to the selected JDK version"""
             field = if (value.isNullOrEmpty()) null else value
         }
 
+    @Argument(
+        value = "-Xallow-jvm-target-different-from-jdk-release",
+        description = "Allows setting `-jvm-target` different from `-jdk-release`"
+    )
+    var allowJvmTargetDifferentFromJdkRelease: Boolean = false
+        set(value) {
+            checkFrozen()
+            field = value
+        }
 
     @Argument(
         value = "-Xsam-conversions",
