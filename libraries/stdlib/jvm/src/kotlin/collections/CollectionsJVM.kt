@@ -76,15 +76,6 @@ public actual fun <T> Iterable<T>.shuffled(): List<T> = toMutableList().apply { 
 public fun <T> Iterable<T>.shuffled(random: java.util.Random): List<T> = toMutableList().apply { shuffle(random) }
 
 
-@kotlin.internal.InlineOnly
-internal actual inline fun copyToArrayImpl(collection: Collection<*>): Array<Any?> =
-    kotlin.jvm.internal.collectionToArray(collection)
-
-@kotlin.internal.InlineOnly
-@Suppress("UNCHECKED_CAST")
-internal actual inline fun <T> copyToArrayImpl(collection: Collection<*>, array: Array<T>): Array<T> =
-    kotlin.jvm.internal.collectionToArray(collection, array as Array<Any?>) as Array<T>
-
 internal actual fun <T> terminateCollectionToArray(collectionSize: Int, array: Array<T>): Array<T> {
     if (collectionSize < array.size) {
         @Suppress("UNCHECKED_CAST")
