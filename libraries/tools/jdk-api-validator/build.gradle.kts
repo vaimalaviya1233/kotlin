@@ -28,7 +28,6 @@ dependencies {
 val signaturesDirectory = buildDir.resolve("signatures")
 
 val collectSignatures by tasks.registering(Sync::class) {
-    dependsOn(signature)
     from(signature)
     into(signaturesDirectory)
 }
