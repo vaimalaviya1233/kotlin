@@ -41,7 +41,7 @@ fun CompilerConfiguration.setupJvmSpecificArguments(arguments: K2JVMCompilerArgu
             if (value != getJavaVersion() || arguments.jdkHome != null) {
                 put(JVMConfigurationKeys.JDK_RELEASE, value)
             }
-            if (jvmTargetArg != null && jvmTargetArg != releaseTargetArg) {
+            if (!arguments.suppressJdkReleaseJvmTargetConflict && jvmTargetArg != null && jvmTargetArg != releaseTargetArg) {
                 messageCollector.report(
                     ERROR,
                     "'-Xjdk-release=$releaseTargetArg' option conflicts with '-jvm-target $jvmTargetArg'. " +
@@ -51,12 +51,15 @@ fun CompilerConfiguration.setupJvmSpecificArguments(arguments: K2JVMCompilerArgu
         }
     }
 
-    val jvmTargetValue = when (releaseTargetArg) {
+    val jvmTargetValue = if (arguments.suppressJdkReleaseJvmTargetConflict)
+        jvmTargetArg
+    else when (releaseTargetArg) {
         "6" -> "1.6"
         "8" -> "1.8"
         null -> jvmTargetArg
         else -> releaseTargetArg
     }
+
     if (jvmTargetValue != null) {
         val jvmTarget = JvmTarget.fromString(jvmTargetValue)
         if (jvmTarget != null) {

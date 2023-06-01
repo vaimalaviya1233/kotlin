@@ -612,6 +612,16 @@ abstract class CommonCompilerArguments : CommonToolArguments() {
         }
 
     @Argument(
+        value = "-Xsuppress-jdk-release-jvm-target-conflict",
+        description = "Suppress error about conflicts between 'jdk-release' and '-jvm-target' options"
+    )
+    var suppressJdkReleaseJvmTargetConflict = false
+        set(value) {
+            checkFrozen()
+            field = value
+        }
+
+    @Argument(
         value = "-Xextended-compiler-checks",
         description = "Enable additional compiler checks that might provide verbose diagnostic information for certain errors.\n" +
                 "Warning: this mode is not backward-compatible and might cause compilation errors in previously compiled code."
