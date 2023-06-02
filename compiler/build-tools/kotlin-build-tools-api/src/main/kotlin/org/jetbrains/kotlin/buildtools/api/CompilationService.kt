@@ -10,22 +10,35 @@ import org.jetbrains.kotlin.buildtools.api.jvm.JvmCompilationConfig
 import java.io.File
 
 /**
- * A facade for invoking compilation in Kotlin compiler. It allows to use compiler in different modes.
- * TODO: add a mention where to see the available modes after implementing them
+ * A facade for invoking compilation and related stuff (such as [calculateClasspathSnapshot]) in Kotlin compiler.
+ *
+ * This interface is not intended to be implemented by API consumers. An instance of [CompilationService] is expected to be obtained from [loadImplementation].
  */
 public interface CompilationService {
+    /**
+     * TODO KT-57565
+     */
     public fun calculateClasspathSnapshot(classpathEntry: File): ClasspathEntrySnapshot
 
     /**
-     * Could be used by a build system to retrieve current defaults for the strategy and to customize them
+     * Provides a default [CompilerExecutionStrategyConfig] allowing to use it as is or customizing for specific requirements.
+     * Could be used as an overview to default values of the options (as they are implementation-specific).
      */
     public fun generateCompilerExecutionStrategyConfig(): CompilerExecutionStrategyConfig
 
     /**
-     * Could be used by a build system to retrieve current defaults for compilation and to customize them
+     * Provides a default [CompilerExecutionStrategyConfig] allowing to use it as is or customizing for specific requirements.
+     * Could be used as an overview to default values of the options (as they are implementation-specific).
      */
     public fun generateJvmCompilationConfig(): JvmCompilationConfig
 
+    /**
+     * Compiles Kotlin code targeting JVM platform and using specified options.
+     * @param strategyConfig an instance of [CompilerExecutionStrategyConfig] initially obtained from [generateCompilerExecutionStrategyConfig]
+     * @param compilationConfig an instance of [JvmCompilationConfig] initially obtained from [generateJvmCompilationConfig]
+     * @param sources a set of all sources of the compilation unit
+     * @param arguments a list of Kotlin JVM compiler arguments
+     */
     public fun compileJvm(
         strategyConfig: CompilerExecutionStrategyConfig,
         compilationConfig: JvmCompilationConfig,

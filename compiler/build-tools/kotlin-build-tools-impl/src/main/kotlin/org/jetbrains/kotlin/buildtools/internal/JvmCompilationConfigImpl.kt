@@ -31,7 +31,7 @@ internal class JvmCompilationConfigImpl(
         sourcesChanges: SourcesChanges,
         approachParameters: P,
         options: IncrementalJvmCompilationConfig<P>,
-    ) = TODO()
+    ) = TODO("Incremental compilation is not yet supported to run via the Build Tools API")
 }
 
 internal abstract class JvmIncrementalCompilationConfigImpl<P : IncrementalCompilationApproachParameters>(

@@ -12,11 +12,7 @@ import java.io.File
 
 internal class CompilationServiceImpl : CompilationService {
     override fun calculateClasspathSnapshot(classpathEntry: File): ClasspathEntrySnapshot {
-        TODO("Not yet implemented: KT-57565")
-    }
-
-    override fun saveSnapshot(snapshot: ClasspathEntrySnapshot, path: File) {
-        TODO("Not yet implemented: KT-57565")
+        TODO("Calculating classpath snapshots via the Build Tools API is not yet implemented: KT-57565")
     }
 
     override fun generateCompilerExecutionStrategyConfig() = CompilerExecutionStrategyConfigImpl()
@@ -26,7 +22,7 @@ internal class CompilationServiceImpl : CompilationService {
     override fun compileJvm(
         strategyConfig: CompilerExecutionStrategyConfig,
         compilationConfig: JvmCompilationConfig,
-        sources: Iterable<File>,
+        sources: Set<File>,
         arguments: List<String>
     ) {
         println("I'm simulating compilation, nothing more yet")

@@ -10,7 +10,9 @@ import org.jetbrains.kotlin.buildtools.api.SourcesChanges
 import java.io.File
 
 /**
- * A configuration interface of compilation options.
+ * A configurator of compilation options.
+ * This interface defines a set of properties and methods that allow users to customize the compilation process.
+ * It provides control over various aspects of compilation, such as incremental compilation, logging customization and other.
  *
  * This interface is not intended to be implemented by API consumers.
  */
@@ -22,6 +24,9 @@ public interface JvmCompilationConfig {
      */
     public val logger: KotlinLogger
 
+    /**
+     * @see [logger]
+     */
     public fun useLogger(logger: KotlinLogger): JvmCompilationConfig
 
     /**
@@ -31,10 +36,26 @@ public interface JvmCompilationConfig {
      */
     public val kotlinScriptExtensions: Set<String>
 
+    /**
+     * @see [kotlinScriptExtensions]
+     */
     public fun useKotlinScriptExtensions(kotlinScriptExtensions: Set<String>): JvmCompilationConfig
 
+    /**
+     * Provides a default [ClasspathSnapshotBasedIncrementalJvmCompilationConfig] allowing to use it as is or customizing for specific requirements.
+     * Could be used as an overview to default values of the options (as they are implementation-specific).
+     * @see [useIncrementalCompilation]
+     */
     public fun generateClasspathSnapshotBasedIncrementalCompilationConfig(): ClasspathSnapshotBasedIncrementalJvmCompilationConfig
 
+    /**
+     * Configures usage of incremental compilation.
+     * @param workingDirectory a working directory for incremental compilation internal state
+     * @param sourcesChanges an instance of [SourcesChanges]
+     * @param approachParameters an object representing mandatory parameters specific for the selected incremental compilation approach
+     * @param options an object representing optional parameters and handles specific for the selected incremental compilation approach
+     * @see [generateClasspathSnapshotBasedIncrementalCompilationConfig]]
+     */
     public fun <P : IncrementalCompilationApproachParameters> useIncrementalCompilation(
         workingDirectory: File,
         sourcesChanges: SourcesChanges,
@@ -46,7 +67,9 @@ public interface JvmCompilationConfig {
 }
 
 /**
- * Options and handles to tune compilation
+ * A configurator containing common handles and options to fine-tune incremental compilation.
+ *
+ * This interface is not intended to be implemented by API consumers.
  */
 public interface IncrementalJvmCompilationConfig<P : IncrementalCompilationApproachParameters> {
     /**
@@ -58,6 +81,9 @@ public interface IncrementalJvmCompilationConfig<P : IncrementalCompilationAppro
      */
     public val projectDir: File?
 
+    /**
+     * @see [projectDir]
+     */
     public fun useProjectDir(projectDir: File): IncrementalJvmCompilationConfig<P>
 
     /**
@@ -67,6 +93,9 @@ public interface IncrementalJvmCompilationConfig<P : IncrementalCompilationAppro
      */
     public val usePreciseJavaTracking: Boolean
 
+    /**
+     * @see [usePreciseJavaTracking]
+     */
     public fun usePreciseJavaTracking(value: Boolean): IncrementalJvmCompilationConfig<P>
 
     /**
@@ -76,6 +105,9 @@ public interface IncrementalJvmCompilationConfig<P : IncrementalCompilationAppro
      */
     public val usePreciseCompilationResultsBackup: Boolean
 
+    /**
+     * @see [usePreciseCompilationResultsBackup]
+     */
     public fun usePreciseCompilationResultsBackup(value: Boolean): IncrementalJvmCompilationConfig<P>
 
     /**
@@ -86,18 +118,26 @@ public interface IncrementalJvmCompilationConfig<P : IncrementalCompilationAppro
      */
     public val keepIncrementalCompilationCachesInMemory: Boolean
 
+    /**
+     * @see [keepIncrementalCompilationCachesInMemory]
+     */
     public fun keepIncrementalCompilationCachesInMemory(value: Boolean): IncrementalJvmCompilationConfig<P>
 
     /**
-     * Could be used to force the non-incremental mode
+     * A handle to force non-incremental compilation, but using the mechanisms of incremental compilation.
      */
     public fun nonIncremental(): IncrementalJvmCompilationConfig<P>
 }
 
+/**
+ * A configurator containing the handles and options to fine-tune classpath snapshots based approach for incremental compilation.
+ *
+ * This interface is not intended to be implemented by API consumers.
+ */
 public interface ClasspathSnapshotBasedIncrementalJvmCompilationConfig :
     IncrementalJvmCompilationConfig<ClasspathSnapshotBasedIncrementalCompilationApproachParameters> {
     /**
-     * Could be used to mark the snapshot files as not changed, if the check is already performed by a build system
+     * A handle to mark snapshot files as unchanged. Could be used if the check is already performed by an API consumer for the sake of optimization
      */
     public fun noClasspathSnapshotsChanges(): ClasspathSnapshotBasedIncrementalJvmCompilationConfig
 
@@ -113,10 +153,13 @@ public interface ClasspathSnapshotBasedIncrementalJvmCompilationConfig :
 }
 
 /**
- * Mandatory parameters for an IC approach
+ * Mandatory parameters for an incremental compilation approach
  */
 public sealed interface IncrementalCompilationApproachParameters
 
+/**
+ * Mandatory parameters of the classpath snapshots based incremental compilation approach
+ */
 public class ClasspathSnapshotBasedIncrementalCompilationApproachParameters(
     /**
      * The classpath snapshots files actual at the moment of compilation

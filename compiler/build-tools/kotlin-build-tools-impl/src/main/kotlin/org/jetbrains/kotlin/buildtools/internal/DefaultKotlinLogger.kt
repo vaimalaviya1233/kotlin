@@ -9,25 +9,25 @@ import org.jetbrains.kotlin.buildtools.api.KotlinLogger
 
 internal object DefaultKotlinLogger : KotlinLogger {
     override val isDebugEnabled: Boolean
-        get() = TODO("Not yet implemented")
+        get() = TODO("Default KotlinLogger is not yet implemented in the Build Tools API")
 
     override fun error(msg: String, throwable: Throwable?) {
-        TODO("Not yet implemented")
+        TODO("Default KotlinLogger is not yet implemented in the Build Tools API")
     }
 
     override fun warn(msg: String) {
-        TODO("Not yet implemented")
+        TODO("Default KotlinLogger is not yet implemented in the Build Tools API")
     }
 
     override fun info(msg: String) {
-        TODO("Not yet implemented")
+        TODO("Default KotlinLogger is not yet implemented in the Build Tools API")
     }
 
     override fun debug(msg: String) {
-        TODO("Not yet implemented")
+        TODO("Default KotlinLogger is not yet implemented in the Build Tools API")
     }
 
     override fun lifecycle(msg: String) {
-        TODO("Not yet implemented")
+        TODO("Default KotlinLogger is not yet implemented in the Build Tools API")
     }
 }

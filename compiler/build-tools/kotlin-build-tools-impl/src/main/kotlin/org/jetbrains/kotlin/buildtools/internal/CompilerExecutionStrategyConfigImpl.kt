@@ -14,6 +14,6 @@ class CompilerExecutionStrategyConfigImpl : CompilerExecutionStrategyConfig {
     }
 
     override fun useDaemonStrategy(sessionDir: File, jvmArguments: List<String>): CompilerExecutionStrategyConfig {
-        TODO("Not yet implemented")
+        TODO("Daemon strategy is not yet supported in the Build Tools API")
     }
 }

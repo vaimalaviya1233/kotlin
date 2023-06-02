@@ -7,17 +7,25 @@ package org.jetbrains.kotlin.buildtools.api
 
 import java.io.File
 
+/**
+ * A hierarchy representing source files changes for incremental compilation
+ */
 public sealed interface SourcesChanges {
     /**
-     * A build system doesn't know the changes, and it'll be considered as a request for non-incremental compilation
+     * A marker object stating that an API consumer cannot calculate changes (either because it's an initial build or for some other reason).
+     * The Build Tools API will not enable its source file changes detector in this mode, expecting the API consumer to provide file changes as [Known] for the consequent builds.
      */
     public object Unknown : SourcesChanges
 
     /**
-     * A build system isn't able to track changes, so changes should be tracked on the incremental compiler side.
+     * A marker object stating that an API consumer is not capable of calculating source file changes.
+     * In this mode, the Build Tools API will enable its source file changes detector and detect changes itself.
      */
     public object ToBeCalculated : SourcesChanges
 
+    /**
+     * A class containing [modifiedFiles] and [removedFiles] calculated from source file changes by an API consumer.
+     */
     public class Known(
         public val modifiedFiles: List<File>,
         public val removedFiles: List<File>,

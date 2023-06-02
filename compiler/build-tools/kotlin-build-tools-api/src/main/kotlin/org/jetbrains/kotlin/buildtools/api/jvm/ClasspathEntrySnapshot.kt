@@ -7,12 +7,22 @@ package org.jetbrains.kotlin.buildtools.api.jvm
 
 import java.io.File
 
+/**
+ * TODO add docs KT-57565
+ *
+ * This interface is not intended to be implemented by API consumers.
+ */
 public interface ClasspathEntrySnapshot {
     public val classSnapshots: LinkedHashMap<String, ClassSnapshot>
 
     public fun saveSnapshot(path: File)
 }
 
+/**
+ * TODO add docs KT-57565
+ *
+ * This interface is not intended to be implemented by API consumers.
+ */
 public interface ClassSnapshot {
     // ... TODO: KT-57565, it will expose some part of org.jetbrains.kotlin.incremental.classpathDiff.ClassSnapshot hierarchy
 }
