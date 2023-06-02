@@ -47,6 +47,12 @@ public class FirIdeNormalAnalysisSourceModuleAnalysisApiExpressionPsiTypeProvide
     }
 
     @Test
+    @TestMetadata("capturedBoundType.kt")
+    public void testCapturedBoundType() throws Exception {
+        runTest("analysis/analysis-api/testData/components/psiTypeProvider/psiType/forExpression/capturedBoundType.kt");
+    }
+
+    @Test
     @TestMetadata("class_object_call.kt")
     public void testClass_object_call() throws Exception {
         runTest("analysis/analysis-api/testData/components/psiTypeProvider/psiType/forExpression/class_object_call.kt");

@@ -8,9 +8,11 @@ package org.jetbrains.kotlin.analysis.api.fir.components
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.components.KtExpressionTypeProvider
 import org.jetbrains.kotlin.analysis.api.fir.KtFirAnalysisSession
-import org.jetbrains.kotlin.analysis.api.fir.utils.getReferencedElementType
+import org.jetbrains.kotlin.analysis.api.fir.buildSymbol
+import org.jetbrains.kotlin.analysis.api.fir.utils.getReferencedSymbol
 import org.jetbrains.kotlin.analysis.api.fir.utils.unwrap
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
+import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -25,6 +27,7 @@ import org.jetbrains.kotlin.fir.references.FirNamedReference
 import org.jetbrains.kotlin.fir.references.FirResolvedNamedReference
 import org.jetbrains.kotlin.fir.references.FirSuperReference
 import org.jetbrains.kotlin.fir.resolve.constructFunctionType
+import org.jetbrains.kotlin.fir.resolve.diagnostics.ConeUnresolvedNameError
 import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
 import org.jetbrains.kotlin.fir.symbols.impl.FirClassSymbol
 import org.jetbrains.kotlin.fir.types.*
@@ -71,7 +74,7 @@ internal class KtFirExpressionTypeProvider(
                 }
             }
             is FirExpression -> fir.typeRef.coneType.asKtType()
-            is FirNamedReference -> fir.getReferencedElementType().asKtType()
+            is FirNamedReference -> getReturnTypeOfReferencedDeclaration(fir)
             is FirStatement -> with(analysisSession) { builtinTypes.UNIT }
             is FirTypeRef, is FirImport, is FirPackageDirective, is FirLabel, is FirTypeParameterRef -> null
 
@@ -106,6 +109,22 @@ internal class KtFirExpressionTypeProvider(
         if (assignment.left != expression) return null
         val setTargetParameterType = fir.argumentsToSubstitutedValueParameters()?.values?.last()?.substitutedType ?: return null
         return setTargetParameterType.asKtType()
+    }
+
+    /**
+     * Returns a return type of the declaration referenced by the [namedReference].
+     *
+     * IMPORTANT: We use conversion to the [KtCallableSymbol] to drop possible substitution overrides
+     * from the fir symbols referenced by [namedReference]. Substitution overrides might contain
+     * [ConeCapturedType]s, which can cause troubles down the line (see KTIJ-25461 for example)
+     * and should not be exposed.
+     */
+    private fun getReturnTypeOfReferencedDeclaration(namedReference: FirNamedReference): KtType {
+        val firSymbol = namedReference.getReferencedSymbol()
+        val ktSymbol = firSymbol?.buildSymbol(firSymbolBuilder) as KtCallableSymbol?
+
+        return ktSymbol?.returnType
+            ?: ConeErrorType(ConeUnresolvedNameError(namedReference.name)).asKtType()
     }
 
     private data class SubstitutedValueParameter(val parameter: FirValueParameter, val substitutedType: ConeKotlinType)
