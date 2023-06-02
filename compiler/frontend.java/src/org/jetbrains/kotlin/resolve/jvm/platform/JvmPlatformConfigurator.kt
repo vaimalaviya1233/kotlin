@@ -39,6 +39,7 @@ object JvmPlatformConfigurator : PlatformConfiguratorBase(
         JvmAnnotationsTargetNonExistentAccessorChecker(),
         SuspendInFunInterfaceChecker(),
         BadInheritedJavaSignaturesChecker,
+        JavaImplicitActualizationChecker,
         JvmMultifileClassStateChecker,
         DefaultCheckerInTailrec,
         FunctionDelegateMemberNameClashChecker,
