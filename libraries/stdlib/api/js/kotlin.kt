@@ -3674,6 +3674,15 @@ public object Unit {
     public open override fun toString(): kotlin.String
 }
 
+@kotlin.RequiresOptIn
+@kotlin.annotation.Retention(value = AnnotationRetention.BINARY)
+@kotlin.annotation.Target(allowedTargets = {AnnotationTarget.CLASS})
+@kotlin.annotation.MustBeDocumented
+@kotlin.SinceKotlin(version = "1.9")
+public final annotation class UnsafeJvmImplicitActualization : kotlin.Annotation {
+    public constructor UnsafeJvmImplicitActualization()
+}
+
 @kotlin.annotation.Target(allowedTargets = {AnnotationTarget.TYPE})
 @kotlin.annotation.Retention(value = AnnotationRetention.SOURCE)
 @kotlin.annotation.MustBeDocumented
