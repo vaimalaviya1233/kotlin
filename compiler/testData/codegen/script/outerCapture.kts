@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 // expected: rv: 2
 fun foo(l: (Int) -> Int ): Int {
     return l(1)

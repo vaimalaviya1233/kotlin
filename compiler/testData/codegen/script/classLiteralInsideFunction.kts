@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 package script.long.name.inside.packag
 
 interface I {

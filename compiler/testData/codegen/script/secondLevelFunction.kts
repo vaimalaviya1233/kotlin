@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 var x: Int = 0
 
 if (true) {

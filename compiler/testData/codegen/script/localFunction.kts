@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 package script
 
 fun f(j: Int): Int {

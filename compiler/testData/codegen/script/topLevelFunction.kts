@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 // expected: rv: 3628800
 
 fun factorial(n: Int): Int {

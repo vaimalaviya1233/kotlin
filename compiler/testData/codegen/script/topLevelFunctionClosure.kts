@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 val x = 12
 
 fun foo(y: Int) = x + y

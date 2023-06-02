@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 // expected: rv: sky color is blue
 // param: sky blue
 

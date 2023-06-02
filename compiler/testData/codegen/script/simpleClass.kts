@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 class SimpleClass(val s: String) {
     fun foo() = s
 }

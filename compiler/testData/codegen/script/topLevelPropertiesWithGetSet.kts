@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 var log = "begin"
 fun append(msg: String) {
     log = "$log;$msg"

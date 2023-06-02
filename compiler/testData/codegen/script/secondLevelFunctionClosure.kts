@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 val z = 30
 var x: Int = 0
 

@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 var x = 0
 x++
 x++
