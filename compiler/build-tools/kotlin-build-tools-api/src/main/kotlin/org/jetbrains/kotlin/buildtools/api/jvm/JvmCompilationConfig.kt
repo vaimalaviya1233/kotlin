@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.buildtools.api.jvm
 
+import org.jetbrains.kotlin.buildtools.api.ExperimentalBuildToolsApi
 import org.jetbrains.kotlin.buildtools.api.KotlinLogger
 import org.jetbrains.kotlin.buildtools.api.SourcesChanges
 import java.io.File
@@ -16,6 +17,7 @@ import java.io.File
  *
  * This interface is not intended to be implemented by API consumers.
  */
+@ExperimentalBuildToolsApi
 public interface JvmCompilationConfig {
     /**
      * A logger used during the compilation.
@@ -71,6 +73,7 @@ public interface JvmCompilationConfig {
  *
  * This interface is not intended to be implemented by API consumers.
  */
+@ExperimentalBuildToolsApi
 public interface IncrementalJvmCompilationConfig<P : IncrementalCompilationApproachParameters> {
     /**
      * A directory used as a base path for computing relative paths in the incremental compilation caches.
@@ -134,6 +137,7 @@ public interface IncrementalJvmCompilationConfig<P : IncrementalCompilationAppro
  *
  * This interface is not intended to be implemented by API consumers.
  */
+@ExperimentalBuildToolsApi
 public interface ClasspathSnapshotBasedIncrementalJvmCompilationConfig :
     IncrementalJvmCompilationConfig<ClasspathSnapshotBasedIncrementalCompilationApproachParameters> {
     /**
@@ -155,11 +159,13 @@ public interface ClasspathSnapshotBasedIncrementalJvmCompilationConfig :
 /**
  * Mandatory parameters for an incremental compilation approach
  */
+@ExperimentalBuildToolsApi
 public sealed interface IncrementalCompilationApproachParameters
 
 /**
  * Mandatory parameters of the classpath snapshots based incremental compilation approach
  */
+@ExperimentalBuildToolsApi
 public class ClasspathSnapshotBasedIncrementalCompilationApproachParameters(
     /**
      * The classpath snapshots files actual at the moment of compilation

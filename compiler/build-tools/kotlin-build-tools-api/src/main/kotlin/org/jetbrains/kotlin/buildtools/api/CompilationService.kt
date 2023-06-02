@@ -14,6 +14,7 @@ import java.io.File
  *
  * This interface is not intended to be implemented by API consumers. An instance of [CompilationService] is expected to be obtained from [loadImplementation].
  */
+@ExperimentalBuildToolsApi
 public interface CompilationService {
     /**
      * TODO KT-57565
@@ -46,6 +47,7 @@ public interface CompilationService {
         arguments: List<String>
     )
 
+    @ExperimentalBuildToolsApi
     public companion object {
         @JvmStatic
         public fun loadImplementation(classLoader: ClassLoader): CompilationService =
