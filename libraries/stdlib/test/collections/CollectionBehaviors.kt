@@ -6,6 +6,7 @@
 package test.collections.behaviors
 
 import test.collections.CompareContext
+import kotlin.test.assertNotEquals
 
 public fun <T> CompareContext<List<T>>.listBehavior() {
     equalityBehavior()
@@ -97,6 +98,13 @@ public fun <K, V> CompareContext<Map<K, V>>.mapBehavior() {
     compareProperty({ keys }, { setBehavior("keySet") })
     compareProperty({ entries }, { setBehavior("entrySet") })
     compareProperty({ values }, { collectionBehavior("values") })
+
+    if (actual !== expected) {
+        compareProperty({ values }) {
+            assertNotEquals(expected, actual)
+            assertNotEquals(expected.hashCode(), actual.hashCode())
+        }
+    }
 }
 
 public fun <T> CompareContext<T>.equalityBehavior(objectName: String = "") {
