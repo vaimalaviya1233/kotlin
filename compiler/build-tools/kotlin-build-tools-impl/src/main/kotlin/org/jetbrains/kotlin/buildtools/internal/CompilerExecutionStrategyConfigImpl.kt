@@ -9,10 +9,11 @@ import org.jetbrains.kotlin.buildtools.api.CompilerExecutionStrategyConfig
 import java.io.File
 
 class CompilerExecutionStrategyConfigImpl : CompilerExecutionStrategyConfig {
-    override fun useInProcessStrategy() {
+    override fun useInProcessStrategy(): CompilerExecutionStrategyConfig {
+        return this
     }
 
-    override fun useDaemonStrategy(classpath: List<File>, sessionDir: File, jvmArguments: List<String>) {
+    override fun useDaemonStrategy(sessionDir: File, jvmArguments: List<String>): CompilerExecutionStrategyConfig {
         TODO("Not yet implemented")
     }
 }

@@ -11,11 +11,10 @@ public interface CompilerExecutionStrategyConfig {
     /**
      * The default strategy. Could be used to be explicit and mark it as the preferred one.
      */
-    public fun useInProcessStrategy()
+    public fun useInProcessStrategy(): CompilerExecutionStrategyConfig
 
     public fun useDaemonStrategy(
-        classpath: List<File>,
         sessionDir: File,
         jvmArguments: List<String>,
-    )
+    ): CompilerExecutionStrategyConfig
 }

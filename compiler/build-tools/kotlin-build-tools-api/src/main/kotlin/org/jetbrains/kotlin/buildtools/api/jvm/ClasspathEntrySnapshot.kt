@@ -5,8 +5,12 @@
 
 package org.jetbrains.kotlin.buildtools.api.jvm
 
+import java.io.File
+
 public interface ClasspathEntrySnapshot {
     public val classSnapshots: LinkedHashMap<String, ClassSnapshot>
+
+    public fun saveSnapshot(path: File)
 }
 
 public interface ClassSnapshot {

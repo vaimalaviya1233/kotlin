@@ -6,19 +6,28 @@
 package org.jetbrains.kotlin.buildtools.internal
 
 import org.jetbrains.kotlin.buildtools.api.KotlinLogger
+import org.jetbrains.kotlin.buildtools.api.SourcesChanges
 import org.jetbrains.kotlin.buildtools.api.jvm.*
 import java.io.File
 
 internal class JvmCompilationConfigImpl(
-    override var kotlinScriptExtensions: List<String> = emptyList(),
+    override var kotlinScriptExtensions: Set<String> = emptySet(),
     override var logger: KotlinLogger = DefaultKotlinLogger,
 ) : JvmCompilationConfig {
-    override fun classpathSnapshotBasedIncrementalCompilationDefaults() =
-        ClasspathSnapshotBasedIncrementalJvmCompilationConfigImpl()
+    override fun useLogger(logger: KotlinLogger): JvmCompilationConfig {
+        this.logger = logger
+        return this
+    }
+
+    override fun useKotlinScriptExtensions(kotlinScriptExtensions: Set<String>): JvmCompilationConfig {
+        this.kotlinScriptExtensions = kotlinScriptExtensions
+        return this
+    }
+
+    override fun generateClasspathSnapshotBasedIncrementalCompilationConfig() = ClasspathSnapshotBasedIncrementalJvmCompilationConfigImpl()
 
     override fun <P : IncrementalCompilationApproachParameters> useIncrementalCompilation(
         workingDirectory: File,
-        rootProjectDir: File,
         sourcesChanges: SourcesChanges,
         approachParameters: P,
         options: IncrementalJvmCompilationConfig<P>,
@@ -27,19 +36,64 @@ internal class JvmCompilationConfigImpl(
 
 internal abstract class JvmIncrementalCompilationConfigImpl<P : IncrementalCompilationApproachParameters>(
     override var usePreciseJavaTracking: Boolean = true,
-    override var preciseCompilationResultsBackup: Boolean = false,
+    override var usePreciseCompilationResultsBackup: Boolean = false,
     override var keepIncrementalCompilationCachesInMemory: Boolean = false,
+    override var projectDir: File? = null,
 ) : IncrementalJvmCompilationConfig<P> {
-    override fun nonIncremental() {
-        TODO("Not yet implemented")
+    override fun useProjectDir(projectDir: File): IncrementalJvmCompilationConfig<P> {
+        this.projectDir = projectDir
+        return this
+    }
+
+    override fun usePreciseJavaTracking(value: Boolean): IncrementalJvmCompilationConfig<P> {
+        usePreciseJavaTracking = value
+        return this
+    }
+
+    override fun usePreciseCompilationResultsBackup(value: Boolean): IncrementalJvmCompilationConfig<P> {
+        usePreciseCompilationResultsBackup = value
+        return this
+    }
+
+    override fun keepIncrementalCompilationCachesInMemory(value: Boolean): IncrementalJvmCompilationConfig<P> {
+        keepIncrementalCompilationCachesInMemory = value
+        return this
+    }
+
+    override fun nonIncremental(): IncrementalJvmCompilationConfig<P> {
+        return this
     }
 }
 
 internal class ClasspathSnapshotBasedIncrementalJvmCompilationConfigImpl :
     JvmIncrementalCompilationConfigImpl<ClasspathSnapshotBasedIncrementalCompilationApproachParameters>(),
     ClasspathSnapshotBasedIncrementalJvmCompilationConfig {
+    override fun useProjectDir(projectDir: File): ClasspathSnapshotBasedIncrementalJvmCompilationConfig {
+        super.useProjectDir(projectDir)
+        return this
+    }
 
-    override fun noClasspathSnapshotsChanges() {
-        TODO("Not yet implemented")
+    override fun usePreciseJavaTracking(value: Boolean): ClasspathSnapshotBasedIncrementalJvmCompilationConfig {
+        super.usePreciseJavaTracking(value)
+        return this
+    }
+
+    override fun usePreciseCompilationResultsBackup(value: Boolean): ClasspathSnapshotBasedIncrementalJvmCompilationConfig {
+        super.usePreciseCompilationResultsBackup(value)
+        return this
+    }
+
+    override fun keepIncrementalCompilationCachesInMemory(value: Boolean): ClasspathSnapshotBasedIncrementalJvmCompilationConfig {
+        super.keepIncrementalCompilationCachesInMemory(value)
+        return this
+    }
+
+    override fun nonIncremental(): ClasspathSnapshotBasedIncrementalJvmCompilationConfig {
+        super.nonIncremental()
+        return this
+    }
+
+    override fun noClasspathSnapshotsChanges(): ClasspathSnapshotBasedIncrementalJvmCompilationConfig {
+        return this
     }
 }

@@ -16,8 +16,6 @@ import java.io.File
 public interface CompilationService {
     public fun calculateClasspathSnapshot(classpathEntry: File): ClasspathEntrySnapshot
 
-    public fun saveSnapshot(snapshot: ClasspathEntrySnapshot, path: File)
-
     /**
      * Could be used by a build system to retrieve current defaults for the strategy and to customize them
      */
@@ -31,7 +29,7 @@ public interface CompilationService {
     public fun compileJvm(
         strategyConfig: CompilerExecutionStrategyConfig,
         compilationConfig: JvmCompilationConfig,
-        sources: Iterable<File>,
+        sources: Set<File>,
         arguments: List<String>
     )
 

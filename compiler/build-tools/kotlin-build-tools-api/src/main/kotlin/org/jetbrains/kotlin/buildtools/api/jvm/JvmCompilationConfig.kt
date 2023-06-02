@@ -6,23 +6,37 @@
 package org.jetbrains.kotlin.buildtools.api.jvm
 
 import org.jetbrains.kotlin.buildtools.api.KotlinLogger
+import org.jetbrains.kotlin.buildtools.api.SourcesChanges
 import java.io.File
 
+/**
+ * A configuration interface of compilation options.
+ *
+ * This interface is not intended to be implemented by API consumers.
+ */
 public interface JvmCompilationConfig {
-    public var kotlinScriptExtensions: List<String>
-    public var logger: KotlinLogger
+    /**
+     * A logger used during the compilation.
+     *
+     * Default logger is a logger just printing messages to stdin and stderr.
+     */
+    public val logger: KotlinLogger
+
+    public fun useLogger(logger: KotlinLogger): JvmCompilationConfig
 
     /**
-     * Could be used by a build system to retrieve current defaults for the approach and to customize them
+     * A set of additional to `.kt` and `.kts` Kotlin script extensions.
+     *
+     * Default value is an empty set.
      */
-    public fun classpathSnapshotBasedIncrementalCompilationDefaults():
-            IncrementalJvmCompilationConfig<ClasspathSnapshotBasedIncrementalCompilationApproachParameters> {
-        error("This version of the Build Tools API does not support the classpath snapshots based incremental compilation")
-    }
+    public val kotlinScriptExtensions: Set<String>
+
+    public fun useKotlinScriptExtensions(kotlinScriptExtensions: Set<String>): JvmCompilationConfig
+
+    public fun generateClasspathSnapshotBasedIncrementalCompilationConfig(): ClasspathSnapshotBasedIncrementalJvmCompilationConfig
 
     public fun <P : IncrementalCompilationApproachParameters> useIncrementalCompilation(
         workingDirectory: File,
-        rootProjectDir: File,
         sourcesChanges: SourcesChanges,
         approachParameters: P,
         options: IncrementalJvmCompilationConfig<P>,
@@ -35,31 +49,49 @@ public interface JvmCompilationConfig {
  * Options and handles to tune compilation
  */
 public interface IncrementalJvmCompilationConfig<P : IncrementalCompilationApproachParameters> {
-    public var usePreciseJavaTracking: Boolean
-    public var preciseCompilationResultsBackup: Boolean
-    public var keepIncrementalCompilationCachesInMemory: Boolean
+    /**
+     * A directory used as a base path for computing relative paths in the incremental compilation caches.
+     *
+     * If is not specified, incremental compilation caches will be non-relocatable
+     *
+     * Default values is `null`
+     */
+    public val projectDir: File?
+
+    public fun useProjectDir(projectDir: File): IncrementalJvmCompilationConfig<P>
+
+    /**
+     * Controls whether incremental compilation should precisely analyze Java files for better changes detection
+     *
+     * Default value is defined by implementation of the API
+     */
+    public val usePreciseJavaTracking: Boolean
+
+    public fun usePreciseJavaTracking(value: Boolean): IncrementalJvmCompilationConfig<P>
+
+    /**
+     * Controls whether incremental compilation should perform file-by-file backup of files and revert them in the case of a failure
+     *
+     * Default value is defined by implementation of the API
+     */
+    public val usePreciseCompilationResultsBackup: Boolean
+
+    public fun usePreciseCompilationResultsBackup(value: Boolean): IncrementalJvmCompilationConfig<P>
+
+    /**
+     * Incremental compilation uses the PersistentHashMap of the intellij platform for storing caches.
+     * This property controls whether the changes should remain in memory and not being flushed to the disk until we could mark the compilation as successful.
+     *
+     * Default value is defined by implementation of the API
+     */
+    public val keepIncrementalCompilationCachesInMemory: Boolean
+
+    public fun keepIncrementalCompilationCachesInMemory(value: Boolean): IncrementalJvmCompilationConfig<P>
 
     /**
      * Could be used to force the non-incremental mode
      */
-    public fun nonIncremental()
-}
-
-public sealed interface SourcesChanges {
-    /**
-     * A build system doesn't know the changes, and it'll be considered as a request for non-incremental compilation
-     */
-    public object Unknown : SourcesChanges
-
-    /**
-     * A build system isn't able to track changes, so changes should be tracked on the incremental compiler side.
-     */
-    public object ToBeCalculated : SourcesChanges
-
-    public class Known(
-        public val modifiedFiles: List<File>,
-        public val removedFiles: List<File>,
-    ) : SourcesChanges
+    public fun nonIncremental(): IncrementalJvmCompilationConfig<P>
 }
 
 public interface ClasspathSnapshotBasedIncrementalJvmCompilationConfig :
@@ -67,7 +99,17 @@ public interface ClasspathSnapshotBasedIncrementalJvmCompilationConfig :
     /**
      * Could be used to mark the snapshot files as not changed, if the check is already performed by a build system
      */
-    public fun noClasspathSnapshotsChanges()
+    public fun noClasspathSnapshotsChanges(): ClasspathSnapshotBasedIncrementalJvmCompilationConfig
+
+    override fun useProjectDir(projectDir: File): ClasspathSnapshotBasedIncrementalJvmCompilationConfig
+
+    override fun usePreciseJavaTracking(value: Boolean): ClasspathSnapshotBasedIncrementalJvmCompilationConfig
+
+    override fun usePreciseCompilationResultsBackup(value: Boolean): ClasspathSnapshotBasedIncrementalJvmCompilationConfig
+
+    override fun keepIncrementalCompilationCachesInMemory(value: Boolean): ClasspathSnapshotBasedIncrementalJvmCompilationConfig
+
+    override fun nonIncremental(): ClasspathSnapshotBasedIncrementalJvmCompilationConfig
 }
 
 /**
@@ -76,6 +118,13 @@ public interface ClasspathSnapshotBasedIncrementalJvmCompilationConfig :
 public sealed interface IncrementalCompilationApproachParameters
 
 public class ClasspathSnapshotBasedIncrementalCompilationApproachParameters(
-    public val currentClasspathSnapshotFiles: List<File>,
-    public val previousClasspathSnapshotFile: File,
+    /**
+     * The classpath snapshots files actual at the moment of compilation
+     */
+    public val newClasspathSnapshotFiles: List<File>,
+    /**
+     * The shrunk classpath snapshot, a result of the previous compilation. Could point to a non-existent file.
+     * At the successful end of the compilation, the shrunk version of the [newClasspathSnapshotFiles] will be stored at this path.
+     */
+    public val shrunkClasspathSnapshot: File,
 ) : IncrementalCompilationApproachParameters
