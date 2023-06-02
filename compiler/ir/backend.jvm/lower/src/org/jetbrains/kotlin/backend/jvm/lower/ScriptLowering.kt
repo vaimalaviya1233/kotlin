@@ -115,6 +115,19 @@ private class ScriptsToClassesLowering(val context: JvmBackendContext, val inner
     private fun collectCapturingClasses(irScript: IrScript, typeRemapper: SimpleTypeRemapper): Set<IrClassImpl> {
         val annotator = ClosureAnnotator(irScript, irScript)
         val capturingClasses = mutableSetOf<IrClassImpl>()
+
+        val scriptsReceivers = mutableSetOf<IrType>().also {
+            it.addIfNotNull(irScript.thisReceiver?.type)
+        }
+        irScript.earlierScripts?.forEach { scriptsReceivers.addIfNotNull(it.owner.thisReceiver?.type) }
+        irScript.importedScripts?.forEach {
+            scriptsReceivers.add(it.owner.targetClass!!.owner.thisReceiver!!.type)
+        }
+        irScript.implicitReceiversParameters.forEach {
+            scriptsReceivers.add(it.type)
+            scriptsReceivers.add(typeRemapper.remapType(it.type))
+        }
+
         val collector = object : IrElementVisitorVoid {
             override fun visitElement(element: IrElement) {
                 element.acceptChildrenVoid(this)
@@ -123,18 +136,6 @@ private class ScriptsToClassesLowering(val context: JvmBackendContext, val inner
             override fun visitClass(declaration: IrClass) {
                 if (declaration is IrClassImpl && !declaration.isInner) {
                     val closure = annotator.getClassClosure(declaration)
-                    val scriptsReceivers = mutableSetOf<IrType>().also {
-                        it.addIfNotNull(irScript.thisReceiver?.type)
-                    }
-                    irScript.earlierScripts?.forEach { scriptsReceivers.addIfNotNull(it.owner.thisReceiver?.type) }
-                    irScript.importedScripts?.forEach {
-                        scriptsReceivers.add(it.owner.targetClass!!.owner.thisReceiver!!.type)
-                    }
-                    irScript.implicitReceiversParameters.forEach {
-                        scriptsReceivers.add(it.type)
-                        scriptsReceivers.add(typeRemapper.remapType(it.type))
-                    }
-
                     if (closure.capturedValues.any { it.owner.type in scriptsReceivers }) {
                         fun reportError(factory: KtDiagnosticFactory1<String>, name: Name? = null) {
                             context.ktDiagnosticReporter.at(declaration).report(factory, (name ?: declaration.name).asString())
