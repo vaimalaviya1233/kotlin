@@ -20,13 +20,16 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.config.AnalysisFlags
 import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.incremental.components.ExpectActualTracker
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
 import org.jetbrains.kotlin.resolve.*
 import org.jetbrains.kotlin.resolve.constants.ConstantValue
+import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.descriptorUtil.isAnnotationConstructor
 import org.jetbrains.kotlin.resolve.descriptorUtil.isPrimaryConstructorOfInlineClass
 import org.jetbrains.kotlin.resolve.descriptorUtil.module
@@ -62,7 +65,8 @@ class ExpectedActualDeclarationChecker(
         if (descriptor.isExpect) {
             checkExpectedDeclarationHasProperActuals(
                 declaration, descriptor, context.trace,
-                checkActualModifier, context.expectActualTracker
+                checkActualModifier, context.expectActualTracker,
+                context.languageVersionSettings
             )
         }
         if (descriptor.isActualOrSomeContainerIsActual()) {
@@ -72,7 +76,8 @@ class ExpectedActualDeclarationChecker(
                 descriptor,
                 checkActualModifier,
                 context.trace,
-                moduleVisibilityFilter = { it in allDependsOnModules }
+                moduleVisibilityFilter = { it in allDependsOnModules },
+                context.languageVersionSettings
             )
         }
     }
@@ -90,7 +95,8 @@ class ExpectedActualDeclarationChecker(
         expect: MemberDescriptor,
         trace: BindingTrace,
         checkActualModifier: Boolean,
-        expectActualTracker: ExpectActualTracker
+        expectActualTracker: ExpectActualTracker,
+        languageVersionSettings: LanguageVersionSettings
     ) {
         val allActualizationPaths = moduleStructureOracle.findAllReversedDependsOnPaths(expect.module)
         val allLeafModules = allActualizationPaths.map { it.nodes.last() }.toSet()
@@ -98,14 +104,31 @@ class ExpectedActualDeclarationChecker(
         allLeafModules.forEach { leafModule ->
             val actuals = ExpectedActualResolver.findActualForExpected(expect, leafModule) ?: return@forEach
 
+            if (actuals.asSequence().flatMap { it.value }.any {
+                    it.source !is KotlinSourceElement &&
+                            it.containingDeclaration is PackageFragmentDescriptor &&
+                            !expectPsi.isAllowedImplicitActualization(languageVersionSettings, trace.bindingContext)
+                }
+            ) {
+                trace.report(Errors.IMPLICIT_JVM_ACTUALIZATION.on(expectPsi, expect, leafModule))
+                return@forEach
+            }
+
             checkExpectedDeclarationHasAtLeastOneActual(
-                expectPsi, expect, actuals, trace, leafModule, checkActualModifier, expectActualTracker
+                expectPsi, expect, actuals, trace, leafModule, checkActualModifier, expectActualTracker, languageVersionSettings
             )
 
             checkExpectedDeclarationHasAtMostOneActual(
                 expectPsi, expect, actuals, allActualizationPaths, trace
             )
         }
+    }
+
+    private fun KtNamedDeclaration.isAllowedImplicitActualization(
+        languageVersionSettings: LanguageVersionSettings,
+        bindingContext: BindingContext,
+    ) = with(OptInUsageChecker) {
+        isOptInAllowed(FqName("kotlin.UnsafeJvmImplicitActualization"), languageVersionSettings, bindingContext)
     }
 
     private fun checkExpectedDeclarationHasAtMostOneActual(
@@ -163,7 +186,8 @@ class ExpectedActualDeclarationChecker(
         trace: BindingTrace,
         module: ModuleDescriptor,
         checkActualModifier: Boolean,
-        expectActualTracker: ExpectActualTracker
+        expectActualTracker: ExpectActualTracker,
+        languageVersionSettings: LanguageVersionSettings,
     ) {
         // Only look for top level actual members; class members will be handled as a part of that expected class
         if (expect.containingDeclaration !is PackageFragmentDescriptor) return
@@ -188,20 +212,30 @@ class ExpectedActualDeclarationChecker(
 
         // ...except diagnostics regarding missing actual keyword, because in that case we won't start looking for the actual at all
         if (checkActualModifier) {
-            actualMembers.forEach { reportMissingActualModifier(it, actualPsi = null, trace) }
+            actualMembers.forEach { reportMissingActualModifier(it, expectPsi, actualPsi = null, trace, languageVersionSettings) }
         }
 
         expectActualTracker.reportExpectActual(expected = expect, actualMembers = actualMembers)
     }
 
-    private fun reportMissingActualModifier(actual: MemberDescriptor, actualPsi: KtNamedDeclaration?, trace: BindingTrace) {
+    private fun reportMissingActualModifier(
+        actual: MemberDescriptor,
+        expectPsi: KtNamedDeclaration?,
+        actualPsi: KtNamedDeclaration?,
+        trace: BindingTrace,
+        settings: LanguageVersionSettings,
+    ) {
         if (actual.isActual) return
-        @Suppress("NAME_SHADOWING")
-        val actualPsi = actualPsi ?: (actual.source as? KotlinSourceElement)?.psi as? KtNamedDeclaration ?: return
+        if (actual.source !is KotlinSourceElement &&
+            expectPsi?.isAllowedImplicitActualization(settings, trace.bindingContext) == true
+        ) return
+        if (!requireActualModifier(actual)) return
 
-        if (requireActualModifier(actual)) {
-            trace.report(Errors.ACTUAL_MISSING.on(actualPsi))
-        }
+        @Suppress("NAME_SHADOWING")
+        val actualPsi = actualPsi
+            ?: (actual.source as? KotlinSourceElement)?.psi as? KtNamedDeclaration
+            ?: error("Failed to report '${Errors.ACTUAL_MISSING}' diagnostic for '${actual.fqNameSafe}'")
+        trace.report(Errors.ACTUAL_MISSING.on(actualPsi))
     }
 
     private fun checkIfExpectHasDefaultArgumentsAndActualizedWithTypealias(
@@ -261,7 +295,8 @@ class ExpectedActualDeclarationChecker(
         actual: MemberDescriptor,
         checkActualModifier: Boolean,
         trace: BindingTrace,
-        moduleVisibilityFilter: ModuleFilter
+        moduleVisibilityFilter: ModuleFilter,
+        languageVersionSettings: LanguageVersionSettings,
     ) {
         val compatibility = ExpectedActualResolver.findExpectedForActual(actual, moduleVisibilityFilter)
             ?: return
@@ -273,7 +308,7 @@ class ExpectedActualDeclarationChecker(
             && actual.containingDeclaration !is PackageFragmentDescriptor
             && compatibility.any { it.key.isCompatibleOrWeakCompatible() }
         ) {
-            reportMissingActualModifier(actual, actualPsi, trace)
+            reportMissingActualModifier(actual, expectPsi = null, actualPsi, trace, languageVersionSettings)
         }
 
         // Usually, actualPsi.hasActualModifier() and descriptor.isActual are the same.
