@@ -512,6 +512,9 @@ public final class kotlin/Unit {
 	public fun toString ()Ljava/lang/String;
 }
 
+public abstract interface annotation class kotlin/UnsafeJvmImplicitActualization : java/lang/annotation/Annotation {
+}
+
 public abstract interface annotation class kotlin/UnsafeVariance : java/lang/annotation/Annotation {
 }
 
