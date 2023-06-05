@@ -53,6 +53,14 @@ public abstract class KtAnalysisSessionProvider(public val project: Project) : D
     ): R {
         val factory =
             nonDefaultLifetimeTokenFactory ?: KtDefaultLifetimeTokenProvider.getService(project).getDefaultLifetimeTokenFactory()
+
+        val containingFile = useSiteKtElement.containingKtFile
+        val originalFile = containingFile.originalFile as KtFile
+        // the file is a non-physical copy of a file, e.g. fake completion file
+        if (originalFile != containingFile) {
+            return analyseInDependedAnalysisSession(originalFile, useSiteKtElement, nonDefaultLifetimeTokenFactory, action)
+        }
+
         return analyse(getAnalysisSession(useSiteKtElement, factory), factory, action)
     }
 
