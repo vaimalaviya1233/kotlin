@@ -49,8 +49,6 @@ abstract class CLICompiler<A : CommonCompilerArguments> : CLITool<A>() {
         const val SCRIPT_PLUGIN_REGISTRAR_NAME =
             "org.jetbrains.kotlin.scripting.compiler.plugin.ScriptingCompilerConfigurationComponentRegistrar"
         const val SCRIPT_PLUGIN_COMMANDLINE_PROCESSOR_NAME = "org.jetbrains.kotlin.scripting.compiler.plugin.ScriptingCommandLineProcessor"
-        const val SCRIPT_PLUGIN_K2_REGISTRAR_NAME =
-            "org.jetbrains.kotlin.scripting.compiler.plugin.ScriptingK2CompilerPluginRegistrar"
     }
 
     abstract val defaultPerformanceManager: CommonCompilerPerformanceManager
@@ -234,13 +232,7 @@ abstract class CLICompiler<A : CommonCompilerArguments> : CLITool<A>() {
             val pluginRegistrar = (pluginRegistrarClass.getDeclaredConstructor().newInstance() as? ComponentRegistrar)?.also {
                 configuration.add(ComponentRegistrar.PLUGIN_COMPONENT_REGISTRARS, it)
             }
-            val pluginK2Registrar = if (useK2) {
-                val pluginK2RegistrarClass = PluginCliParser::class.java.classLoader.loadClass(SCRIPT_PLUGIN_K2_REGISTRAR_NAME)
-                (pluginK2RegistrarClass.getDeclaredConstructor().newInstance() as? CompilerPluginRegistrar)?.also {
-                    configuration.add(CompilerPluginRegistrar.COMPILER_PLUGIN_REGISTRARS, it)
-                }
-            } else null
-            if (pluginRegistrar != null || pluginK2Registrar != null) {
+            if (pluginRegistrar != null) {
                 processScriptPluginCliOptions(pluginOptions, configuration)
                 true
             } else false
