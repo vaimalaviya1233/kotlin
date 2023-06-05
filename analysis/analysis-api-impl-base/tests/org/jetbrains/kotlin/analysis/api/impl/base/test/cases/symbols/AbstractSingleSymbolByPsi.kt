@@ -12,6 +12,8 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.test.services.TestServices
 
 abstract class AbstractSingleSymbolByPsi : AbstractSymbolTest() {
+    override val dependentSessionCaretTag: String? get() = null
+
     override fun KtAnalysisSession.collectSymbols(ktFile: KtFile, testServices: TestServices): SymbolsData {
         val declaration = testServices.expressionMarkerProvider.getElementOfTypeAtCaret<KtDeclaration>(ktFile)
         val symbol = declaration.getSymbol()

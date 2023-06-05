@@ -47,6 +47,12 @@ public class Fe10IdeNormalAnalysisSourceModuleSingleSymbolByPsiGenerated extends
     }
 
     @Test
+    @TestMetadata("ConstructorParameter.kt")
+    public void testConstructorParameter() throws Exception {
+        runTest("analysis/analysis-api/testData/symbols/singleSymbolByPsi/ConstructorParameter.kt");
+    }
+
+    @Test
     @TestMetadata("ExpandedParameterType.kt")
     public void testExpandedParameterType() throws Exception {
         runTest("analysis/analysis-api/testData/symbols/singleSymbolByPsi/ExpandedParameterType.kt");

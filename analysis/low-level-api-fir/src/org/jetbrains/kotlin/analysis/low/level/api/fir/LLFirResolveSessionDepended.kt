@@ -78,6 +78,7 @@ internal class LLFirResolveSessionDepended(
         TODO("Diagnostics are not implemented for depended state")
 
     override fun resolveToFirSymbol(ktDeclaration: KtDeclaration, phase: FirResolvePhase): FirBasedSymbol<*> {
+        ktToFirMapping?.getElement(ktDeclaration, this)?.let { return (it as FirDeclaration).symbol }
         return originalFirResolveSession.resolveToFirSymbol(ktDeclaration, phase)
     }
 

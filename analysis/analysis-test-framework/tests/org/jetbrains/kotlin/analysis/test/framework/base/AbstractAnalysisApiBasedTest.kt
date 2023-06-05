@@ -202,12 +202,14 @@ abstract class AbstractAnalysisApiBasedTest : TestWithDisposable() {
      */
     protected fun <R> analyseForTest(file: KtFile, action: KtAnalysisSession.(KtElement) -> R): R {
         return if (configurator.analyseInDependentSession) {
-            val declaration = testServices.expressionMarkerProvider.getElementOfTypeAtCaret<KtDeclaration>(file, ON_AIR_CONTEXT_CARET_TAG)
+            val declaration = testServices.expressionMarkerProvider.getElementOfTypeAtCaret<KtDeclaration>(file, dependentSessionCaretTag)
             analyseForTest(declaration, action)
         } else {
             analyze(file, action = { action(file) })
         }
     }
+
+    protected open val dependentSessionCaretTag: String? get() = ON_AIR_CONTEXT_CARET_TAG
 
     @BeforeEach
     fun initTestInfo(testInfo: TestInfo) {

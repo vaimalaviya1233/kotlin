@@ -89,8 +89,8 @@ abstract class AbstractSymbolTest : AbstractAnalysisApiSingleFileTest() {
         }
 
         val pointersWithRendered = executeOnPooledThreadInReadAction {
-            analyseForTest(ktFile) {
-                val (symbols, symbolForPrettyRendering) = collectSymbols(ktFile, testServices)
+            analyseForTest(ktFile) { useSiteKtElement ->
+                val (symbols, symbolForPrettyRendering) = collectSymbols(useSiteKtElement.containingKtFile, testServices)
 
                 val pointerWithRenderedSymbol = symbols
                     .asSequence()
@@ -133,6 +133,9 @@ abstract class AbstractSymbolTest : AbstractAnalysisApiSingleFileTest() {
         compareResults(pointersWithRendered, testServices)
 
         configurator.doOutOfBlockModification(ktFile)
+
+        // don't compare restored symbols when running analysis in dependent session
+        if (configurator.analyseInDependentSession) return
 
         restoreSymbolsInOtherReadActionAndCompareResults(
             directiveToIgnore = directiveToIgnoreSymbolRestore,

@@ -100,8 +100,8 @@ private fun AnalysisApiTestGroup.generateResolveExtensionsTests() {
 }
 
 private fun AnalysisApiTestGroup.generateAnalysisApiNonComponentsTests() {
-    group("symbols", filter = analysisSessionModeIs(AnalysisSessionMode.Normal)) {
-        test(AbstractSymbolByPsiTest::class) {
+    group("symbols") {
+        test(AbstractSymbolByPsiTest::class, filter = analysisSessionModeIs(AnalysisSessionMode.Normal)) {
             model("symbolByPsi")
         }
 
@@ -109,12 +109,13 @@ private fun AnalysisApiTestGroup.generateAnalysisApiNonComponentsTests() {
             model("singleSymbolByPsi")
         }
 
-        test(AbstractSymbolRestoreFromDifferentModuleTest::class) {
+        test(AbstractSymbolRestoreFromDifferentModuleTest::class, filter = analysisSessionModeIs(AnalysisSessionMode.Normal)) {
             model("symbolRestoreFromDifferentModule")
         }
 
         test(
-            AbstractSymbolByFqNameTest::class
+            AbstractSymbolByFqNameTest::class,
+            filter = analysisSessionModeIs(AnalysisSessionMode.Normal)
         ) {
             when (it.analysisApiMode) {
                 AnalysisApiMode.Ide ->
@@ -124,7 +125,7 @@ private fun AnalysisApiTestGroup.generateAnalysisApiNonComponentsTests() {
             }
         }
 
-        test(AbstractSymbolByReferenceTest::class) {
+        test(AbstractSymbolByReferenceTest::class, filter = analysisSessionModeIs(AnalysisSessionMode.Normal)) {
             when (it.analysisApiMode) {
                 AnalysisApiMode.Ide ->
                     model("symbolByReference")

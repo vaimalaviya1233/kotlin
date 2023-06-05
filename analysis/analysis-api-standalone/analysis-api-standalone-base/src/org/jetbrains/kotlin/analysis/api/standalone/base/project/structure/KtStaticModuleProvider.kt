@@ -20,6 +20,7 @@ class KtStaticModuleProvider(
     @OptIn(KtModuleStructureInternals::class)
     override fun getModule(element: PsiElement, contextualModule: KtModule?): KtModule {
         val containingFileAsPsiFile = element.containingFile
+            .originalFile // if element is analysed in dependent session, use original file's module
         val containingFileAsVirtualFile = containingFileAsPsiFile.virtualFile
         if (containingFileAsVirtualFile.extension == BuiltInSerializerProtocol.BUILTINS_FILE_EXTENSION) {
             return builtinsModule
