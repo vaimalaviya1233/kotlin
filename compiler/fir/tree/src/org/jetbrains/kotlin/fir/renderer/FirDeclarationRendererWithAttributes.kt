@@ -6,12 +6,15 @@
 package org.jetbrains.kotlin.fir.renderer
 
 import org.jetbrains.kotlin.fir.declarations.FirDeclaration
+import org.jetbrains.kotlin.fir.declarations.FirDeclarationDataKey
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationDataRegistry
 import org.jetbrains.kotlin.fir.declarations.FirProperty
 import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirClassLikeSymbol
 
-open class FirDeclarationRendererWithAttributes : FirDeclarationRenderer() {
+open class FirDeclarationRendererWithAttributes(
+    private val ignoredAttributeKeys: Set<String> = emptySet()
+) : FirDeclarationRenderer() {
     override fun FirDeclaration.renderDeclarationAttributes() {
         if (attributes.isNotEmpty()) {
             val attributes = getAttributesWithValues().mapNotNull { (klass, value) ->
@@ -25,6 +28,7 @@ open class FirDeclarationRendererWithAttributes : FirDeclarationRenderer() {
         val attributesMap = FirDeclarationDataRegistry.allValuesThreadUnsafeForRendering()
         return attributesMap.entries
             .map { it.key.substringAfterLast(".") to it.value }
+            .filter { it.first !in ignoredAttributeKeys }
             .sortedBy { it.first }
             .map { (klass, index) -> klass to attributes[index] }
     }
@@ -33,6 +37,11 @@ open class FirDeclarationRendererWithAttributes : FirDeclarationRenderer() {
         is FirCallableSymbol<*> -> callableId.toString()
         is FirClassLikeSymbol<*> -> classId.asString()
         is FirProperty -> symbol.callableId.toString()
+        is Lazy<*> -> value?.toString()
         else -> toString()
+    }
+
+    companion object {
+        val COMMON_IGNORED_ATTRIBUTES = setOf("FirVersionRequirementsTableKey", "SourceElementKey")
     }
 }
