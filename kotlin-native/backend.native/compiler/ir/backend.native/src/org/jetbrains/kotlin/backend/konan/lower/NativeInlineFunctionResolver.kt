@@ -52,8 +52,7 @@ internal class NativeInlineFunctionResolver(override val context: Context, val g
             }
         } else {
             // The function is from Lazy IR, get its body from the IR linker.
-            val moduleDescriptor = packageFragment.packageFragmentDescriptor.containingDeclaration
-            val moduleDeserializer = context.irLinker.moduleDeserializers[moduleDescriptor]
+            val moduleDeserializer = context.irLinker.getModuleDeserializer(packageFragment)
                     ?: error("No module deserializer for ${function.render()}")
             require(context.config.cachedLibraries.isLibraryCached(moduleDeserializer.klib)) {
                 "No IR and no cache for ${function.render()}"

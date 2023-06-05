@@ -32,10 +32,13 @@ import org.jetbrains.kotlin.backend.konan.descriptors.findPackage
 import org.jetbrains.kotlin.backend.konan.descriptors.isFromInteropLibrary
 import org.jetbrains.kotlin.backend.konan.descriptors.isInteropLibrary
 import org.jetbrains.kotlin.backend.konan.ir.interop.IrProviderForCEnumAndCStructStubs
+import org.jetbrains.kotlin.backend.konan.ir.isFromInteropLibrary
+import org.jetbrains.kotlin.backend.konan.ir.isFromInteropLibraryByDescriptor
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.konan.isNativeStdlib
 import org.jetbrains.kotlin.fir.lazy.Fir2IrLazyClass
 import org.jetbrains.kotlin.ir.IrBuiltIns
+import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.builders.TranslationPluginContext
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.declarations.impl.IrFileImpl
@@ -427,11 +430,12 @@ object KonanFakeOverrideClassFilter : FakeOverrideClassFilter {
         IdSignature.Flags.IS_NATIVE_INTEROP_LIBRARY.test()
     }
 
+    @OptIn(ObsoleteDescriptorBasedAPI::class)
     private fun IrClassSymbol.isInterop(): Boolean {
         if (this is IrPublicSymbolBase<*> && this.signature.isInteropSignature()) return true
 
         // K2 doesn't properly put signatures into such symbols yet, workaround:
-        return this.isBound && this.owner is Fir2IrLazyClass && this.descriptor.isFromInteropLibrary()
+        return this.isBound && this.owner is Fir2IrLazyClass && this.owner.isFromInteropLibraryByDescriptor()
     }
 
     // This is an alternative to .isObjCClass that doesn't need to walk up all the class heirarchy,
@@ -447,6 +451,7 @@ object KonanFakeOverrideClassFilter : FakeOverrideClassFilter {
 
 internal data class DeserializedInlineFunction(val firstAccess: Boolean, val function: InlineFunctionOriginInfo)
 
+@OptIn(ObsoleteDescriptorBasedAPI::class)
 internal class KonanIrLinker(
         private val currentModule: ModuleDescriptor,
         override val translationPluginContext: TranslationPluginContext?,
@@ -490,6 +495,8 @@ internal class KonanIrLinker(
 
     val moduleDeserializers = mutableMapOf<ModuleDescriptor, KonanPartialModuleDeserializer>()
     val klibToModuleDeserializerMap = mutableMapOf<KotlinLibrary, KonanPartialModuleDeserializer>()
+
+    fun getModuleDeserializer(packageFragment: IrPackageFragment) = moduleDeserializers[packageFragment.packageFragmentDescriptor.containingDeclaration]
 
     override fun createModuleDeserializer(moduleDescriptor: ModuleDescriptor, klib: KotlinLibrary?, strategyResolver: (String) -> DeserializationStrategy) =
             when {
@@ -567,6 +574,7 @@ internal class KonanIrLinker(
 
     private val InvalidIndex = -1
 
+    @OptIn(ObsoleteDescriptorBasedAPI::class)
     inner class KonanPartialModuleDeserializer(
             moduleDescriptor: ModuleDescriptor,
             override val klib: KotlinLibrary,

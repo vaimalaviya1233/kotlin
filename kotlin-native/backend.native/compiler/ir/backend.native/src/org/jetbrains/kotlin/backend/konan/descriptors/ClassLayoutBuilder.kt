@@ -369,7 +369,7 @@ internal class ClassLayoutBuilder(val irClass: IrClass, val context: Context) {
     fun vtableIndex(function: IrSimpleFunction): Int {
         val bridgeDirections = function.target.bridgeDirectionsTo(function)
         val index = vtableEntries.indexOfFirst { it.function == function && it.bridgeDirections == bridgeDirections }
-        if (index < 0) throw Error(function.render() + " $function " + " (${function.symbol.descriptor}) not in vtable of " + irClass.render())
+        if (index < 0) throw Error(function.render() + " $function " + " (${function.render()}) not in vtable of " + irClass.render())
         return index
     }
 
@@ -509,9 +509,8 @@ internal class ClassLayoutBuilder(val irClass: IrClass, val context: Context) {
         else null
         val packageFragment = irClass.getPackageFragment()
         if (packageFragment is IrExternalPackageFragment) {
-            val moduleDescriptor = packageFragment.packageFragmentDescriptor.containingDeclaration
-            if (moduleDescriptor.isFromInteropLibrary()) return emptyList()
-            val moduleDeserializer = context.irLinker.moduleDeserializers[moduleDescriptor]
+            if (packageFragment.isFromInteropLibrary()) return emptyList()
+            val moduleDeserializer = context.irLinker.getModuleDeserializer(packageFragment)
                     ?: error("No module deserializer for ${irClass.render()}")
             require(context.config.cachedLibraries.isLibraryCached(moduleDeserializer.klib)) {
                 "No IR and no cache for ${irClass.render()}"
