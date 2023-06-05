@@ -1,2 +1,2 @@
 KtType: T
-PsiType: PsiType:T
+PsiType: null

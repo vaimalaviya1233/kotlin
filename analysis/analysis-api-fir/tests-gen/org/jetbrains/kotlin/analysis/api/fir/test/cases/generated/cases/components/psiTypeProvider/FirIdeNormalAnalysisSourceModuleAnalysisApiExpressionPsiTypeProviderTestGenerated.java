@@ -65,9 +65,45 @@ public class FirIdeNormalAnalysisSourceModuleAnalysisApiExpressionPsiTypeProvide
     }
 
     @Test
+    @TestMetadata("functionalType1.kt")
+    public void testFunctionalType1() throws Exception {
+        runTest("analysis/analysis-api/testData/components/psiTypeProvider/psiType/forExpression/functionalType1.kt");
+    }
+
+    @Test
+    @TestMetadata("functionalType2.kt")
+    public void testFunctionalType2() throws Exception {
+        runTest("analysis/analysis-api/testData/components/psiTypeProvider/psiType/forExpression/functionalType2.kt");
+    }
+
+    @Test
+    @TestMetadata("functionalType3.kt")
+    public void testFunctionalType3() throws Exception {
+        runTest("analysis/analysis-api/testData/components/psiTypeProvider/psiType/forExpression/functionalType3.kt");
+    }
+
+    @Test
+    @TestMetadata("invokeCallOnObject1.kt")
+    public void testInvokeCallOnObject1() throws Exception {
+        runTest("analysis/analysis-api/testData/components/psiTypeProvider/psiType/forExpression/invokeCallOnObject1.kt");
+    }
+
+    @Test
+    @TestMetadata("invokeCallOnObject2.kt")
+    public void testInvokeCallOnObject2() throws Exception {
+        runTest("analysis/analysis-api/testData/components/psiTypeProvider/psiType/forExpression/invokeCallOnObject2.kt");
+    }
+
+    @Test
     @TestMetadata("localClassWithUnresolvedSuperType.kt")
     public void testLocalClassWithUnresolvedSuperType() throws Exception {
         runTest("analysis/analysis-api/testData/components/psiTypeProvider/psiType/forExpression/localClassWithUnresolvedSuperType.kt");
+    }
+
+    @Test
+    @TestMetadata("nameReferenceInFunctionCall.kt")
+    public void testNameReferenceInFunctionCall() throws Exception {
+        runTest("analysis/analysis-api/testData/components/psiTypeProvider/psiType/forExpression/nameReferenceInFunctionCall.kt");
     }
 
     @Test

@@ -1,0 +1,2 @@
+KtType: Foo.Companion
+PsiType: PsiType:Companion

@@ -18,14 +18,18 @@ import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.analysis.checkers.classKind
 import org.jetbrains.kotlin.fir.analysis.checkers.getContainingClassSymbol
+import org.jetbrains.kotlin.fir.declarations.FirCallableDeclaration
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationOrigin
 import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.psi
 import org.jetbrains.kotlin.fir.references.FirErrorNamedReference
 import org.jetbrains.kotlin.fir.references.FirNamedReference
 import org.jetbrains.kotlin.fir.references.FirResolvedNamedReference
+import org.jetbrains.kotlin.fir.resolve.diagnostics.ConeUnresolvedNameError
 import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirConstructorSymbol
+import org.jetbrains.kotlin.fir.types.ConeErrorType
+import org.jetbrains.kotlin.fir.types.ConeKotlinType
 import org.jetbrains.kotlin.fir.types.ConeNullability
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
@@ -46,14 +50,16 @@ internal fun KtExpression.unwrap(): KtExpression {
     } ?: this
 }
 
-internal fun FirNamedReference.getReferencedSymbol(): FirCallableSymbol<*>? {
+internal fun FirNamedReference.getReferencedElementType(): ConeKotlinType {
     val symbols = when (this) {
         is FirResolvedNamedReference -> listOf(resolvedSymbol)
         is FirErrorNamedReference -> getCandidateSymbols()
         else -> error("Unexpected ${this::class}")
     }
+    val firCallableDeclaration = symbols.singleOrNull()?.fir as? FirCallableDeclaration
+        ?: return ConeErrorType(ConeUnresolvedNameError(name))
 
-    return symbols.singleOrNull() as FirCallableSymbol<*>?
+    return firCallableDeclaration.symbol.resolvedReturnType
 }
 
 internal fun KtTypeNullability.toConeNullability() = when (this) {
