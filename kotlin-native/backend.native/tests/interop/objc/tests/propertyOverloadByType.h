@@ -1,7 +1,8 @@
 #import <Foundation/NSObject.h>
 
 @interface InterfaceBase : NSObject
-@property InterfaceBase* delegate;
+@property (readonly) InterfaceBase* delegate;
+- (instancetype)initWith:(InterfaceBase*)base;
 @end
 
 // Presence of property `delegate` in both InterfaceBase & IntegerProperty makes an intersection override, and compiler invokes
@@ -13,9 +14,9 @@
 // Without this protocol, these invocations don't happen.
 
 @protocol IntegerProperty
-@property NSInteger delegate;
+@property (readonly) NSInteger delegate;
 @end
 
 @interface InterfaceDerived : InterfaceBase<IntegerProperty>
-@property NSString* delegate;
+@property (readonly) InterfaceBase* delegate;
 @end
