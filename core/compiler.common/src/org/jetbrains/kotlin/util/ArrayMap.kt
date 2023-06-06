@@ -69,6 +69,27 @@ internal class OneElementArrayMap<T : Any>(val value: T, val index: Int) : Array
             }
         }
     }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        when (other) {
+            is OneElementArrayMap<*> -> {
+                if (value != other.value) return false
+                return index == other.index
+            }
+            is ArrayMapImpl<*> -> {
+                if (other.size != 1) return false
+                return other[index] == value
+            }
+            else -> return false
+        }
+    }
+
+    override fun hashCode(): Int {
+        var result = value.hashCode()
+        result = 31 * result + index
+        return result
+    }
 }
 
 internal class ArrayMapImpl<T : Any> private constructor(
@@ -141,4 +162,15 @@ internal class ArrayMapImpl<T : Any> private constructor(
     }
 
     data class Entry<T>(override val key: Int, override val value: T) : Map.Entry<Int, T>
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is ArrayMapImpl<*>) return other == this
+
+        return data.contentEquals(other.data)
+    }
+
+    override fun hashCode(): Int {
+        return data.contentHashCode()
+    }
 }

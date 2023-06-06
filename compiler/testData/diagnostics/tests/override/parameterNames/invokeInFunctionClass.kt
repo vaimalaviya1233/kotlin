@@ -1,4 +1,6 @@
 // FIR_IDENTICAL
+// FIR_IDENTICAL
+
 class Function1Impl : (String) -> Unit {
     override fun invoke(myParamName: String) {}
 }
@@ -25,4 +27,13 @@ fun test3(f: String.(String) -> Unit) {
     "".f("")
     "".f(<!NO_VALUE_FOR_PARAMETER!><!NAMED_ARGUMENTS_NOT_ALLOWED, NAMED_PARAMETER_NOT_FOUND!>p0<!> = "")<!>
     "".f(<!NO_VALUE_FOR_PARAMETER!><!NAMED_ARGUMENTS_NOT_ALLOWED, NAMED_PARAMETER_NOT_FOUND!>zzz<!> = "")<!>
+}
+
+fun test4(f: (myParamName: String) -> Unit) {
+    f("")
+    f(<!NO_VALUE_FOR_PARAMETER!><!NAMED_ARGUMENTS_NOT_ALLOWED, NAMED_PARAMETER_NOT_FOUND!>p0<!> = "")<!>
+    f(<!NAMED_ARGUMENTS_NOT_ALLOWED!>myParamName<!> = "")
+    f.invoke("")
+    f.invoke(<!NO_VALUE_FOR_PARAMETER!><!NAMED_ARGUMENTS_NOT_ALLOWED, NAMED_PARAMETER_NOT_FOUND!>p0<!> = "")<!>
+    f.invoke(<!NAMED_ARGUMENTS_NOT_ALLOWED!>myParamName<!> = "")
 }

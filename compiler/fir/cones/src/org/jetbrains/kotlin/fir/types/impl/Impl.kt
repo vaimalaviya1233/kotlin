@@ -32,6 +32,7 @@ class ConeClassLikeTypeImpl(
         if (lookupTag != other.lookupTag) return false
         if (!typeArguments.contentEquals(other.typeArguments)) return false
         if (nullability != other.nullability) return false
+        if (attributes != other.attributes) return false
 
         return true
     }
@@ -40,6 +41,7 @@ class ConeClassLikeTypeImpl(
         var result = lookupTag.hashCode()
         result = 31 * result + typeArguments.contentHashCode()
         result = 31 * result + nullability.hashCode()
+        result = 31 * result + attributes.hashCode()
         return result
     }
 }

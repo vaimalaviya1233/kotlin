@@ -5,11 +5,9 @@
 
 package org.jetbrains.kotlin.fir.resolve.calls
 
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.fir.FirSession
-import org.jetbrains.kotlin.fir.declarations.FirDeclarationOrigin
-import org.jetbrains.kotlin.fir.declarations.FirFunction
-import org.jetbrains.kotlin.fir.declarations.FirSimpleFunction
-import org.jetbrains.kotlin.fir.declarations.FirValueParameter
+import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.utils.isOperator
 import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.expressions.builder.buildNamedArgumentExpression
@@ -23,7 +21,10 @@ import org.jetbrains.kotlin.fir.scopes.ProcessorAction
 import org.jetbrains.kotlin.fir.scopes.processOverriddenFunctions
 import org.jetbrains.kotlin.fir.symbols.impl.FirNamedFunctionSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirValueParameterSymbol
+import org.jetbrains.kotlin.fir.types.coneTypeOrNull
+import org.jetbrains.kotlin.fir.types.customAnnotations
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.resolve.ForbiddenNamedArgumentsTarget
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import kotlin.collections.component1
@@ -332,7 +333,7 @@ private class FirCallArgumentsProcessor(
 
     private fun getParameterByName(name: Name): FirValueParameter? {
         if (nameToParameter == null) {
-            nameToParameter = parameters.associateBy { it.name }
+            nameToParameter = parameters.associateBy { extractParameterNameAnnotationValue(it) ?: it.name }
         }
         return nameToParameter!![name]
     }
@@ -422,4 +423,12 @@ private class FirCallArgumentsProcessor(
 
     private val parameters: List<FirValueParameter>
         get() = function.valueParameters
+
+
+    private fun extractParameterNameAnnotationValue(it: FirValueParameter): Name? {
+        val customAnnotations = it.returnTypeRef.coneTypeOrNull?.customAnnotations ?: return null
+        val parameterNameAnnotation = customAnnotations.find { it.unexpandedClassId == StandardNames.FqNames.parameterNameClassId }
+        val name = parameterNameAnnotation?.getStringArgument(StandardClassIds.Annotations.ParameterNames.parameterNameName) ?: return null
+        return Name.identifier(name)
+    }
 }

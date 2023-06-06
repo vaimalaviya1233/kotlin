@@ -123,4 +123,15 @@ class ConeAttributes private constructor(attributes: List<ConeAttribute<*>>) : A
 
     override val typeRegistry: TypeRegistry<ConeAttribute<*>, ConeAttribute<*>>
         get() = Companion
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is ConeAttributes) return false
+
+        return arrayMap == other.arrayMap
+    }
+
+    override fun hashCode(): Int {
+        return arrayMap.hashCode()
+    }
 }

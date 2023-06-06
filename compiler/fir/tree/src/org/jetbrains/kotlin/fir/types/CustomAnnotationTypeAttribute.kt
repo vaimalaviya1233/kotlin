@@ -19,6 +19,10 @@ class CustomAnnotationTypeAttribute(
         listOfNotNull(containerSymbol),
     )
 
+    private val render by lazy {
+        annotations.joinToString(separator = " ") { it.render() }
+    }
+
     override fun union(other: CustomAnnotationTypeAttribute?): CustomAnnotationTypeAttribute? = null
 
     override fun intersect(other: CustomAnnotationTypeAttribute?): CustomAnnotationTypeAttribute? = null
@@ -30,10 +34,21 @@ class CustomAnnotationTypeAttribute(
 
     override fun isSubtypeOf(other: CustomAnnotationTypeAttribute?): Boolean = true
 
-    override fun toString(): String = annotations.joinToString(separator = " ") { it.render() }
+    override fun toString(): String = render
 
     override val key: KClass<out CustomAnnotationTypeAttribute>
         get() = CustomAnnotationTypeAttribute::class
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is CustomAnnotationTypeAttribute) return false
+
+        return render == other.render
+    }
+
+    override fun hashCode(): Int {
+        return render.hashCode()
+    }
 }
 
 val ConeAttributes.custom: CustomAnnotationTypeAttribute? by ConeAttributes.attributeAccessor<CustomAnnotationTypeAttribute>()
