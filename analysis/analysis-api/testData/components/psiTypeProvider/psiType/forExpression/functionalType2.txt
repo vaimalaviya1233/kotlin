@@ -1,2 +1,0 @@
-KtType: (kotlin.Int) -> kotlin.String
-PsiType: PsiType:Function1<? super Integer, ? extends String>

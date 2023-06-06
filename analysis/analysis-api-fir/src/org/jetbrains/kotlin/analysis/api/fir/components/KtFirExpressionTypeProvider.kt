@@ -73,14 +73,18 @@ internal class KtFirExpressionTypeProvider(
             is FirExpression -> fir.typeRef.coneType.asKtType()
             is FirNamedReference -> {
                 val outerExpression = expression.getOutermostParenthesizerOrThis().parent as? KtElement
-                val outerFirElement = outerExpression?.getOrBuildFir(firResolveSession)
-                val type = when (outerFirElement) {
-                    is FirPropertyAccessExpression -> outerFirElement.typeRef.coneType
-                    is FirImplicitInvokeCall -> outerFirElement.explicitReceiver?.typeRef?.coneType
+
+                val correspondingFir = when (val outerFirElement = outerExpression?.getOrBuildFir(firResolveSession)) {
+                    is FirVariableAssignment -> outerFirElement.lValue
+                    is FirPropertyAccessExpression -> outerFirElement
+                    is FirImplicitInvokeCall -> outerFirElement.explicitReceiver
+                    is FirSafeCallExpression -> {
+                        if (outerFirElement.selector is FirPropertyAccessExpression) outerFirElement else null
+                    }
                     else -> null
                 }
 
-                type?.asKtType()
+                correspondingFir?.typeRef?.coneType?.asKtType()
             }
             is FirStatement -> with(analysisSession) { builtinTypes.UNIT }
             is FirTypeRef, is FirImport, is FirPackageDirective, is FirLabel, is FirTypeParameterRef -> null
