@@ -24,6 +24,20 @@ class TypeTranslatorImpl(
     private val ktFile: KtFile? = null,
     allowErrorTypeInAnnotations: Boolean = false,
 ) : TypeTranslator(symbolTable, languageVersionSettings, typeParametersResolverBuilder, enterTableScope, extensions) {
+    @Suppress("unused")
+    @Deprecated("Provided for binary compatibility.", level = DeprecationLevel.HIDDEN)
+    constructor(
+        symbolTable: ReferenceSymbolTable,
+        languageVersionSettings: LanguageVersionSettings,
+        moduleDescriptor: ModuleDescriptor,
+        typeParametersResolverBuilder: () -> TypeParametersResolver = { ScopedTypeParametersResolver() },
+        enterTableScope: Boolean = false,
+        extensions: StubGeneratorExtensions = StubGeneratorExtensions.EMPTY,
+        ktFile: KtFile? = null,
+    ) : this(
+        symbolTable, languageVersionSettings, moduleDescriptor, typeParametersResolverBuilder, enterTableScope, extensions, ktFile, false
+    )
+
     override val constantValueGenerator: ConstantValueGenerator =
         ConstantValueGeneratorImpl(moduleDescriptor, symbolTable, this, allowErrorTypeInAnnotations)
 
