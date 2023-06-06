@@ -12,6 +12,8 @@ FILE: noInferenceFromWrappedDelegate.kt
     public final inline operator fun <V> R|State<V>|.getValue(thisRef: R|kotlin/Any?|, property: R|kotlin/reflect/KProperty<*>|): R|V| {
         ^getValue this@R|/getValue|.R|SubstitutionOverride</State.value: R|V|>|
     }
+    public final inline operator fun <V> R|State<V>|.setValue(thisRef: R|kotlin/Any?|, property: R|kotlin/reflect/KProperty<*>|, v: R|V|): R|kotlin/Unit| {
+    }
     public final inline fun <M> remember(block: R|() -> M|): R|M| {
         ^remember R|<local>/block|.R|SubstitutionOverride<kotlin/Function0.invoke: R|M|>|()
     }
@@ -24,3 +26,48 @@ FILE: noInferenceFromWrappedDelegate.kt
         }
     public final val first: R|kotlin/Int| = R|/list|.R|kotlin/collections/first|<R|kotlin/Int|>()
         public get(): R|kotlin/Int|
+    public final val list2: R|kotlin/collections/List<kotlin/Int>|by R|/State.State|<R|kotlin/collections/List<kotlin/Int>|>(R|kotlin/collections/listOf|<R|kotlin/Int|>(Int(0)))
+        public get(): R|kotlin/collections/List<kotlin/Int>| {
+            ^ D|/list2|.R|/getValue|<R|kotlin/collections/List<kotlin/Int>|>(Null(null), ::R|/list2|)
+        }
+    public final val first2: R|kotlin/Int| = R|/list2|.R|kotlin/collections/first|<R|kotlin/Int|>()
+        public get(): R|kotlin/Int|
+    public final var mutableList: R|kotlin/collections/List<kotlin/Int>|by R|/remember|<R|State<kotlin/collections/List<kotlin/Int>>|>(<L> = remember@fun <anonymous>(): R|State<kotlin/collections/List<kotlin/Int>>| <inline=Inline, kind=UNKNOWN>  {
+        ^ R|/State.State|<R|kotlin/collections/List<kotlin/Int>|>(R|kotlin/collections/listOf|<R|kotlin/Int|>(Int(0)))
+    }
+    )
+        public get(): R|kotlin/collections/List<kotlin/Int>| {
+            ^ D|/mutableList|.R|/getValue|<R|kotlin/collections/List<kotlin/Int>|>(Null(null), ::R|/mutableList|)
+        }
+        public set(<set-?>: R|kotlin/collections/List<kotlin/Int>|): R|kotlin/Unit| {
+            D|/mutableList|.R|/setValue|<R|kotlin/collections/List<kotlin/Int>|>(Null(null), ::R|/mutableList|, R|<local>/mutableList|)
+        }
+    public final val mutableFirst: R|kotlin/Int| = R|/mutableList|.R|kotlin/collections/first|<R|kotlin/Int|>()
+        public get(): R|kotlin/Int|
+    public final var mutableList2: R|kotlin/collections/List<kotlin/Int>|by R|/State.State|<R|kotlin/collections/List<kotlin/Int>|>(R|kotlin/collections/listOf|<R|kotlin/Int|>(Int(0)))
+        public get(): R|kotlin/collections/List<kotlin/Int>| {
+            ^ D|/mutableList2|.R|/getValue|<R|kotlin/collections/List<kotlin/Int>|>(Null(null), ::R|/mutableList2|)
+        }
+        public set(<set-?>: R|kotlin/collections/List<kotlin/Int>|): R|kotlin/Unit| {
+            D|/mutableList2|.R|/setValue|<R|kotlin/collections/List<kotlin/Int>|>(Null(null), ::R|/mutableList2|, R|<local>/mutableList2|)
+        }
+    public final val mutableFirst2: R|kotlin/Int| = R|/mutableList2|.R|kotlin/collections/first|<R|kotlin/Int|>()
+        public get(): R|kotlin/Int|
+    public final fun test(): R|kotlin/Unit| {
+        lval list: R|kotlin/collections/List<kotlin/Int>|by R|/remember|<R|State<kotlin/collections/List<kotlin/Int>>|>(<L> = remember@fun <anonymous>(): R|State<kotlin/collections/List<kotlin/Int>>| <inline=Inline, kind=UNKNOWN>  {
+            ^ R|/State.State|<R|kotlin/collections/List<kotlin/Int>|>(R|kotlin/collections/listOf|<R|kotlin/Int|>(Int(0)))
+        }
+        )
+        R|<local>/list|.R|kotlin/collections/first|<R|kotlin/Int|>()
+        lval list2: R|kotlin/collections/List<kotlin/Int>|by R|/State.State|<R|kotlin/collections/List<kotlin/Int>|>(R|kotlin/collections/listOf|<R|kotlin/Int|>(Int(0)))
+        R|<local>/list2|.R|kotlin/collections/first|<R|kotlin/Int|>()
+        lvar mutableList: R|kotlin/collections/List<kotlin/Int>|by R|/remember|<R|State<kotlin/collections/List<kotlin/Int>>|>(<L> = remember@fun <anonymous>(): R|State<kotlin/collections/List<kotlin/Int>>| <inline=Inline, kind=UNKNOWN>  {
+            ^ R|/State.State|<R|kotlin/collections/List<kotlin/Int>|>(R|kotlin/collections/listOf|<R|kotlin/Int|>(Int(0)))
+        }
+        )
+        R|<local>/mutableList|.R|kotlin/collections/first|<R|kotlin/Int|>()
+        R|<local>/mutableList| = R|kotlin/collections/listOf|<R|kotlin/Int|>(Int(1))
+        lvar mutableList2: R|kotlin/collections/List<kotlin/Int>|by R|/State.State|<R|kotlin/collections/List<kotlin/Int>|>(R|kotlin/collections/listOf|<R|kotlin/Int|>(Int(0)))
+        R|<local>/mutableList2|.R|kotlin/collections/first|<R|kotlin/Int|>()
+        R|<local>/mutableList2| = R|kotlin/collections/listOf|<R|kotlin/Int|>(Int(1))
+    }

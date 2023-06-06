@@ -30,6 +30,7 @@ import org.jetbrains.kotlin.fir.resolve.calls.FirNamedReferenceWithCandidate
 import org.jetbrains.kotlin.fir.resolve.calls.candidate
 import org.jetbrains.kotlin.fir.resolve.dfa.FirControlFlowGraphReferenceImpl
 import org.jetbrains.kotlin.fir.resolve.diagnostics.ConeLocalVariableNoTypeOrInitializer
+import org.jetbrains.kotlin.fir.resolve.inference.FirDelegatedPropertyInferenceSession
 import org.jetbrains.kotlin.fir.resolve.inference.FirStubTypeTransformer
 import org.jetbrains.kotlin.fir.resolve.inference.ResolvedLambdaAtom
 import org.jetbrains.kotlin.fir.resolve.inference.extractLambdaInfoFromFunctionType
@@ -288,7 +289,7 @@ open class FirDeclarationsResolveTransformer(
                 }
             }
 
-            property.transformAccessors()
+            property.transformAccessors(delegatedSession = this)
             val completedCalls = completeCandidates()
 
             val finalSubstitutor = createFinalSubstitutor()
@@ -420,7 +421,7 @@ open class FirDeclarationsResolveTransformer(
         return variable
     }
 
-    private fun FirProperty.transformAccessors(mayResolveSetter: Boolean = true) {
+    private fun FirProperty.transformAccessors(mayResolveSetter: Boolean = true, delegatedSession: FirDelegatedPropertyInferenceSession? = null) {
         var enhancedTypeRef = returnTypeRef
         if (bodyResolveState < FirPropertyBodyResolveState.INITIALIZER_AND_GETTER_RESOLVED) {
             getter?.let {
@@ -433,11 +434,14 @@ open class FirDeclarationsResolveTransformer(
             // We need update type of getter for case when its type was approximated
             getter?.transformTypeWithPropertyType(enhancedTypeRef, forceUpdateForNonImplicitTypes = true)
         }
-        setter?.let {
-            it.transformTypeWithPropertyType(enhancedTypeRef)
+        setter?.let { setter ->
+            delegatedSession?.createStubSubstitutor()?.let {
+                enhancedTypeRef = enhancedTypeRef.withReplacedConeType(it.substituteOrSelf(enhancedTypeRef.coneType))
+            }
+            setter.transformTypeWithPropertyType(enhancedTypeRef)
 
             if (mayResolveSetter) {
-                transformAccessor(it, enhancedTypeRef, this)
+                transformAccessor(setter, enhancedTypeRef, this)
             }
         }
     }

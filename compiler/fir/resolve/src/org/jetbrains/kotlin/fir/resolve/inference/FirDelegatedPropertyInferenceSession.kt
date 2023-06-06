@@ -139,6 +139,11 @@ class FirDelegatedPropertyInferenceSession(
         return typeContext.typeSubstitutorByTypeConstructor(bindings)
     }
 
+    fun createStubSubstitutor(): ConeSubstitutor {
+        val typeContext = components.session.typeContext
+        return typeContext.typeSubstitutorByTypeConstructor(stubTypesByTypeVariable.mapKeys { it.key.typeConstructor })
+    }
+
     override fun hasSyntheticTypeVariables(): Boolean {
         return syntheticTypeVariableByTypeVariable.isNotEmpty()
     }
