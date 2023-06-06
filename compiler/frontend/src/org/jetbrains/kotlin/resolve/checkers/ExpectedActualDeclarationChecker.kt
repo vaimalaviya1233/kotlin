@@ -86,31 +86,31 @@ class ExpectedActualDeclarationChecker(
     }
 
     private fun checkExpectedDeclarationHasProperActuals(
-        reportOn: KtNamedDeclaration,
-        descriptor: MemberDescriptor,
+        expectPsi: KtNamedDeclaration,
+        expect: MemberDescriptor,
         trace: BindingTrace,
         checkActualModifier: Boolean,
         expectActualTracker: ExpectActualTracker
     ) {
-        val allActualizationPaths = moduleStructureOracle.findAllReversedDependsOnPaths(descriptor.module)
+        val allActualizationPaths = moduleStructureOracle.findAllReversedDependsOnPaths(expect.module)
         val allLeafModules = allActualizationPaths.map { it.nodes.last() }.toSet()
 
         allLeafModules.forEach { leafModule ->
-            val actuals = ExpectedActualResolver.findActualForExpected(descriptor, leafModule) ?: return@forEach
+            val actuals = ExpectedActualResolver.findActualForExpected(expect, leafModule) ?: return@forEach
 
             checkExpectedDeclarationHasAtLeastOneActual(
-                reportOn, descriptor, actuals, trace, leafModule, checkActualModifier, expectActualTracker
+                expectPsi, expect, actuals, trace, leafModule, checkActualModifier, expectActualTracker
             )
 
             checkExpectedDeclarationHasAtMostOneActual(
-                reportOn, descriptor, actuals, allActualizationPaths, trace
+                expectPsi, expect, actuals, allActualizationPaths, trace
             )
         }
     }
 
     private fun checkExpectedDeclarationHasAtMostOneActual(
-        reportOn: KtNamedDeclaration,
-        expectDescriptor: MemberDescriptor,
+        expectPsi: KtNamedDeclaration,
+        expect: MemberDescriptor,
         actuals: ActualsMap,
         modulePaths: List<ModulePath>,
         trace: BindingTrace,
@@ -146,8 +146,8 @@ class ExpectedActualDeclarationChecker(
         actualsByModulePath.forEach { (_, actualsInPath) ->
             if (actualsInPath.size > 1) {
                 trace.report(Errors.AMBIGUOUS_ACTUALS.on(
-                    reportOn,
-                    expectDescriptor,
+                    expectPsi,
+                    expect,
                     actualsInPath
                         .map { it.module }
                         .sortedBy { it.name.asString() }
@@ -157,8 +157,8 @@ class ExpectedActualDeclarationChecker(
     }
 
     private fun checkExpectedDeclarationHasAtLeastOneActual(
-        reportOn: KtNamedDeclaration,
-        expectDescriptor: MemberDescriptor,
+        expectPsi: KtNamedDeclaration,
+        expect: MemberDescriptor,
         actuals: ActualsMap,
         trace: BindingTrace,
         module: ModuleDescriptor,
@@ -166,19 +166,19 @@ class ExpectedActualDeclarationChecker(
         expectActualTracker: ExpectActualTracker
     ) {
         // Only look for top level actual members; class members will be handled as a part of that expected class
-        if (expectDescriptor.containingDeclaration !is PackageFragmentDescriptor) return
+        if (expect.containingDeclaration !is PackageFragmentDescriptor) return
 
         // Only strong incompatibilities, but this is an OptionalExpectation -- don't report it
-        if (actuals.allStrongIncompatibilities() && OptionalAnnotationUtil.isOptionalAnnotationClass(expectDescriptor)) return
+        if (actuals.allStrongIncompatibilities() && OptionalAnnotationUtil.isOptionalAnnotationClass(expect)) return
 
         // Only strong incompatibilities, or error won't be reported on actual: report NO_ACTUAL_FOR_EXPECT here
         if (actuals.allStrongIncompatibilities() ||
-            Compatible !in actuals && expectDescriptor.hasNoActualWithDiagnostic(actuals)
+            Compatible !in actuals && expect.hasNoActualWithDiagnostic(actuals)
         ) {
             assert(actuals.keys.all { it is Incompatible })
             @Suppress("UNCHECKED_CAST")
             val incompatibility = actuals as Map<Incompatible<MemberDescriptor>, Collection<MemberDescriptor>>
-            trace.report(Errors.NO_ACTUAL_FOR_EXPECT.on(reportOn, expectDescriptor, module, incompatibility))
+            trace.report(Errors.NO_ACTUAL_FOR_EXPECT.on(expectPsi, expect, module, incompatibility))
             return
         }
 
@@ -188,33 +188,33 @@ class ExpectedActualDeclarationChecker(
 
         // ...except diagnostics regarding missing actual keyword, because in that case we won't start looking for the actual at all
         if (checkActualModifier) {
-            actualMembers.forEach { reportMissingActualModifier(it, reportOn = null, trace) }
+            actualMembers.forEach { reportMissingActualModifier(it, actualPsi = null, trace) }
         }
 
-        expectActualTracker.reportExpectActual(expected = expectDescriptor, actualMembers = actualMembers)
+        expectActualTracker.reportExpectActual(expected = expect, actualMembers = actualMembers)
     }
 
-    private fun reportMissingActualModifier(actual: MemberDescriptor, reportOn: KtNamedDeclaration?, trace: BindingTrace) {
+    private fun reportMissingActualModifier(actual: MemberDescriptor, actualPsi: KtNamedDeclaration?, trace: BindingTrace) {
         if (actual.isActual) return
         @Suppress("NAME_SHADOWING")
-        val reportOn = reportOn ?: (actual.source as? KotlinSourceElement)?.psi as? KtNamedDeclaration ?: return
+        val actualPsi = actualPsi ?: (actual.source as? KotlinSourceElement)?.psi as? KtNamedDeclaration ?: return
 
         if (requireActualModifier(actual)) {
-            trace.report(Errors.ACTUAL_MISSING.on(reportOn))
+            trace.report(Errors.ACTUAL_MISSING.on(actualPsi))
         }
     }
 
     private fun checkIfExpectHasDefaultArgumentsAndActualizedWithTypealias(
-        expectDescriptor: MemberDescriptor,
+        expect: MemberDescriptor,
         actualDeclaration: KtNamedDeclaration,
         trace: BindingTrace,
     ) {
-        if (expectDescriptor !is ClassDescriptor ||
+        if (expect !is ClassDescriptor ||
             actualDeclaration !is KtTypeAlias ||
-            expectDescriptor.kind == ClassKind.ANNOTATION_CLASS
+            expect.kind == ClassKind.ANNOTATION_CLASS
         ) return
 
-        val members = expectDescriptor.constructors + expectDescriptor.unsubstitutedMemberScope
+        val members = expect.constructors + expect.unsubstitutedMemberScope
             .getContributedDescriptors(DescriptorKindFilter.FUNCTIONS)
             .filterIsInstance<FunctionDescriptor>()
 
@@ -226,7 +226,7 @@ class ExpectedActualDeclarationChecker(
         trace.report(
             Errors.DEFAULT_ARGUMENTS_IN_EXPECT_WITH_ACTUAL_TYPEALIAS.on(
                 actualDeclaration,
-                expectDescriptor,
+                expect,
                 membersWithDefaultValueParameters
             )
         )
@@ -257,37 +257,37 @@ class ExpectedActualDeclarationChecker(
     }
 
     private fun checkActualDeclarationHasExpected(
-        reportOn: KtNamedDeclaration,
-        descriptor: MemberDescriptor,
+        actualPsi: KtNamedDeclaration,
+        actual: MemberDescriptor,
         checkActualModifier: Boolean,
         trace: BindingTrace,
         moduleVisibilityFilter: ModuleFilter
     ) {
-        val compatibility = ExpectedActualResolver.findExpectedForActual(descriptor, moduleVisibilityFilter)
+        val compatibility = ExpectedActualResolver.findExpectedForActual(actual, moduleVisibilityFilter)
             ?: return
 
-        checkAmbiguousExpects(compatibility, trace, reportOn, descriptor)
+        checkAmbiguousExpects(compatibility, trace, actualPsi, actual)
 
         // For top-level declaration missing actual error reported in Actual checker
         if (checkActualModifier
-            && descriptor.containingDeclaration !is PackageFragmentDescriptor
+            && actual.containingDeclaration !is PackageFragmentDescriptor
             && compatibility.any { it.key.isCompatibleOrWeakCompatible() }
         ) {
-            reportMissingActualModifier(descriptor, reportOn, trace)
+            reportMissingActualModifier(actual, actualPsi, trace)
         }
 
-        // Usually, reportOn.hasActualModifier() and descriptor.isActual are the same.
+        // Usually, actualPsi.hasActualModifier() and descriptor.isActual are the same.
         // The only one case where it isn't true is constructor of annotation class. In that case descriptor.isActual is true.
         // See the FunctionDescriptorResolver.createConstructorDescriptor
         // But in that case compatibility.allStrongIncompatibilities() == true means that in the expect class there is no constructor
-        if (!reportOn.hasActualModifier() && compatibility.allStrongIncompatibilities()) return
+        if (!actualPsi.hasActualModifier() && compatibility.allStrongIncompatibilities()) return
 
         // 'firstOrNull' is needed because in diagnostic tests, common sources appear twice, so the same class is duplicated
         // TODO: replace with 'singleOrNull' as soon as multi-module diagnostic tests are refactored
         val singleIncompatibility = compatibility.keys.firstOrNull()
         if (singleIncompatibility is Incompatible.ClassScopes) {
-            assert(descriptor is ClassDescriptor || descriptor is TypeAliasDescriptor) {
-                "Incompatible.ClassScopes is only possible for a class or a typealias: $descriptor"
+            assert(actual is ClassDescriptor || actual is TypeAliasDescriptor) {
+                "Incompatible.ClassScopes is only possible for a class or a typealias: $actual"
             }
 
             // Do not report "expected members have no actual ones" for those expected members, for which there's a clear
@@ -311,11 +311,11 @@ class ExpectedActualDeclarationChecker(
 
             if (nonTrivialUnfulfilled.isNotEmpty()) {
                 val classDescriptor =
-                    (descriptor as? TypeAliasDescriptor)?.expandedType?.constructor?.declarationDescriptor as? ClassDescriptor
-                        ?: (descriptor as ClassDescriptor)
+                    (actual as? TypeAliasDescriptor)?.expandedType?.constructor?.declarationDescriptor as? ClassDescriptor
+                        ?: (actual as ClassDescriptor)
                 trace.report(
                     Errors.NO_ACTUAL_CLASS_MEMBER_FOR_EXPECTED_CLASS.on(
-                        reportOn, classDescriptor, nonTrivialUnfulfilled
+                        actualPsi, classDescriptor, nonTrivialUnfulfilled
                     )
                 )
             }
@@ -323,30 +323,30 @@ class ExpectedActualDeclarationChecker(
             assert(compatibility.keys.all { it is Incompatible })
             @Suppress("UNCHECKED_CAST")
             val incompatibility = compatibility as Map<Incompatible<MemberDescriptor>, Collection<MemberDescriptor>>
-            trace.report(Errors.ACTUAL_WITHOUT_EXPECT.on(reportOn, descriptor, incompatibility))
+            trace.report(Errors.ACTUAL_WITHOUT_EXPECT.on(actualPsi, actual, incompatibility))
         } else {
             val expected = compatibility[Compatible]!!.first()
             if (expected is ClassDescriptor && expected.kind == ClassKind.ANNOTATION_CLASS) {
                 val actualConstructor =
-                    (descriptor as? ClassDescriptor)?.constructors?.singleOrNull()
-                        ?: (descriptor as? TypeAliasDescriptor)?.constructors?.singleOrNull()?.underlyingConstructorDescriptor
+                    (actual as? ClassDescriptor)?.constructors?.singleOrNull()
+                        ?: (actual as? TypeAliasDescriptor)?.constructors?.singleOrNull()?.underlyingConstructorDescriptor
                 val expectedConstructor = expected.constructors.singleOrNull()
                 if (expectedConstructor != null && actualConstructor != null) {
-                    checkAnnotationConstructors(expectedConstructor, actualConstructor, trace, reportOn)
+                    checkAnnotationConstructors(expectedConstructor, actualConstructor, trace, actualPsi)
                 }
             }
         }
         val expectSingleCandidate = compatibility.values.singleOrNull()?.firstOrNull()
         if (expectSingleCandidate != null) {
-            checkIfExpectHasDefaultArgumentsAndActualizedWithTypealias(expectSingleCandidate, reportOn, trace)
+            checkIfExpectHasDefaultArgumentsAndActualizedWithTypealias(expectSingleCandidate, actualPsi, trace)
         }
     }
 
     private fun checkAmbiguousExpects(
         compatibility: Map<ExpectActualCompatibility<MemberDescriptor>, List<MemberDescriptor>>,
         trace: BindingTrace,
-        reportOn: KtNamedDeclaration,
-        descriptor: MemberDescriptor
+        actualPsi: KtNamedDeclaration,
+        actual: MemberDescriptor
     ) {
         val filesWithAtLeastWeaklyCompatibleExpects = compatibility.asSequence()
             .filter { (compatibility, _) ->
@@ -359,7 +359,7 @@ class ExpectedActualDeclarationChecker(
             .toList()
 
         if (filesWithAtLeastWeaklyCompatibleExpects.size > 1) {
-            trace.report(Errors.AMBIGUOUS_EXPECTS.on(reportOn, descriptor, filesWithAtLeastWeaklyCompatibleExpects))
+            trace.report(Errors.AMBIGUOUS_EXPECTS.on(actualPsi, actual, filesWithAtLeastWeaklyCompatibleExpects))
         }
     }
 
@@ -367,14 +367,14 @@ class ExpectedActualDeclarationChecker(
     //  - annotation constructors, because annotation classes can only have one constructor
     //  - inline class primary constructors, because inline class must have primary constructor
     //  - value parameter inside primary constructor of inline class, because inline class must have one value parameter
-    private fun requireActualModifier(descriptor: MemberDescriptor): Boolean {
-        return !descriptor.isAnnotationConstructor() &&
-                !descriptor.isPrimaryConstructorOfInlineClass() &&
-                !isUnderlyingPropertyOfInlineClass(descriptor)
+    private fun requireActualModifier(actual: MemberDescriptor): Boolean {
+        return !actual.isAnnotationConstructor() &&
+                !actual.isPrimaryConstructorOfInlineClass() &&
+                !isUnderlyingPropertyOfInlineClass(actual)
     }
 
-    private fun isUnderlyingPropertyOfInlineClass(descriptor: MemberDescriptor): Boolean {
-        return descriptor is PropertyDescriptor && descriptor.isUnderlyingPropertyOfInlineClass()
+    private fun isUnderlyingPropertyOfInlineClass(actual: MemberDescriptor): Boolean {
+        return actual is PropertyDescriptor && actual.isUnderlyingPropertyOfInlineClass()
     }
 
     // This should ideally be handled by CallableMemberDescriptor.Kind, but default constructors have kind DECLARATION and non-empty source.
@@ -387,7 +387,7 @@ class ExpectedActualDeclarationChecker(
         }
 
     private fun checkAnnotationConstructors(
-        expected: ConstructorDescriptor, actual: ConstructorDescriptor, trace: BindingTrace, reportOn: PsiElement
+        expected: ConstructorDescriptor, actual: ConstructorDescriptor, trace: BindingTrace, actualPsi: PsiElement
     ) {
         for (expectedParameterDescriptor in expected.valueParameters) {
             // Actual parameter with the same name is guaranteed to exist because this method is only called for compatible annotations
@@ -404,7 +404,7 @@ class ExpectedActualDeclarationChecker(
                     getActualAnnotationParameterValue(actualParameterDescriptor, trace.bindingContext, expectedParameterDescriptor.type)
                 if (expectedValue != actualValue) {
                     val ktParameter = DescriptorToSourceUtils.descriptorToDeclaration(actualParameterDescriptor)
-                    val target = (ktParameter as? KtParameter)?.defaultValue ?: (reportOn as? KtTypeAlias)?.nameIdentifier ?: reportOn
+                    val target = (ktParameter as? KtParameter)?.defaultValue ?: (actualPsi as? KtTypeAlias)?.nameIdentifier ?: actualPsi
                     trace.report(Errors.ACTUAL_ANNOTATION_CONFLICTING_DEFAULT_ARGUMENT_VALUE.on(target, actualParameterDescriptor))
                 }
             }

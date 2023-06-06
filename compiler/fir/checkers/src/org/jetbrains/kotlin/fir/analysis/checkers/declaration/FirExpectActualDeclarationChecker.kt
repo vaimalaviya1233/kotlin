@@ -59,16 +59,16 @@ object FirExpectActualDeclarationChecker : FirBasicDeclarationChecker() {
     }
 
     private fun checkExpectDeclarationModifiers(
-        declaration: FirMemberDeclaration,
+        expect: FirMemberDeclaration,
         context: CheckerContext,
         reporter: DiagnosticReporter,
     ) {
-        checkExpectDeclarationHasNoExternalModifier(declaration, context, reporter)
-        if (declaration is FirProperty) {
-            checkExpectPropertyAccessorsModifiers(declaration, context, reporter)
+        checkExpectDeclarationHasNoExternalModifier(expect, context, reporter)
+        if (expect is FirProperty) {
+            checkExpectPropertyAccessorsModifiers(expect, context, reporter)
         }
-        if (declaration is FirFunction && declaration.isTailRec) {
-            reporter.reportOn(declaration.source, FirErrors.EXPECTED_TAILREC_FUNCTION, context)
+        if (expect is FirFunction && expect.isTailRec) {
+            reporter.reportOn(expect.source, FirErrors.EXPECTED_TAILREC_FUNCTION, context)
         }
     }
 
@@ -105,19 +105,19 @@ object FirExpectActualDeclarationChecker : FirBasicDeclarationChecker() {
     }
 
     private fun checkActualDeclarationHasExpected(
-        declaration: FirMemberDeclaration,
+        actual: FirMemberDeclaration,
         context: CheckerContext,
         reporter: DiagnosticReporter,
         checkActual: Boolean = true
     ) {
-        val symbol = declaration.symbol
+        val symbol = actual.symbol
         val compatibilityToMembersMap = symbol.expectForActual ?: return
         val session = context.session
 
         checkAmbiguousExpects(symbol, compatibilityToMembersMap, symbol, context, reporter)
 
-        val source = declaration.source
-        if (!declaration.isActual) {
+        val source = actual.source
+        if (!actual.isActual) {
             if (compatibilityToMembersMap.allStrongIncompatibilities()) return
 
             if (Compatible in compatibilityToMembersMap) {
@@ -132,7 +132,7 @@ object FirExpectActualDeclarationChecker : FirBasicDeclarationChecker() {
         when {
             singleIncompatibility is Incompatible.ClassScopes -> {
                 assert(symbol is FirRegularClassSymbol || symbol is FirTypeAliasSymbol) {
-                    "Incompatible.ClassScopes is only possible for a class or a typealias: $declaration"
+                    "Incompatible.ClassScopes is only possible for a class or a typealias: $actual"
                 }
 
                 // Do not report "expected members have no actual ones" for those expected members, for which there's a clear
