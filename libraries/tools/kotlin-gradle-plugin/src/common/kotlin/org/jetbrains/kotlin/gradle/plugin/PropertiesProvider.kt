@@ -54,7 +54,7 @@ import org.jetbrains.kotlin.gradle.utils.NativeCompilerDownloader
 import org.jetbrains.kotlin.gradle.utils.SingleWarningPerBuild
 import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.konan.target.presetName
-import org.jetbrains.kotlin.statistics.metrics.StringMetrics
+import org.jetbrains.kotlin.statistics.metrics.BooleanMetrics
 import org.jetbrains.kotlin.tooling.core.UnsafeApi
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.toUpperCaseAsciiOnly
@@ -189,15 +189,15 @@ internal class PropertiesProvider private constructor(private val project: Proje
 
             val gradleProperty = booleanProperty(CompilerSystemProperties.COMPILE_INCREMENTAL_WITH_ARTIFACT_TRANSFORM.property)
             if (gradleProperty != null) {
-                reporter?.report(StringMetrics.USE_CLASSPATH_SNAPSHOT, gradleProperty.toString())
+                reporter?.report(BooleanMetrics.USE_CLASSPATH_SNAPSHOT, gradleProperty)
                 return gradleProperty
             }
             val systemProperty = CompilerSystemProperties.COMPILE_INCREMENTAL_WITH_ARTIFACT_TRANSFORM.value?.toBooleanLenient()
             if (systemProperty != null) {
-                reporter?.report(StringMetrics.USE_CLASSPATH_SNAPSHOT, systemProperty.toString())
+                reporter?.report(BooleanMetrics.USE_CLASSPATH_SNAPSHOT, systemProperty)
                 return systemProperty
             }
-            reporter?.report(StringMetrics.USE_CLASSPATH_SNAPSHOT, "default-true")
+            reporter?.report(BooleanMetrics.USE_CLASSPATH_SNAPSHOT, true)
             return true
         }
 
@@ -474,7 +474,7 @@ internal class PropertiesProvider private constructor(private val project: Proje
     val jsGenerateExecutableDefault: Boolean
         get() = (booleanProperty("kotlin.js.generate.executable.default") ?: true).also {
             KotlinBuildStatsService.getInstance()
-                ?.report(StringMetrics.JS_GENERATE_EXECUTABLE_DEFAULT, it.toString())
+                ?.report(BooleanMetrics.JS_GENERATE_EXECUTABLE_DEFAULT, it)
         }
 
     val stdlibDefaultDependency: Boolean

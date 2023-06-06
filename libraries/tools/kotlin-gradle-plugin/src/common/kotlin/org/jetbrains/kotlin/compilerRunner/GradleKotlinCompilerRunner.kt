@@ -170,7 +170,7 @@ internal open class GradleCompilerRunner(
                         val args = K2JVMCompilerArguments()
                         parseCommandLineArguments(argsArray.toList(), args)
                         report(StringMetrics.JVM_DEFAULTS, args.jvmDefault)
-                        report(StringMetrics.USE_FIR, args.useK2.toString())
+                        report(BooleanMetrics.USE_FIR, args.useK2)
 
                         val pluginPatterns = listOf(Pair(BooleanMetrics.ENABLED_COMPILER_PLUGIN_ALL_OPEN, "kotlin-allopen-.*jar"),
                                                     Pair(BooleanMetrics.ENABLED_COMPILER_PLUGIN_NO_ARG, "kotlin-noarg-.*jar"),
@@ -197,7 +197,7 @@ internal open class GradleCompilerRunner(
                             report(BooleanMetrics.JS_SOURCE_MAP, args.sourceMap)
                         }
                         if (args.irProduceJs) {
-                            report(StringMetrics.JS_PROPERTY_LAZY_INITIALIZATION, args.irPropertyLazyInitialization.toString())
+                            report(BooleanMetrics.JS_PROPERTY_LAZY_INITIALIZATION, args.irPropertyLazyInitialization)
                         }
                     }
                 }

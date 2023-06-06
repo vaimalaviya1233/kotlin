@@ -5,8 +5,9 @@
 
 package org.jetbrains.kotlin.statistics.metrics
 
-import org.jetbrains.kotlin.statistics.metrics.BooleanAnonymizationPolicy.*
-import org.jetbrains.kotlin.statistics.metrics.BooleanOverridePolicy.*
+import org.jetbrains.kotlin.statistics.metrics.BooleanAnonymizationPolicy.SAFE
+import org.jetbrains.kotlin.statistics.metrics.BooleanOverridePolicy.OR
+import org.jetbrains.kotlin.statistics.metrics.BooleanOverridePolicy.OVERRIDE
 
 
 enum class BooleanMetrics(val type: BooleanOverridePolicy, val anonymization: BooleanAnonymizationPolicy, val perProject: Boolean = false) {
@@ -41,6 +42,7 @@ enum class BooleanMetrics(val type: BooleanOverridePolicy, val anonymization: Bo
     KOTLIN_PROGRESSIVE_MODE(OVERRIDE, SAFE),
     KOTLIN_KTS_USED(OR, SAFE),
 
+    // TODO(Dmitrii Krasnov): unused, what should we do with this property?
     JS_GENERATE_EXTERNALS(OR, SAFE),
 
     JS_SOURCE_MAP(OR, SAFE),
@@ -68,9 +70,14 @@ enum class BooleanMetrics(val type: BooleanOverridePolicy, val anonymization: Bo
     TESTS_EXECUTED(OVERRIDE, SAFE),
     MAVEN_PUBLISH_EXECUTED(OVERRIDE, SAFE),
     BUILD_FAILED(OVERRIDE, SAFE),
-    KOTLIN_COMPILATION_FAILED(OR, SAFE);
+    KOTLIN_COMPILATION_FAILED(OR, SAFE),
+
+    USE_CLASSPATH_SNAPSHOT(OVERRIDE, SAFE),
+    JS_GENERATE_EXECUTABLE_DEFAULT(OVERRIDE, SAFE),
+    JS_PROPERTY_LAZY_INITIALIZATION(OVERRIDE, SAFE),
+    USE_FIR(OVERRIDE, SAFE);
 
     companion object {
-        const val VERSION = 1
+        const val VERSION = 2
     }
 }

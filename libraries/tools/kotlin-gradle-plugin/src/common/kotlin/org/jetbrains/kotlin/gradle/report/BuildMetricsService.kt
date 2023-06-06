@@ -117,7 +117,7 @@ abstract class BuildMetricsService : BuildService<BuildMetricsService.Parameters
             buildMetrics.addAll(it)
 
             KotlinBuildStatsService.applyIfInitialised { collector ->
-                collector.report(NumericalMetrics.COMPILATION_DURATION, totalTimeMs)
+                collector.report(NumericalMetrics.COMPILATION_DURATION_MS, totalTimeMs)
                 collector.report(BooleanMetrics.KOTLIN_COMPILATION_FAILED, event.result is FailureResult)
                 val metricsMap = buildMetrics.buildPerformanceMetrics.asMap()
 

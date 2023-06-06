@@ -78,16 +78,25 @@ enum class StringMetrics(val type: StringOverridePolicy, val anonymization: Stri
     // Features
     KOTLIN_LANGUAGE_VERSION(OVERRIDE, ComponentVersionAnonymizer()),
     KOTLIN_API_VERSION(OVERRIDE, ComponentVersionAnonymizer()),
+
+    // TODO(Dmitrii Krasnov): remove after removing from intellij repo
     USE_CLASSPATH_SNAPSHOT(CONCAT, AllowedListAnonymizer(listOf("true", "false", "default-true"))),
+
+    // TODO(Dmitrii Krasnov): remove after removing from intellij repo
     JS_GENERATE_EXECUTABLE_DEFAULT(CONCAT, AllowedListAnonymizer(listOf("true", "false"))),
     JS_TARGET_MODE(CONCAT, AllowedListAnonymizer(listOf("both", "browser", "nodejs", "none"))),
     JS_OUTPUT_GRANULARITY(OVERRIDE, RegexControlled("(whole_program|per_module|per_file)", false)),
 
     // Compiler parameters
     JVM_DEFAULTS(CONCAT, AllowedListAnonymizer(listOf("disable", "enable", "compatibility", "all", "all-compatibility"))),
+
+    // TODO(Dmitrii Krasnov): remove after removing from intellij repo
     USE_OLD_BACKEND(CONCAT, AllowedListAnonymizer(listOf("true", "false"))),
+
+    // TODO(Dmitrii Krasnov): remove after removing from intellij repo
     USE_FIR(CONCAT, AllowedListAnonymizer(listOf("true", "false"))),
 
+    // TODO(Dmitrii Krasnov): remove after removing from intellij repo
     JS_PROPERTY_LAZY_INITIALIZATION(CONCAT, AllowedListAnonymizer(listOf("true", "false")));
 
     companion object {
