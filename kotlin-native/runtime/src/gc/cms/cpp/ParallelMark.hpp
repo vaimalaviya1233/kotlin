@@ -9,7 +9,6 @@
 #include "ThreadRegistry.hpp"
 #include "Utils.hpp"
 #include "parproc/ParallelProcessor.hpp"
-#include "parproc/CooperativeWorkLists.hpp"
 #include "ManuallyScoped.hpp"
 
 namespace kotlin::gc::mark {
@@ -80,15 +79,12 @@ class MarkDispatcher : private Pinned {
 
     using MarkStackImpl = intrusive_forward_list<ObjectData>;
 
-    template<typename WorkProcessor>
-    using CoopWorkListImpl = SharableQueuePerWorker<WorkProcessor, MarkStackImpl, 256>;
-
-    using ParallelProcessor = ParallelProcessor<kMaxWorkers, CoopWorkListImpl>;
+    using ParallelProcessor = ParallelProcessor<kMaxWorkers, MarkStackImpl, 256>;
 
 public:
     class MarkTraits {
     public:
-        using MarkQueue = ParallelProcessor::WorkListInterface;
+        using MarkQueue = ParallelProcessor::Worker;
         using ObjectFactory = ObjectData::ObjectFactory;
 
         static void clear(MarkQueue& queue) noexcept {

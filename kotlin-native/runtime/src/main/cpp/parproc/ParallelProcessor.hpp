@@ -9,64 +9,15 @@
 #include "../KAssert.h"
 #include "../Logging.hpp"
 #include "../Utils.hpp"
+#include "Porting.h"
 #include "PushOnlyAtomicArray.hpp"
+#include "SplitSharedList.hpp"
 
 namespace kotlin {
 
 namespace internal {
 
-template<typename Iterable, typename MapFun>
-class Map {
-public:
-    class iterator {
-        using Base = typename Iterable::iterator;
-        using MappingResult = typename std::invoke_result<MapFun, typename std::iterator_traits<Base>::reference>::type;
-    public:
-        using difference_type = typename std::iterator_traits<Base>::difference_type;
-        using value_type = typename std::remove_reference<MappingResult>::type;
-        using pointer = value_type*;
-        using reference = value_type&;
-        using iterator_category = std::input_iterator_tag;
-
-        iterator(typename Iterable::iterator base, const MapFun& mapping) : base_(base), mapping_(mapping) {}
-        iterator(const iterator&) noexcept = default;
-        iterator& operator=(const iterator&) noexcept = default;
-
-        reference operator*() noexcept { return mapping_(*base_); }
-
-        iterator& operator++() noexcept {
-            ++base_;
-            return *this;
-        }
-
-        iterator operator++(int) noexcept {
-            auto result = *this;
-            ++base_;
-            return result;
-        }
-
-        bool operator==(const iterator& rhs) const noexcept { return base_ == rhs.base_; }
-        bool operator!=(const iterator& rhs) const noexcept { return !(*this == rhs); }
-
-    private:
-        typename Iterable::iterator base_;
-        const MapFun& mapping_;
-    };
-
-    Map(Iterable& iterable, MapFun&& mapping) : iterable_(iterable), mapping_(std::move(mapping)) {}
-
-    iterator begin() noexcept {
-        return iterator{iterable_.begin(), mapping_};
-    }
-
-    iterator end() noexcept {
-        return iterator{iterable_.end(), mapping_};
-    }
-
-private:
-    Iterable& iterable_;
-    MapFun mapping_;
-};
+enum class ShareOn { kPush, kPop };
 
 } // namespace internal
 
@@ -80,74 +31,23 @@ private:
  * 3.  No work must be pushed into a worker's work list from outside (by any means other than `serialWorkProcessor`)
  *     after the start of `performWork` execution.
  */
-template <std::size_t kMaxWorkers, template <typename> typename CooperativeWorkList>
+template <std::size_t kMaxWorkers, typename ListImpl, std::size_t kMinSizeToShare, std::size_t kMaxSizeToSteal = kMinSizeToShare / 2, internal::ShareOn kShareOn = internal::ShareOn::kPush>
 class ParallelProcessor : private Pinned {
 public:
-
-    using WorkListInterface = typename CooperativeWorkList<ParallelProcessor>::LocalQueue;
+    static const std::size_t kStealingAttemptCyclesBeforeWait = 4;
 
     class Worker : private Pinned {
         friend ParallelProcessor;
     public:
-        explicit Worker(ParallelProcessor& dispatcher)
-                : dispatcher_(dispatcher), workList_(dispatcher_.commonWorkList_) {
+        explicit Worker(ParallelProcessor& dispatcher) : dispatcher_(dispatcher) {
             dispatcher_.registerWorker(*this);
         }
 
-        WorkListInterface& workList() {
-            return workList_;
-        }
+        ~Worker() {
+            RuntimeAssert(empty(), "There should be no local tasks left");
+            RuntimeAssert(dispatcher_.allDone_.load(std::memory_order_relaxed), "Work must be done");
 
-        template <typename SerialWorkProcessor>
-        void performWork(SerialWorkProcessor serialWorkProcessor) {
-            RuntimeAssert(dispatcher_.isRegistered(*this),
-                          "A worker must be registered in dispatcher before the start of execution");
-            while (true) {
-                bool hasWork = workList_.tryAcquireWork();
-                if (hasWork) {
-                    serialWorkProcessor(workList_);
-                } else {
-                    std::unique_lock lock(dispatcher_.waitMutex_);
-
-                    auto nowWaiting = dispatcher_.waitingWorkers_.fetch_add(1, std::memory_order_relaxed) + 1;
-                    RuntimeLogDebug({ "balancing" },
-                                    "Worker goes to sleep (now sleeping %zu registered %zu expected %zu)",
-                                    nowWaiting,
-                                    dispatcher_.registeredWorkers_.size(),
-                                    dispatcher_.expectedWorkers_.load());
-
-                    if (dispatcher_.allDone_) {
-                        break;
-                    }
-
-                    auto registeredWorkers = dispatcher_.registeredWorkers_.size();
-                    if (nowWaiting == registeredWorkers
-                            && registeredWorkers == dispatcher_.expectedWorkers_.load(std::memory_order_relaxed)) {
-                        // we are the last ones awake
-                        RuntimeLogDebug({ "balancing" }, "Worker has detected termination");
-                        RuntimeAssert(dispatcher_.commonWorkList_.empty(), "There should be no shared tasks left");
-                        dispatcher_.allDone_ = true;
-                        lock.unlock();
-                        dispatcher_.waitCV_.notify_all();
-                        break;
-                    }
-
-                    dispatcher_.waitCV_.wait(lock);
-                    if (dispatcher_.allDone_) {
-                        break;
-                    }
-                    dispatcher_.waitingWorkers_.fetch_sub(1, std::memory_order_relaxed);
-                    RuntimeLogDebug({ "balancing" }, "Worker woke up");
-                }
-            }
-            RuntimeAssert(workList_.empty(), "There should be no local tasks left");
-
-            RuntimeAssert(dispatcher_.allDone_, "Work must be done");
-            dispatcher_.waitingWorkers_.fetch_sub(1, std::memory_order_relaxed);
-        }
-
-        void waitEveryWorkerTermination() {
-            RuntimeAssert(dispatcher_.allDone_.load(), "Must only be called when the work is done");
+            // TODO: I don't understand the need for below
 
             std::size_t expected = 0;
             dispatcher_.workersWaitingForTermination_.compare_exchange_strong(expected, dispatcher_.registeredWorkers_.size());
@@ -160,12 +60,123 @@ public:
             --dispatcher_.workersWaitingForTermination_;
         }
 
+        bool empty() const noexcept {
+            return list_.localEmpty() && list_.sharedEmpty();
+        }
+
+        bool tryPush(typename ListImpl::reference value) noexcept {
+            bool pushed = list_.tryPushLocal(value);
+            if (pushed && kShareOn == internal::ShareOn::kPush) {
+                shareAll();
+            }
+            return pushed;
+        }
+
+        typename ListImpl::pointer tryPop() noexcept {
+            while (true) {
+                if (auto popped = list_.tryPopLocal()) {
+                    if (kShareOn == internal::ShareOn::kPop) {
+                        shareAll();
+                    }
+                    return popped;
+                }
+                if (tryAcquireWork()) {
+                    continue;
+                }
+                break;
+            }
+            return nullptr;
+        }
+
     private:
+        bool tryTransferFromLocal() noexcept {
+            // check own shared queue first
+            auto selfStolen = list_.tryTransferFrom(list_, kMaxSizeToSteal);
+            if (selfStolen > 0) {
+                RuntimeLogDebug({"balancing"}, "Worker has acquired %zu tasks from itself", selfStolen);
+                return true;
+            }
+            return false;
+        }
+
+        bool tryTransferFromCooperating() {
+            for (size_t i = 0; i < kStealingAttemptCyclesBeforeWait; ++i) {
+                for (auto& fromAtomic : dispatcher_.registeredWorkers_) {
+                    auto& from = *fromAtomic.load(std::memory_order_relaxed);
+                    auto stolen = list_.tryTransferFrom(from.list_, kMaxSizeToSteal);
+                    if (stolen > 0) {
+                        RuntimeLogDebug({"balancing"}, "Worker has acquired %zu tasks from %d", stolen, from.carrierThreadId_);
+                        return true;
+                    }
+                }
+                std::this_thread::yield();
+            }
+            return false;
+        }
+
+        bool tryAcquireWork() noexcept {
+            if (tryTransferFromLocal())
+                return true;
+            if (tryTransferFromCooperating())
+                return true;
+
+            RuntimeLogDebug({"balancing"}, "Worker has not found a victim to steal from :(");
+
+            return waitForMoreWork();
+        }
+
+        bool waitForMoreWork() noexcept {
+            std::unique_lock lock(dispatcher_.waitMutex_);
+
+            auto nowWaiting = dispatcher_.waitingWorkers_.fetch_add(1, std::memory_order_relaxed) + 1;
+            RuntimeLogDebug({ "balancing" },
+                            "Worker goes to sleep (now sleeping %zu registered %zu expected %zu)",
+                            nowWaiting,
+                            dispatcher_.registeredWorkers_.size(),
+                            dispatcher_.expectedWorkers_.load());
+
+            if (dispatcher_.allDone_) {
+                dispatcher_.waitingWorkers_.fetch_sub(1, std::memory_order_relaxed);
+                return false;
+            }
+
+            auto registeredWorkers = dispatcher_.registeredWorkers_.size();
+            if (nowWaiting == registeredWorkers
+                    && registeredWorkers == dispatcher_.expectedWorkers_.load(std::memory_order_relaxed)) {
+                // we are the last ones awake
+                RuntimeLogDebug({ "balancing" }, "Worker has detected termination");
+                dispatcher_.allDone_ = true;
+                lock.unlock();
+                dispatcher_.waitCV_.notify_all();
+                dispatcher_.waitingWorkers_.fetch_sub(1, std::memory_order_relaxed);
+                return false;
+            }
+
+            dispatcher_.waitCV_.wait(lock);
+            dispatcher_.waitingWorkers_.fetch_sub(1, std::memory_order_relaxed);
+            if (dispatcher_.allDone_) {
+                return false;
+            }
+            RuntimeLogDebug({ "balancing" }, "Worker woke up");
+
+            return true;
+        }
+
+        void shareAll() noexcept {
+            if (list_.localSize() > kMinSizeToShare) {
+                auto shared = list_.shareAllWith(list_);
+                if (shared > 0) {
+                    dispatcher_.onShare(shared);
+                }
+            }
+        }
+
+        const int carrierThreadId_ = konan::currentThreadId();
         ParallelProcessor& dispatcher_;
-        WorkListInterface workList_;
+        SplitSharedList<ListImpl> list_;
     };
 
-    explicit ParallelProcessor(size_t expectedWorkers) : commonWorkList_(*this), expectedWorkers_(expectedWorkers) {}
+    explicit ParallelProcessor(size_t expectedWorkers) : expectedWorkers_(expectedWorkers) {}
 
     ~ParallelProcessor() {
         RuntimeAssert(waitingWorkers_.load() == 0, "All the workers must terminate before dispatcher destruction");
@@ -195,7 +206,7 @@ public:
 
 private:
     void registerWorker(Worker& worker) {
-        RuntimeAssert(worker.workList_.empty(), "Work list of an unregistered worker must be empty (e.g. fully depleted earlier)");
+        RuntimeAssert(worker.empty(), "Work list of an unregistered worker must be empty (e.g. fully depleted earlier)");
         RuntimeAssert(!allDone_, "Dispatcher must wait for every possible worker to register before finishing the work");
         RuntimeAssert(!isRegistered(worker), "Task registration is not idempotent");
 
@@ -216,9 +227,6 @@ private:
         return false;
     }
 
-    friend typename CooperativeWorkList<ParallelProcessor>::CommonStorage;
-    friend typename CooperativeWorkList<ParallelProcessor>::LocalQueue;
-
     void onShare(std::size_t sharedAmount) {
         RuntimeAssert(sharedAmount > 0, "Must have shared something");
         RuntimeLogDebug({ "balancing" }, "Worker has shared %zu tasks", sharedAmount);
@@ -226,13 +234,6 @@ private:
             waitCV_.notify_all();
         }
     }
-
-    auto workerQueues() {
-        return internal::Map(registeredWorkers_, [](std::atomic<Worker*>& worker) -> WorkListInterface& {
-            return worker.load(std::memory_order_relaxed)->workList_; });
-    }
-
-    typename CooperativeWorkList<ParallelProcessor>::CommonStorage commonWorkList_;
 
     PushOnlyAtomicArray<Worker*, kMaxWorkers, nullptr> registeredWorkers_;
     std::atomic<size_t> expectedWorkers_ = 0;

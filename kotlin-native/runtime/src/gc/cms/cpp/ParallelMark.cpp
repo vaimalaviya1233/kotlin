@@ -108,12 +108,12 @@ void gc::mark::MarkDispatcher::MarkJob::runMainInSTW() {
     ParallelProcessor::Worker parallelWorker(*dispatcher_.parallelProcessor_);
 
     dispatcher_.pacer_.requestParallelMark();
-    completeMutatorsRootSet(parallelWorker.workList());
+    completeMutatorsRootSet(parallelWorker);
     spinWait([&] {
         return dispatcher_.allMutators([](mm::ThreadData& mut) { return mut.gc().impl().gc().published(); });
     });
     // global root set must be collected after all the mutator's global data have been published
-    collectRootSetGlobals<MarkTraits>(dispatcher_.gcHandle(), parallelWorker.workList());
+    collectRootSetGlobals<MarkTraits>(dispatcher_.gcHandle(), parallelWorker);
     dispatcher_.allCooperativeMutatorsAreRegistered();
     parallelMark(parallelWorker);
 }
@@ -133,11 +133,11 @@ void gc::mark::MarkDispatcher::MarkJob::runOnMutator(mm::ThreadData& mutatorThre
         auto epoch = dispatcher_.gcHandle().getEpoch();
         GCLogDebug(epoch, "Mutator thread %d takes part in marking", konan::currentThreadId());
 
-        collectRootSet(mutatorThread, parallelWorker.workList());
+        collectRootSet(mutatorThread, parallelWorker);
     }
 
     dispatcher_.pacer_.waitForParallelMark();
-    completeMutatorsRootSet(parallelWorker.workList());
+    completeMutatorsRootSet(parallelWorker);
     parallelMark(parallelWorker);
 }
 
@@ -151,7 +151,7 @@ void gc::mark::MarkDispatcher::MarkJob::runAuxiliary() {
         // so the parallel mark would wait
         ParallelProcessor::Worker parallelWorker(*dispatcher_.parallelProcessor_);
         dispatcher_.pacer_.waitForParallelMark();
-        completeMutatorsRootSet(parallelWorker.workList());
+        completeMutatorsRootSet(parallelWorker);
         parallelMark(parallelWorker);
     } else {
         RuntimeAssert(dispatcher_.activeWorkers_ == dispatcher_.parallelProcessor_->expectedWorkers(), "Must not decline workers that might be expected");
@@ -184,15 +184,7 @@ void gc::mark::MarkDispatcher::MarkJob::collectRootSet(mm::ThreadData& thread, M
 
 void gc::mark::MarkDispatcher::MarkJob::parallelMark(ParallelProcessor::Worker& worker) {
     GCLogDebug(dispatcher_.gcHandle().getEpoch(), "Mark task has begun on thread %d", konan::currentThreadId());
-    {
-        auto markHandle = dispatcher_.gcHandle().mark();
-        worker.performWork([&markHandle, this](MarkTraits::MarkQueue& markStack) {
-            GCLogDebug(dispatcher_.gcHandle().getEpoch(),"Mark task begins to mark a new portion of objects");
-            Mark<MarkTraits>(markHandle, markStack);
-        });
-    }
-    // wait for other threads to collect statistics
-    worker.waitEveryWorkerTermination();
+    Mark<MarkTraits>(dispatcher_.gcHandle(), worker);
 }
 
 // dispatcher
