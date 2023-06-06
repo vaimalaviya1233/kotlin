@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 class Function1Impl : (String) -> Unit {
     override fun invoke(myParamName: String) {}
 }
