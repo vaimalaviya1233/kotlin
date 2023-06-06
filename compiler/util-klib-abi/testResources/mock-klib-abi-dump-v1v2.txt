@@ -1,0 +1,90 @@
+abstract class klib.abi.test/AbstractClass, klib.abi.test/AbstractClass|null[0] : klib.abi.test/FunctionInterface, klib.abi.test/Interface {
+    final constructor klib.abi.test/AbstractClass.^c(), klib.abi.test/AbstractClass.<init>|-5645683436151566731[0]
+}
+final annotation class klib.abi.test/AnnotationClass, klib.abi.test/AnnotationClass|null[0] {
+    final constructor klib.abi.test/AnnotationClass.^c(), klib.abi.test/AnnotationClass.<init>|-5645683436151566731[0]
+}
+final class klib.abi.test/Class, klib.abi.test/Class|null[0] {
+    final constructor klib.abi.test/Class.^c(), klib.abi.test/Class.<init>|-5645683436151566731[0]
+    final val klib.abi.test/Class.valOfClass=kotlin/String, klib.abi.test/Class.valOfClass|433973585083875737[0]
+    final fun klib.abi.test/Class.valOfClass.^g$()=kotlin/String, klib.abi.test/Class.valOfClass.<get-valOfClass>|5369084220387716246[0]
+    final fun klib.abi.test/Class.funOfClass$()=kotlin/String, klib.abi.test/Class.funOfClass|-797013061710964143[0]
+    final object klib.abi.test/Class.Companion, klib.abi.test/Class.Companion|null[0]
+    final inner class klib.abi.test/Class.Inner, klib.abi.test/Class.Inner|null[0] {
+        final constructor klib.abi.test/Class.Inner.^c$(), klib.abi.test/Class.Inner.<init>|-5645683436151566731[0]
+        final val klib.abi.test/Class.Inner.valOfInner=kotlin/String, klib.abi.test/Class.Inner.valOfInner|7828569960507871692[0]
+        final fun klib.abi.test/Class.Inner.valOfInner.^g$()=kotlin/String, klib.abi.test/Class.Inner.valOfInner.<get-valOfInner>|-2946052066369038659[0]
+        final fun klib.abi.test/Class.Inner.funOfInner$()=kotlin/String, klib.abi.test/Class.Inner.funOfInner|3010729524886683981[0]
+        final inner class klib.abi.test/Class.Inner.InnerOfInner, klib.abi.test/Class.Inner.InnerOfInner|null[0] {
+            final constructor klib.abi.test/Class.Inner.InnerOfInner.^c$(), klib.abi.test/Class.Inner.InnerOfInner.<init>|-5645683436151566731[0]
+            final val klib.abi.test/Class.Inner.InnerOfInner.valOfInnerOfInner=kotlin/String, klib.abi.test/Class.Inner.InnerOfInner.valOfInnerOfInner|-7036138277816820418[0]
+            final fun klib.abi.test/Class.Inner.InnerOfInner.valOfInnerOfInner.^g$()=kotlin/String, klib.abi.test/Class.Inner.InnerOfInner.valOfInnerOfInner.<get-valOfInnerOfInner>|4226646688399547436[0]
+            final fun klib.abi.test/Class.Inner.InnerOfInner.funOfInnerOfInner$()=kotlin/String, klib.abi.test/Class.Inner.InnerOfInner.funOfInnerOfInner|-1588191082896750619[0]
+        }
+    }
+    final class klib.abi.test/Class.Nested, klib.abi.test/Class.Nested|null[0] {
+        final constructor klib.abi.test/Class.Nested.^c(), klib.abi.test/Class.Nested.<init>|-5645683436151566731[0]
+        final val klib.abi.test/Class.Nested.valOfNested=kotlin/String, klib.abi.test/Class.Nested.valOfNested|-5321144969073740296[0]
+        final fun klib.abi.test/Class.Nested.valOfNested.^g$()=kotlin/String, klib.abi.test/Class.Nested.valOfNested.<get-valOfNested>|-5624075254170403138[0]
+        final fun klib.abi.test/Class.Nested.funOfNested$()=kotlin/String, klib.abi.test/Class.Nested.funOfNested|-1263241914935971934[0]
+        final inner class klib.abi.test/Class.Nested.InnerOfNested, klib.abi.test/Class.Nested.InnerOfNested|null[0] {
+            final constructor klib.abi.test/Class.Nested.InnerOfNested.^c$(), klib.abi.test/Class.Nested.InnerOfNested.<init>|-5645683436151566731[0]
+            final val klib.abi.test/Class.Nested.InnerOfNested.valOfInnerOfNested=kotlin/String, klib.abi.test/Class.Nested.InnerOfNested.valOfInnerOfNested|-7130048892740966353[0]
+            final fun klib.abi.test/Class.Nested.InnerOfNested.valOfInnerOfNested.^g$()=kotlin/String, klib.abi.test/Class.Nested.InnerOfNested.valOfInnerOfNested.<get-valOfInnerOfNested>|2771438287613059430[0]
+            final fun klib.abi.test/Class.Nested.InnerOfNested.funOfInnerOfNested$()=kotlin/String, klib.abi.test/Class.Nested.InnerOfNested.funOfInnerOfNested|2020651343652422702[0]
+        }
+        final class klib.abi.test/Class.Nested.NestedOfNested, klib.abi.test/Class.Nested.NestedOfNested|null[0] {
+            final constructor klib.abi.test/Class.Nested.NestedOfNested.^c(), klib.abi.test/Class.Nested.NestedOfNested.<init>|-5645683436151566731[0]
+            final val klib.abi.test/Class.Nested.NestedOfNested.valOfNestedOfNested=kotlin/String, klib.abi.test/Class.Nested.NestedOfNested.valOfNestedOfNested|3623806239156077906[0]
+            final fun klib.abi.test/Class.Nested.NestedOfNested.valOfNestedOfNested.^g$()=kotlin/String, klib.abi.test/Class.Nested.NestedOfNested.valOfNestedOfNested.<get-valOfNestedOfNested>|-3381702863193046068[0]
+            final fun klib.abi.test/Class.Nested.NestedOfNested.funOfNestedOfNested$()=kotlin/String, klib.abi.test/Class.Nested.NestedOfNested.funOfNestedOfNested|-1104359515243763750[0]
+        }
+    }
+}
+final enum class klib.abi.test/EnumClass, klib.abi.test/EnumClass|null[0] {
+    final enum entry klib.abi.test/EnumClass.ENTRY1, klib.abi.test/EnumClass.ENTRY1|null[0]
+    final enum entry klib.abi.test/EnumClass.ENTRY2, klib.abi.test/EnumClass.ENTRY2|null[0]
+    abstract fun klib.abi.test/EnumClass.foo$()=kotlin/Unit, klib.abi.test/EnumClass.foo|-1041209573719867811[0]
+}
+abstract fun interface klib.abi.test/FunctionInterface, klib.abi.test/FunctionInterface|null[0] {
+    abstract fun klib.abi.test/FunctionInterface.foo$()=kotlin/Unit, klib.abi.test/FunctionInterface.foo|-1041209573719867811[0]
+}
+abstract interface klib.abi.test/Interface, klib.abi.test/Interface|null[0]
+final object klib.abi.test/Object, klib.abi.test/Object|null[0]
+final value class klib.abi.test/ValueClass, klib.abi.test/ValueClass|null[0] {
+    final constructor klib.abi.test/ValueClass.^c(kotlin/Int), klib.abi.test/ValueClass.<init>|-5182794243525578284[0]
+    final val klib.abi.test/ValueClass.p=kotlin/Int, klib.abi.test/ValueClass.p|6715504260787941082[0]
+    final fun klib.abi.test/ValueClass.p.^g$()=kotlin/Int, klib.abi.test/ValueClass.p.<get-p>|-1162552463316289847[0]
+}
+final var klib.abi.test/topLevelVar=kotlin/String, klib.abi.test/topLevelVar|7956002610571589851[0]
+final fun klib.abi.test/topLevelVar.^g()=kotlin/String, klib.abi.test/topLevelVar.<get-topLevelVar>|4171232910088346368[0]
+final fun klib.abi.test/topLevelVar.^s(kotlin/String), klib.abi.test/topLevelVar.<set-topLevelVar>|-8754680581387542939[0]
+final var klib.abi.test/topLevelVar@kotlin/Int=kotlin/String, klib.abi.test/topLevelVar|2818339884836210153[0]
+final fun klib.abi.test/topLevelVar@kotlin/Int.^g()=kotlin/String, klib.abi.test/topLevelVar.<get-topLevelVar>|3024882152913336936[0]
+final fun klib.abi.test/topLevelVar@kotlin/Int.^s(kotlin/String), klib.abi.test/topLevelVar.<set-topLevelVar>|5463347746919915819[0]
+final val klib.abi.test/topLevelVal=kotlin/String, klib.abi.test/topLevelVal|-3803935533547561652[0]
+final fun klib.abi.test/topLevelVal.^g()=kotlin/String, klib.abi.test/topLevelVal.<get-topLevelVal>|2084281846661455900[0]
+final const val klib.abi.test/topLevelConstVal=kotlin/String, klib.abi.test/topLevelConstVal|-2477645097827337477[0]
+final fun klib.abi.test/topLevelConstVal.^g()=kotlin/String, klib.abi.test/topLevelConstVal.<get-topLevelConstVal>|8000506644318128252[0]
+final fun klib.abi.test/overloadedTopLevelFun(kotlin/String)=kotlin/String, klib.abi.test/overloadedTopLevelFun|-1909424610827250362[0]
+final fun klib.abi.test/overloadedTopLevelFun<kotlin/Any?>(kotlin/String)=kotlin/String, klib.abi.test/overloadedTopLevelFun|-3575352618111393371[0]
+final fun klib.abi.test/overloadedTopLevelFun<kotlin/Any?>(#0)=kotlin/String, klib.abi.test/overloadedTopLevelFun|-1587513576983547699[0]
+final fun klib.abi.test/overloadedTopLevelFun<kotlin/Any>(#0)=kotlin/String, klib.abi.test/overloadedTopLevelFun|4890147970487595330[0]
+final fun klib.abi.test/overloadedTopLevelFun<kotlin/Any>(#0?)=kotlin/String, klib.abi.test/overloadedTopLevelFun|-9202363577444565286[0]
+final fun klib.abi.test/overloadedTopLevelFun<kotlin/CharSequence>(#0)=kotlin/String, klib.abi.test/overloadedTopLevelFun|-600727038924012581[0]
+final fun klib.abi.test/overloadedTopLevelFun<kotlin/Appendable&kotlin/CharSequence>(#0)=kotlin/String, klib.abi.test/overloadedTopLevelFun|-2971508381780377198[0]
+final fun klib.abi.test/suspendTopLevelFun(kotlin/Int)=kotlin/String|s, klib.abi.test/suspendTopLevelFun|-2671426082158503799[0]
+final fun klib.abi.test/expectTopLevelFun(kotlin/Int)=kotlin/String|e, klib.abi.test/expectTopLevelFun|-8029371211400495179[1]
+final fun klib.abi.test/topLevelVarargFun(kotlin/Int...)=kotlin/String, klib.abi.test/topLevelVarargFun|-8062578169479577844[0]
+final fun klib.abi.test/topLevelVarargFun(kotlin/Array<kotlin/Int>)=kotlin/String, klib.abi.test/topLevelVarargFun|-1977594530768978081[0]
+final fun klib.abi.test/topLevelVarargFun(kotlin/Array<-kotlin/Int>)=kotlin/String, klib.abi.test/topLevelVarargFun|5428601736755292589[0]
+final fun[0:default_arg 1:default_arg] klib.abi.test/topLevelFunWithDefaults(kotlin/Int;kotlin/Long)=kotlin/String, klib.abi.test/topLevelFunWithDefaults|1159926268696030611[0]
+final inline fun[1:noinline 2:crossinline] klib.abi.test/topLevelInlineFun(kotlin/Function1<kotlin/Int;kotlin/String>;kotlin/Function1<kotlin/Int;kotlin/String>;kotlin/Function1<kotlin/Int;kotlin/String>), klib.abi.test/topLevelInlineFun|-5396238017896868274[0]
+final fun klib.abi.test/topLevelFun()=kotlin/String, klib.abi.test/topLevelFun|-622527295593064409[0]
+final fun klib.abi.test/topLevelFun(kotlin/Int)=kotlin/String, klib.abi.test/topLevelFun|6933303545227536755[0]
+final fun klib.abi.test/topLevelFun(kotlin/Int;kotlin/Long)=kotlin/String, klib.abi.test/topLevelFun|6240270410835079577[0]
+final fun klib.abi.test/topLevelFun@kotlin/Int()=kotlin/String, klib.abi.test/topLevelFun|-1131436401381962866[0]
+final fun klib.abi.test/topLevelFun{kotlin/Int}()=kotlin/String, klib.abi.test/topLevelFun|-6933665416149205282[0]
+final fun klib.abi.test/topLevelFun{kotlin/Int;kotlin/Long}()=kotlin/String, klib.abi.test/topLevelFun|2726666196939267226[0]
+final fun klib.abi.test/topLevelFun{kotlin/Int;kotlin/Long}@kotlin/Int()=kotlin/String, klib.abi.test/topLevelFun|294059116065521812[0]
+final fun klib.abi.test/topLevelFun{kotlin/Int;kotlin/Long}@kotlin/Int(kotlin/Int;kotlin/Long)=kotlin/String, klib.abi.test/topLevelFun|7086915696014031501[0]

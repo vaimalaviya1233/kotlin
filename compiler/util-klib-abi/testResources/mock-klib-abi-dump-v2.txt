@@ -1,0 +1,90 @@
+abstract class klib.abi.test/AbstractClass : klib.abi.test/FunctionInterface, klib.abi.test/Interface {
+    final constructor klib.abi.test/AbstractClass.^c()
+}
+final annotation class klib.abi.test/AnnotationClass {
+    final constructor klib.abi.test/AnnotationClass.^c()
+}
+final class klib.abi.test/Class {
+    final constructor klib.abi.test/Class.^c()
+    final val klib.abi.test/Class.valOfClass=kotlin/String
+    final fun klib.abi.test/Class.valOfClass.^g$()=kotlin/String
+    final fun klib.abi.test/Class.funOfClass$()=kotlin/String
+    final object klib.abi.test/Class.Companion
+    final inner class klib.abi.test/Class.Inner {
+        final constructor klib.abi.test/Class.Inner.^c$()
+        final val klib.abi.test/Class.Inner.valOfInner=kotlin/String
+        final fun klib.abi.test/Class.Inner.valOfInner.^g$()=kotlin/String
+        final fun klib.abi.test/Class.Inner.funOfInner$()=kotlin/String
+        final inner class klib.abi.test/Class.Inner.InnerOfInner {
+            final constructor klib.abi.test/Class.Inner.InnerOfInner.^c$()
+            final val klib.abi.test/Class.Inner.InnerOfInner.valOfInnerOfInner=kotlin/String
+            final fun klib.abi.test/Class.Inner.InnerOfInner.valOfInnerOfInner.^g$()=kotlin/String
+            final fun klib.abi.test/Class.Inner.InnerOfInner.funOfInnerOfInner$()=kotlin/String
+        }
+    }
+    final class klib.abi.test/Class.Nested {
+        final constructor klib.abi.test/Class.Nested.^c()
+        final val klib.abi.test/Class.Nested.valOfNested=kotlin/String
+        final fun klib.abi.test/Class.Nested.valOfNested.^g$()=kotlin/String
+        final fun klib.abi.test/Class.Nested.funOfNested$()=kotlin/String
+        final inner class klib.abi.test/Class.Nested.InnerOfNested {
+            final constructor klib.abi.test/Class.Nested.InnerOfNested.^c$()
+            final val klib.abi.test/Class.Nested.InnerOfNested.valOfInnerOfNested=kotlin/String
+            final fun klib.abi.test/Class.Nested.InnerOfNested.valOfInnerOfNested.^g$()=kotlin/String
+            final fun klib.abi.test/Class.Nested.InnerOfNested.funOfInnerOfNested$()=kotlin/String
+        }
+        final class klib.abi.test/Class.Nested.NestedOfNested {
+            final constructor klib.abi.test/Class.Nested.NestedOfNested.^c()
+            final val klib.abi.test/Class.Nested.NestedOfNested.valOfNestedOfNested=kotlin/String
+            final fun klib.abi.test/Class.Nested.NestedOfNested.valOfNestedOfNested.^g$()=kotlin/String
+            final fun klib.abi.test/Class.Nested.NestedOfNested.funOfNestedOfNested$()=kotlin/String
+        }
+    }
+}
+final enum class klib.abi.test/EnumClass {
+    final enum entry klib.abi.test/EnumClass.ENTRY1
+    final enum entry klib.abi.test/EnumClass.ENTRY2
+    abstract fun klib.abi.test/EnumClass.foo$()=kotlin/Unit
+}
+abstract fun interface klib.abi.test/FunctionInterface {
+    abstract fun klib.abi.test/FunctionInterface.foo$()=kotlin/Unit
+}
+abstract interface klib.abi.test/Interface
+final object klib.abi.test/Object
+final value class klib.abi.test/ValueClass {
+    final constructor klib.abi.test/ValueClass.^c(kotlin/Int)
+    final val klib.abi.test/ValueClass.p=kotlin/Int
+    final fun klib.abi.test/ValueClass.p.^g$()=kotlin/Int
+}
+final var klib.abi.test/topLevelVar=kotlin/String
+final fun klib.abi.test/topLevelVar.^g()=kotlin/String
+final fun klib.abi.test/topLevelVar.^s(kotlin/String)
+final var klib.abi.test/topLevelVar@kotlin/Int=kotlin/String
+final fun klib.abi.test/topLevelVar@kotlin/Int.^g()=kotlin/String
+final fun klib.abi.test/topLevelVar@kotlin/Int.^s(kotlin/String)
+final val klib.abi.test/topLevelVal=kotlin/String
+final fun klib.abi.test/topLevelVal.^g()=kotlin/String
+final const val klib.abi.test/topLevelConstVal=kotlin/String
+final fun klib.abi.test/topLevelConstVal.^g()=kotlin/String
+final fun klib.abi.test/overloadedTopLevelFun(kotlin/String)=kotlin/String
+final fun klib.abi.test/overloadedTopLevelFun<kotlin/Any?>(kotlin/String)=kotlin/String
+final fun klib.abi.test/overloadedTopLevelFun<kotlin/Any?>(#0)=kotlin/String
+final fun klib.abi.test/overloadedTopLevelFun<kotlin/Any>(#0)=kotlin/String
+final fun klib.abi.test/overloadedTopLevelFun<kotlin/Any>(#0?)=kotlin/String
+final fun klib.abi.test/overloadedTopLevelFun<kotlin/CharSequence>(#0)=kotlin/String
+final fun klib.abi.test/overloadedTopLevelFun<kotlin/Appendable&kotlin/CharSequence>(#0)=kotlin/String
+final fun klib.abi.test/suspendTopLevelFun(kotlin/Int)=kotlin/String|s
+final fun klib.abi.test/expectTopLevelFun(kotlin/Int)=kotlin/String|e
+final fun klib.abi.test/topLevelVarargFun(kotlin/Int...)=kotlin/String
+final fun klib.abi.test/topLevelVarargFun(kotlin/Array<kotlin/Int>)=kotlin/String
+final fun klib.abi.test/topLevelVarargFun(kotlin/Array<-kotlin/Int>)=kotlin/String
+final fun[0:default_arg 1:default_arg] klib.abi.test/topLevelFunWithDefaults(kotlin/Int;kotlin/Long)=kotlin/String
+final inline fun[1:noinline 2:crossinline] klib.abi.test/topLevelInlineFun(kotlin/Function1<kotlin/Int;kotlin/String>;kotlin/Function1<kotlin/Int;kotlin/String>;kotlin/Function1<kotlin/Int;kotlin/String>)
+final fun klib.abi.test/topLevelFun()=kotlin/String
+final fun klib.abi.test/topLevelFun(kotlin/Int)=kotlin/String
+final fun klib.abi.test/topLevelFun(kotlin/Int;kotlin/Long)=kotlin/String
+final fun klib.abi.test/topLevelFun@kotlin/Int()=kotlin/String
+final fun klib.abi.test/topLevelFun{kotlin/Int}()=kotlin/String
+final fun klib.abi.test/topLevelFun{kotlin/Int;kotlin/Long}()=kotlin/String
+final fun klib.abi.test/topLevelFun{kotlin/Int;kotlin/Long}@kotlin/Int()=kotlin/String
+final fun klib.abi.test/topLevelFun{kotlin/Int;kotlin/Long}@kotlin/Int(kotlin/Int;kotlin/Long)=kotlin/String
