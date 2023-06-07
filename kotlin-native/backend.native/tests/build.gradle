@@ -5808,7 +5808,7 @@ Task pluginTest(String name, String pluginName, Closure configureClosure) {
         from {
             sourceSets[pluginName].output
         }
-        baseName = pluginName
+        archiveBaseName = pluginName
         destinationDirectory = buildDir
     }
     def taskName = "$name-with-$pluginName"
