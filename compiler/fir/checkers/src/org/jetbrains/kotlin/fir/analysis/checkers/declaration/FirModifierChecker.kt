@@ -262,13 +262,17 @@ object FirModifierChecker : FirBasicDeclarationChecker() {
         val possibleParentPredicate = possibleParentTargetPredicateMap[modifierToken] ?: return true
         if (actualParents.any { possibleParentPredicate.isAllowed(it, context.session.languageVersionSettings) }) return true
 
-        reporter.reportOn(
-            modifierSource,
-            FirErrors.WRONG_MODIFIER_CONTAINING_DECLARATION,
-            modifierToken,
-            actualParents.firstOrThis(),
-            context
-        )
+        if (modifierToken == KtTokens.INNER_KEYWORD && parent?.let { it is FirScript } == true) {
+            reporter.reportOn(modifierSource, FirErrors.INNER_ON_TOP_LEVEL_SCRIPT_CLASS, context)
+        } else {
+            reporter.reportOn(
+                modifierSource,
+                FirErrors.WRONG_MODIFIER_CONTAINING_DECLARATION,
+                modifierToken,
+                actualParents.firstOrThis(),
+                context
+            )
+        }
 
         return false
     }

@@ -217,6 +217,10 @@ sealed interface KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
         val callableId: CallableId
     }
 
+    interface InnerOnTopLevelScriptClass : KtFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = InnerOnTopLevelScriptClass::class
+    }
+
     interface InvisibleReference : KtFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = InvisibleReference::class
         val reference: KtSymbol

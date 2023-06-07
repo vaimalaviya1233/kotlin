@@ -98,6 +98,7 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
             parameter<Visibility>("visibility")
             parameter<CallableId>("callableId")
         }
+        val INNER_ON_TOP_LEVEL_SCRIPT_CLASS by warning<PsiElement>()
     }
 
     val UNRESOLVED by object : DiagnosticGroup("Unresolved") {
