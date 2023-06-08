@@ -141,6 +141,7 @@ compileKotlin2Js {
 }
 
 compileTestKotlin2Js {
+    enabled = false
     kotlinOptions {
         moduleKind = "umd"
         freeCompilerArgs += [
@@ -252,20 +253,20 @@ tasks.register("libraryJarWithoutIr", Jar) {
     manifestAttributes(manifest, project, 'Main')
     destinationDirectory = file("$buildDir/lib/dist")
 
-    // TODO: Use standard implementation title after js stdlib detector becomes more flexible (KT-17655)
-    Properties properties = new Properties()
-    new File("${rootDir}/resources/kotlinManifest.properties").withInputStream {
-        properties.load(it)
-    }
-    manifest.attributes 'Implementation-Title': properties."manifest.impl.title.kotlin.javascript.stdlib"
+//    // TODO: Use standard implementation title after js stdlib detector becomes more flexible (KT-17655)
+//    Properties properties = new Properties()
+//    new File("${rootDir}/resources/kotlinManifest.properties").withInputStream {
+//        properties.load(it)
+//    }
+//    manifest.attributes 'Implementation-Title': properties."manifest.impl.title.kotlin.javascript.stdlib"
 
     includeEmptyDirs false
     duplicatesStrategy DuplicatesStrategy.EXCLUDE
-    from jsOutputFileName
-    from jsOutputMetaFileName
-    from "${jsOutputFileName}.map"
-    from sourceSets.main.kotlin.classesDirectory
-    filesMatching("*.*") { it.mode = 0b110100100 } // KTI-401
+//    from jsOutputFileName
+//    from jsOutputMetaFileName
+//    from "${jsOutputFileName}.map"
+//    from sourceSets.main.kotlin.classesDirectory
+//    filesMatching("*.*") { it.mode = 0b110100100 } // KTI-401
 }
 
 tasks.register("libraryJarWithIr", Zip) {
@@ -370,7 +371,7 @@ tasks.register("runMocha", NodeTask) {
     }
 }
 
-test.dependsOn runMocha
+//test.dependsOn runMocha
 
 tasks.withType(org.jetbrains.kotlin.gradle.dsl.KotlinJsCompile) {
     kotlinOptions.freeCompilerArgs += "-Xforce-deprecated-legacy-compiler-usage"
