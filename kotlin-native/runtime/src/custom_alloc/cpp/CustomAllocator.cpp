@@ -12,11 +12,11 @@
 #include <cstring>
 #include <new>
 
-#include "ConcurrentMarkAndSweep.hpp"
 #include "CustomAllocConstants.hpp"
 #include "CustomLogging.hpp"
 #include "ExtraObjectData.hpp"
 #include "ExtraObjectPage.hpp"
+#include "GC.hpp"
 #include "GCScheduler.hpp"
 #include "KAssert.h"
 #include "SingleObjectPage.hpp"
@@ -31,7 +31,7 @@ namespace kotlin::alloc {
 
 size_t ObjectAllocatedDataSize(const TypeInfo* typeInfo) noexcept {
     size_t membersSize = typeInfo->instanceSize_ - sizeof(ObjHeader);
-    return AlignUp(sizeof(HeapObjHeader) + membersSize, kObjectAlignment);
+    return AlignUp(heapObjectHeaderSize + membersSize, kObjectAlignment);
 }
 
 uint64_t ArrayAllocatedDataSize(const TypeInfo* typeInfo, uint32_t count) noexcept {
@@ -39,7 +39,7 @@ uint64_t ArrayAllocatedDataSize(const TypeInfo* typeInfo, uint32_t count) noexce
     // at about half of uint64_t max.
     uint64_t membersSize = static_cast<uint64_t>(-typeInfo->instanceSize_) * count;
     // Note: array body is aligned, but for size computation it is enough to align the sum.
-    return AlignUp<uint64_t>(sizeof(HeapArrayHeader) + membersSize, kObjectAlignment);
+    return AlignUp<uint64_t>(heapArrayHeaderSize + membersSize, kObjectAlignment);
 }
 
 CustomAllocator::CustomAllocator(Heap& heap, gc::GCSchedulerThreadData& gcScheduler) noexcept :
@@ -51,8 +51,8 @@ CustomAllocator::CustomAllocator(Heap& heap, gc::GCSchedulerThreadData& gcSchedu
 ObjHeader* CustomAllocator::CreateObject(const TypeInfo* typeInfo) noexcept {
     RuntimeAssert(!typeInfo->IsArray(), "Must not be an array");
     size_t allocSize = ObjectAllocatedDataSize(typeInfo);
-    auto* heapObject = new (Allocate(allocSize)) HeapObjHeader();
-    auto* object = &heapObject->object;
+    uint8_t* heapObject = Allocate(allocSize);
+    auto* object = reinterpret_cast<ObjHeader*>(heapObject + gcDataSize);
     if (typeInfo->flags_ & TF_HAS_FINALIZER) {
         auto* extraObject = CreateExtraObject();
         object->typeInfoOrMeta_ = reinterpret_cast<TypeInfo*>(new (extraObject) mm::ExtraObjectData(object, typeInfo));
@@ -67,8 +67,8 @@ ObjHeader* CustomAllocator::CreateObject(const TypeInfo* typeInfo) noexcept {
 ArrayHeader* CustomAllocator::CreateArray(const TypeInfo* typeInfo, uint32_t count) noexcept {
     RuntimeAssert(typeInfo->IsArray(), "Must be an array");
     auto allocSize = ArrayAllocatedDataSize(typeInfo, count);
-    auto* heapArray = new (Allocate(allocSize)) HeapArrayHeader();
-    auto* array = &heapArray->array;
+    uint8_t* heapArray = Allocate(allocSize);
+    auto* array = reinterpret_cast<ArrayHeader*>(heapArray + gcDataSize);
     array->typeInfoOrMeta_ = const_cast<TypeInfo*>(typeInfo);
     array->count_ = count;
     return array;

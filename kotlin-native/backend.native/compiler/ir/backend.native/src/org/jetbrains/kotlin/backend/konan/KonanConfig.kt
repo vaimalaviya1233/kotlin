@@ -258,13 +258,7 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
                 if (sanitizer != null) {
                     configuration.report(CompilerMessageSeverity.STRONG_WARNING, "Sanitizers are useful only with the std allocator")
                 }
-                if (gc == GC.PARALLEL_MARK_CONCURRENT_SWEEP) {
-                    AllocationMode.CUSTOM
-                } else {
-                    configuration.report(CompilerMessageSeverity.STRONG_WARNING,
-                            "Custom allocator is currently only integrated with concurrent mark and sweep gc. Using default mode.")
-                    defaultAllocationMode
-                }
+                AllocationMode.CUSTOM
             }
         }
     }
@@ -274,19 +268,17 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
         add("common_gc.bc")
         if (allocationMode == AllocationMode.CUSTOM) {
             add("experimental_memory_manager_custom.bc")
-            add("concurrent_ms_gc_custom.bc")
+            when (gc) {
+                GC.STOP_THE_WORLD_MARK_AND_SWEEP -> add("same_thread_ms_gc_custom.bc")
+                GC.NOOP -> add("noop_gc_custom.bc")
+                GC.PARALLEL_MARK_CONCURRENT_SWEEP -> add("concurrent_ms_gc_custom.bc")
+            }
         } else {
             add("experimental_memory_manager.bc")
             when (gc) {
-                GC.STOP_THE_WORLD_MARK_AND_SWEEP -> {
-                    add("same_thread_ms_gc.bc")
-                }
-                GC.NOOP -> {
-                    add("noop_gc.bc")
-                }
-                GC.PARALLEL_MARK_CONCURRENT_SWEEP -> {
-                    add("concurrent_ms_gc.bc")
-                }
+                GC.STOP_THE_WORLD_MARK_AND_SWEEP -> add("same_thread_ms_gc.bc")
+                GC.NOOP -> add("noop_gc.bc")
+                GC.PARALLEL_MARK_CONCURRENT_SWEEP -> add("concurrent_ms_gc.bc")
             }
         }
         if (shouldCoverLibraries || shouldCoverSources) add("profileRuntime.bc")

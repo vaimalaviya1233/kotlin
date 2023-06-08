@@ -73,6 +73,9 @@ public:
     static void processArrayInMark(void* state, ArrayHeader* array) noexcept;
     static void processFieldInMark(void* state, ObjHeader* field) noexcept;
 
+    static const size_t objectDataSize;
+    static bool SweepObject(void* objectData) noexcept;
+
 private:
     std_support::unique_ptr<Impl> impl_;
 };
