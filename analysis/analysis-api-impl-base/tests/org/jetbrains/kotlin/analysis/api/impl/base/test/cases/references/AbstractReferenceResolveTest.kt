@@ -64,7 +64,7 @@ abstract class AbstractReferenceResolveTest : AbstractAnalysisApiBasedTest() {
             analyseForTest(ktReferences.first().element) {
                 val symbols = ktReferences.flatMap { it.resolveToSymbols() }
                 checkReferenceResultForValidity(ktReferences, mainModule, testServices, symbols)
-                renderResolvedTo(symbols, renderingOptions)
+                renderResolvedTo(symbols, renderingOptions) { getAdditionalSymbolInfo(it) }
             }
 
         if (Directives.UNRESOLVED_REFERENCE in mainModule.directives) {
@@ -74,6 +74,8 @@ abstract class AbstractReferenceResolveTest : AbstractAnalysisApiBasedTest() {
         val actual = "Resolved to:\n$resolvedTo"
         testServices.assertions.assertEqualsToTestDataFileSibling(actual)
     }
+
+    open fun KtAnalysisSession.getAdditionalSymbolInfo(symbol: KtSymbol): String? = null
 
     private fun findReferencesAtCaret(mainKtFile: KtFile, caretPosition: Int): List<KtReference> =
         mainKtFile.findReferenceAt(caretPosition)?.unwrapMultiReferences().orEmpty().filterIsInstance<KtReference>()
