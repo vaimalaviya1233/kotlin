@@ -48,6 +48,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.BindingTrace
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.jvm.isJvm
+import org.jetbrains.kotlin.resolve.jvm.ReplaceWithSupertypeAnonymousTypeTransformer
 import org.jetbrains.kotlin.resolve.jvm.extensions.AnalysisHandlerExtension
 import org.jetbrains.kotlin.resolve.jvm.extensions.PartialAnalysisHandlerExtension
 import org.jetbrains.kotlin.utils.decodePluginOptions
@@ -261,7 +262,7 @@ class Kapt3ComponentRegistrar : ComponentRegistrar {
             moduleDescriptor: ModuleDescriptor
         ) {
             if (!platform.isJvm()) return
-            container.useInstance(KaptAnonymousTypeTransformer(analysisExtension))
+            container.useInstance(ReplaceWithSupertypeAnonymousTypeTransformer(analysisExtension))
         }
     }
 
