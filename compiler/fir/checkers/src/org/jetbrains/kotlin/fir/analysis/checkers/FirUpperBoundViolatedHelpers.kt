@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
 import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
 import org.jetbrains.kotlin.fir.resolve.substitution.AbstractConeSubstitutor
 import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
+import org.jetbrains.kotlin.fir.resolve.substitution.substitutorByMap
 import org.jetbrains.kotlin.fir.resolve.toSymbol
 import org.jetbrains.kotlin.fir.resolve.withCombinedAttributesFrom
 import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
@@ -134,7 +135,26 @@ private class OriginalProjectionTypeAttribute(val data: ConeTypeProjection) : Co
         get() = OriginalProjectionTypeAttribute::class
 }
 
-private val ConeAttributes.originalProjection: OriginalProjectionTypeAttribute? by ConeAttributes.attributeAccessor<OriginalProjectionTypeAttribute>()
+private val ConeAttributes.originalProjection: OriginalProjectionTypeAttribute? by ConeAttributes.attributeAccessor()
+
+fun List<FirTypeProjection>.toTypeArgumentsWithSourceInfo(): List<ConeTypeProjection> {
+    return map { firTypeProjection ->
+        firTypeProjection.toConeTypeProjection().withSource(
+            FirTypeRefSource((firTypeProjection as? FirTypeProjectionWithVariance)?.typeRef, firTypeProjection.source)
+        )
+    }
+}
+
+fun createSubstitutorForUpperBoundViolationCheck(
+    typeParameters: List<FirTypeParameterSymbol>,
+    typeArguments: List<ConeTypeProjection>,
+    session: FirSession
+): ConeSubstitutor {
+    return substitutorByMap(
+        typeParameters.withIndex().associate { Pair(it.value, typeArguments[it.index] as ConeKotlinType) },
+        session,
+    )
+}
 
 fun checkUpperBoundViolated(
     context: CheckerContext,
@@ -216,7 +236,7 @@ private class SourceAttribute(private val data: FirTypeRefSource) : ConeAttribut
         get() = SourceAttribute::class
 }
 
-private val ConeAttributes.sourceAttribute: SourceAttribute? by ConeAttributes.attributeAccessor<SourceAttribute>()
+private val ConeAttributes.sourceAttribute: SourceAttribute? by ConeAttributes.attributeAccessor()
 
 fun ConeTypeProjection.withSource(source: FirTypeRefSource?): ConeTypeProjection {
     return when {
