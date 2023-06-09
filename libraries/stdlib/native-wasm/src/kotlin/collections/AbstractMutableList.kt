@@ -58,25 +58,9 @@ public actual abstract class AbstractMutableList<E> protected actual constructor
 
     override actual fun contains(element: E): Boolean = indexOf(element) >= 0
 
-    override actual fun indexOf(element: E): Int {
-        val iterator = listIterator()
-        while (iterator.hasNext()) {
-            if (iterator.next() == element) {
-                return iterator.previousIndex()
-            }
-        }
-        return -1
-    }
+    override actual fun indexOf(element: E): Int = indexOfFirst { it == element }
 
-    override actual fun lastIndexOf(element: E): Int {
-        val iterator = listIterator(size)
-        while (iterator.hasPrevious()) {
-            if (iterator.previous() == element) {
-                return iterator.nextIndex()
-            }
-        }
-        return -1
-    }
+    override actual fun lastIndexOf(element: E): Int = indexOfLast { it == element }
 
     override actual fun listIterator(): MutableListIterator<E> = listIterator(0)
     override actual fun listIterator(index: Int): MutableListIterator<E> = ListIteratorImpl(index)
