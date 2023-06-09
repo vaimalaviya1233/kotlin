@@ -32,7 +32,7 @@ public interface MutableIterator<out T> : Iterator<T> {
      * Removes from the underlying collection the last element returned by this iterator.
      *
      * @throws IllegalStateException if [next] has not been called yet,
-     * or the last [next] call has already been followed by a [remove] call.
+     * or the most recent [next] call has already been followed by a [remove] call.
      */
     public fun remove(): Unit
 }
@@ -76,6 +76,7 @@ public interface ListIterator<out T> : Iterator<T> {
 /**
  * An iterator over a mutable collection that supports indexed access. Provides the ability
  * to add, modify and remove elements while iterating.
+ * @see MutableList.listIterator
  */
 public interface MutableListIterator<T> : ListIterator<T>, MutableIterator<T> {
     // Query Operations
@@ -87,7 +88,7 @@ public interface MutableListIterator<T> : ListIterator<T>, MutableIterator<T> {
      * Removes from the underlying collection the last element returned by this iterator.
      *
      * @throws IllegalStateException if neither [next] nor [previous] has not been called yet,
-     * or the last [next] or [previous] call has already been followed by a [remove] or [add] call.
+     * or the most recent [next] or [previous] call has already been followed by a [remove] or [add] call.
      */
     override fun remove(): Unit
 
@@ -95,7 +96,7 @@ public interface MutableListIterator<T> : ListIterator<T>, MutableIterator<T> {
      * Replaces the last element returned by [next] or [previous] with the specified element [element].
      *
      * @throws IllegalStateException if neither [next] nor [previous] has not been called yet,
-     * or the last [next] or [previous] call has already been followed by a [remove] or [add] call.
+     * or the most recent [next] or [previous] call has already been followed by a [remove] or [add] call.
      */
     public fun set(element: T): Unit
 
