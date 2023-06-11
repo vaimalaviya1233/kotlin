@@ -18,6 +18,7 @@ import kotlin.native.internal.PointsTo
 /**
  * An array of bytes.
  * @constructor Creates a new array of the specified [size], with all elements initialized to zero.
+ * @throws RuntimeException if the specified [size] is negative.
  */
 @ExportTypeInfo("theByteArrayTypeInfo")
 public final class ByteArray {
@@ -30,6 +31,8 @@ public final class ByteArray {
      *
      * The function [init] is called for each array element sequentially starting from the first one.
      * It should return the value for an array element given its index.
+     *
+     * @throws RuntimeException if the specified [size] is negative.
      */
     @Suppress("WRONG_MODIFIER_TARGET")
     public inline constructor(size: Int, init: (Int) -> Byte): this(size) {
@@ -81,7 +84,8 @@ private class ByteIteratorImpl(val collection: ByteArray) : ByteIterator() {
 
 /**
  * An array of chars.
- * @constructor Creates a new array of the specified [size], with all elements initialized to zero.
+ * @constructor Creates a new array of the specified [size], with all elements initialized to null char (`\u0000').
+ * @throws RuntimeException if the specified [size] is negative.
  */
 @ExportTypeInfo("theCharArrayTypeInfo")
 public final class CharArray {
@@ -94,6 +98,8 @@ public final class CharArray {
      *
      * The function [init] is called for each array element sequentially starting from the first one.
      * It should return the value for an array element given its index.
+     *
+     * @throws RuntimeException if the specified [size] is negative.
      */
     @Suppress("WRONG_MODIFIER_TARGET")
     public inline constructor(size: Int, init: (Int) -> Char): this(size) {
@@ -147,6 +153,7 @@ private class CharIteratorImpl(val collection: CharArray) : CharIterator() {
 /**
  * An array of shorts.
  * @constructor Creates a new array of the specified [size], with all elements initialized to zero.
+ * @throws RuntimeException if the specified [size] is negative.
  */
 @ExportTypeInfo("theShortArrayTypeInfo")
 public final class ShortArray {
@@ -159,6 +166,8 @@ public final class ShortArray {
      *
      * The function [init] is called for each array element sequentially starting from the first one.
      * It should return the value for an array element given its index.
+     *
+     * @throws RuntimeException if the specified [size] is negative.
      */
     @Suppress("WRONG_MODIFIER_TARGET")
     public inline constructor(size: Int, init: (Int) -> Short): this(size) {
@@ -212,6 +221,7 @@ private class ShortIteratorImpl(val collection: ShortArray) : ShortIterator() {
 /**
  * An array of ints. When targeting the JVM, instances of this class are represented as `int[]`.
  * @constructor Creates a new array of the specified [size], with all elements initialized to zero.
+ * @throws RuntimeException if the specified [size] is negative.
  */
 @ExportTypeInfo("theIntArrayTypeInfo")
 public final class IntArray {
@@ -224,6 +234,8 @@ public final class IntArray {
      *
      * The function [init] is called for each array element sequentially starting from the first one.
      * It should return the value for an array element given its index.
+     *
+     * @throws RuntimeException if the specified [size] is negative.
      */
     @Suppress("WRONG_MODIFIER_TARGET")
     public inline constructor(size: Int, init: (Int) -> Int): this(size) {
@@ -277,6 +289,7 @@ private class IntIteratorImpl(val collection: IntArray) : IntIterator() {
 /**
  * An array of longs.
  * @constructor Creates a new array of the specified [size], with all elements initialized to zero.
+ * @throws RuntimeException if the specified [size] is negative.
  */
 @ExportTypeInfo("theLongArrayTypeInfo")
 public final class LongArray {
@@ -289,6 +302,8 @@ public final class LongArray {
      *
      * The function [init] is called for each array element sequentially starting from the first one.
      * It should return the value for an array element given its index.
+     *
+     * @throws RuntimeException if the specified [size] is negative.
      */
     @Suppress("WRONG_MODIFIER_TARGET")
     public inline constructor(size: Int, init: (Int) -> Long): this(size) {
@@ -342,6 +357,7 @@ private class LongIteratorImpl(val collection: LongArray) : LongIterator() {
 /**
  * An array of floats.
  * @constructor Creates a new array of the specified [size], with all elements initialized to zero.
+ * @throws RuntimeException if the specified [size] is negative.
  */
 @ExportTypeInfo("theFloatArrayTypeInfo")
 public final class FloatArray {
@@ -354,6 +370,8 @@ public final class FloatArray {
      *
      * The function [init] is called for each array element sequentially starting from the first one.
      * It should return the value for an array element given its index.
+     *
+     * @throws RuntimeException if the specified [size] is negative.
      */
     @Suppress("WRONG_MODIFIER_TARGET")
     public inline constructor(size: Int, init: (Int) -> Float): this(size) {
@@ -404,6 +422,11 @@ private class FloatIteratorImpl(val collection: FloatArray) : FloatIterator() {
     }
 }
 
+/**
+ * An array of doubles.
+ * @constructor Creates a new array of the specified [size], with all elements initialized to zero.
+ * @throws RuntimeException if the specified [size] is negative.
+ */
 @ExportTypeInfo("theDoubleArrayTypeInfo")
 public final class DoubleArray {
     // Constructors are handled with the compiler magic.
@@ -415,6 +438,8 @@ public final class DoubleArray {
      *
      * The function [init] is called for each array element sequentially starting from the first one.
      * It should return the value for an array element given its index.
+     *
+     * @throws RuntimeException if the specified [size] is negative.
      */
     @Suppress("WRONG_MODIFIER_TARGET")
     public inline constructor(size: Int, init: (Int) -> Double): this(size) {
@@ -465,6 +490,11 @@ private class DoubleIteratorImpl(val collection: DoubleArray) : DoubleIterator()
     }
 }
 
+/**
+ * An array of booleans.
+ * @constructor Creates a new array of the specified [size], with all elements initialized to `false`.
+ * @throws RuntimeException if the specified [size] is negative.
+ */
 @ExportTypeInfo("theBooleanArrayTypeInfo")
 public final class BooleanArray {
     // Constructors are handled with the compiler magic.
@@ -476,6 +506,8 @@ public final class BooleanArray {
      *
      * The function [init] is called for each array element sequentially starting from the first one.
      * It should return the value for an array element given its index.
+     *
+     * @throws RuntimeException if the specified [size] is negative.
      */
     @Suppress("WRONG_MODIFIER_TARGET")
     public inline constructor(size: Int, init: (Int) -> Boolean): this(size) {
