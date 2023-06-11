@@ -220,7 +220,11 @@ private fun mapInapplicableCandidateError(
             )
 
             is ArgumentTypeMismatch -> {
-                FirErrors.ARGUMENT_TYPE_MISMATCH.createOn(
+                val typeMismatchKind = when {
+                    rootCause.isMismatchInsideFunctionLiteral -> FirErrors.TYPE_MISMATCH
+                    else -> FirErrors.ARGUMENT_TYPE_MISMATCH
+                }
+                typeMismatchKind.createOn(
                     rootCause.argument.source ?: source,
                     rootCause.expectedType.removeTypeVariableTypes(typeContext),
                     rootCause.argument.typeRef.coneType.removeTypeVariableTypes(typeContext),

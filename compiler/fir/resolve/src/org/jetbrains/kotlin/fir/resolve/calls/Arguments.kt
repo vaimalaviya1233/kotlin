@@ -51,7 +51,8 @@ fun Candidate.resolveArgumentExpression(
     sink: CheckerSink,
     context: ResolutionContext,
     isReceiver: Boolean,
-    isDispatch: Boolean
+    isDispatch: Boolean,
+    isInsideFunctionLiteralArgument: Boolean
 ) {
     when (argument) {
         is FirFunctionCall, is FirWhenExpression, is FirTryExpression, is FirCheckNotNullCall, is FirElvisExpression -> resolveSubCallArgument(
@@ -61,7 +62,9 @@ fun Candidate.resolveArgumentExpression(
             sink,
             context,
             isReceiver,
-            isDispatch
+            isDispatch,
+            useNullableArgumentType = false,
+            isInsideFunctionLiteralArgument = isInsideFunctionLiteralArgument
         )
         // x?.bar() is desugared to `x SAFE-CALL-OPERATOR { $not-null-receiver$.bar() }`
         //
@@ -80,7 +83,8 @@ fun Candidate.resolveArgumentExpression(
                     context,
                     isReceiver,
                     isDispatch,
-                    useNullableArgumentType = true
+                    useNullableArgumentType = true,
+                    isInsideFunctionLiteralArgument = isInsideFunctionLiteralArgument
                 )
             } else {
                 // Assignment
@@ -93,7 +97,8 @@ fun Candidate.resolveArgumentExpression(
                     isReceiver = false,
                     isDispatch = false,
                     sink = sink,
-                    context = context
+                    context = context,
+                    isInsideFunctionLiteralArgument
                 )
             }
         }
@@ -106,7 +111,9 @@ fun Candidate.resolveArgumentExpression(
                     sink,
                     context,
                     isReceiver,
-                    isDispatch
+                    isDispatch,
+                    useNullableArgumentType = false,
+                    isInsideFunctionLiteralArgument = isInsideFunctionLiteralArgument
                 )
             else
                 preprocessCallableReference(argument, expectedType, context)
@@ -121,7 +128,8 @@ fun Candidate.resolveArgumentExpression(
             sink,
             context,
             isReceiver,
-            isDispatch
+            isDispatch,
+            isInsideFunctionLiteralArgument
         )
         is FirBlock -> resolveBlockArgument(
             csBuilder,
@@ -130,9 +138,20 @@ fun Candidate.resolveArgumentExpression(
             sink,
             context,
             isReceiver,
-            isDispatch
+            isDispatch,
+            isInsideFunctionLiteralArgument
         )
-        else -> resolvePlainExpressionArgument(csBuilder, argument, expectedType, sink, context, isReceiver, isDispatch)
+        else -> resolvePlainExpressionArgument(
+            csBuilder,
+            argument,
+            expectedType,
+            sink,
+            context,
+            isReceiver,
+            isDispatch,
+            useNullableArgumentType = false,
+            isInsideFunctionLiteralArgument = isInsideFunctionLiteralArgument
+        )
     }
 }
 
@@ -143,7 +162,8 @@ private fun Candidate.resolveBlockArgument(
     sink: CheckerSink,
     context: ResolutionContext,
     isReceiver: Boolean,
-    isDispatch: Boolean
+    isDispatch: Boolean,
+    isInsideFunctionLiteralArgument: Boolean
 ) {
     val returnArguments = block.returnExpressions()
     if (returnArguments.isEmpty()) {
@@ -156,7 +176,8 @@ private fun Candidate.resolveBlockArgument(
             isReceiver = false,
             isDispatch = false,
             sink = sink,
-            context = context
+            context = context,
+            isInsideFunctionLiteralArgument
         )
         return
     }
@@ -168,7 +189,8 @@ private fun Candidate.resolveBlockArgument(
             sink,
             context,
             isReceiver,
-            isDispatch
+            isDispatch,
+            isInsideFunctionLiteralArgument
         )
     }
 }
@@ -181,7 +203,8 @@ fun Candidate.resolveSubCallArgument(
     context: ResolutionContext,
     isReceiver: Boolean,
     isDispatch: Boolean,
-    useNullableArgumentType: Boolean = false
+    useNullableArgumentType: Boolean,
+    isInsideFunctionLiteralArgument: Boolean
 ) {
     require(argument is FirExpression)
     val candidate = argument.candidate() ?: return resolvePlainExpressionArgument(
@@ -192,7 +215,8 @@ fun Candidate.resolveSubCallArgument(
         context,
         isReceiver,
         isDispatch,
-        useNullableArgumentType
+        useNullableArgumentType,
+        isInsideFunctionLiteralArgument
     )
     /*
      * It's important to extract type from argument neither from symbol, because of symbol contains
@@ -209,7 +233,8 @@ fun Candidate.resolveSubCallArgument(
         context,
         isReceiver,
         isDispatch,
-        useNullableArgumentType
+        useNullableArgumentType,
+        isInsideFunctionLiteralArgument
     )
 }
 
@@ -221,7 +246,8 @@ fun Candidate.resolvePlainExpressionArgument(
     context: ResolutionContext,
     isReceiver: Boolean,
     isDispatch: Boolean,
-    useNullableArgumentType: Boolean = false
+    useNullableArgumentType: Boolean,
+    isInsideFunctionLiteralArgument: Boolean
 ) {
 
     if (expectedType == null) return
@@ -235,7 +261,8 @@ fun Candidate.resolvePlainExpressionArgument(
         context,
         isReceiver,
         isDispatch,
-        useNullableArgumentType
+        useNullableArgumentType,
+        isInsideFunctionLiteralArgument
     )
 }
 
@@ -248,7 +275,8 @@ fun Candidate.resolvePlainArgumentType(
     context: ResolutionContext,
     isReceiver: Boolean,
     isDispatch: Boolean,
-    useNullableArgumentType: Boolean = false
+    useNullableArgumentType: Boolean = false,
+    isInsideFunctionLiteralArgument: Boolean = false
 ) {
     val position = if (isReceiver) ConeReceiverConstraintPosition(argument) else ConeArgumentConstraintPosition(argument)
 
@@ -273,7 +301,16 @@ fun Candidate.resolvePlainArgumentType(
     }
 
     checkApplicabilityForArgumentType(
-        csBuilder, argument, argumentTypeForApplicabilityCheck, expectedType, position, isReceiver, isDispatch, sink, context
+        csBuilder,
+        argument,
+        argumentTypeForApplicabilityCheck,
+        expectedType,
+        position,
+        isReceiver,
+        isDispatch,
+        sink,
+        context,
+        isInsideFunctionLiteralArgument
     )
 }
 
@@ -340,7 +377,8 @@ private fun checkApplicabilityForArgumentType(
     isReceiver: Boolean,
     isDispatch: Boolean,
     sink: CheckerSink,
-    context: ResolutionContext
+    context: ResolutionContext,
+    isInsideFunctionLiteralArgument: Boolean
 ) {
     if (expectedType == null) return
 
@@ -384,7 +422,8 @@ private fun checkApplicabilityForArgumentType(
             argument,
             // Reaching here means argument types mismatch, and we want to record whether it's due to the nullability by checking a subtype
             // relation with nullable expected type.
-            context.session.typeContext.isTypeMismatchDueToNullability(argumentType, actualExpectedType)
+            context.session.typeContext.isTypeMismatchDueToNullability(argumentType, actualExpectedType),
+            isInsideFunctionLiteralArgument
         )
     }
 
@@ -448,7 +487,8 @@ internal fun Candidate.resolveArgument(
         sink,
         context,
         isReceiver,
-        false
+        false,
+        isInsideFunctionLiteralArgument = false
     )
 }
 

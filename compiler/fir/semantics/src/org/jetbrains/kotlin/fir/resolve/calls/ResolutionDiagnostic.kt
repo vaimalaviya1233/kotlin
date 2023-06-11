@@ -112,6 +112,7 @@ class ArgumentTypeMismatch(
     val actualType: ConeKotlinType,
     val argument: FirExpression,
     val isMismatchDueToNullability: Boolean,
+    val isMismatchInsideFunctionLiteral: Boolean,
 ) : ResolutionDiagnostic(INAPPLICABLE)
 
 class NullForNotNullType(

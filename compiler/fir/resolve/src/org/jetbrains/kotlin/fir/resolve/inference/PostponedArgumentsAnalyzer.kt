@@ -206,7 +206,8 @@ class PostponedArgumentsAnalyzer(
                     checkerSink,
                     context = resolutionContext,
                     isReceiver = false,
-                    isDispatch = false
+                    isDispatch = false,
+                    isInsideFunctionLiteralArgument = true
                 )
             }
         }

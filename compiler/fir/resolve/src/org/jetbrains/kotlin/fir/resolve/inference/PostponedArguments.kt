@@ -82,7 +82,8 @@ fun Candidate.preprocessLambdaArgument(
                         expectedType,
                         lambdaType,
                         argument,
-                        context.session.typeContext.isTypeMismatchDueToNullability(lambdaType, expectedType)
+                        context.session.typeContext.isTypeMismatchDueToNullability(lambdaType, expectedType),
+                        isMismatchInsideFunctionLiteral = false
                     )
                 )
             }
