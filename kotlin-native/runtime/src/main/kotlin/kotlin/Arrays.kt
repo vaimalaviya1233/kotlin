@@ -41,6 +41,7 @@ public final class ByteArray {
         }
     }
 
+    /** Returns the number of elements in the array. */
     public val size: Int
         get() = getArrayLength()
 
@@ -219,7 +220,7 @@ private class ShortIteratorImpl(val collection: ShortArray) : ShortIterator() {
 }
 
 /**
- * An array of ints. When targeting the JVM, instances of this class are represented as `int[]`.
+ * An array of ints.
  * @constructor Creates a new array of the specified [size], with all elements initialized to zero.
  * @throws RuntimeException if the specified [size] is negative.
  */
