@@ -34,7 +34,7 @@ class Candidate(
     // - in case a use-site receiver is explicit
     // - in some cases with static entities, no matter is a use-site receiver explicit or not
     // OR we may have here a kind of ImplicitReceiverValue (non-statics only)
-    override var dispatchReceiver: FirExpression?,
+    dispatchReceiver: FirExpression?,
     // In most cases, it contains zero or single element
     // More than one, only in case of context receiver group
     val givenExtensionReceiverOptions: List<FirExpression>,
@@ -47,6 +47,21 @@ class Candidate(
     // It's only true if we're in the member scope of smart cast receiver and this particular candidate came from original type
     val isFromOriginalTypeInPresenceOfSmartCast: Boolean = false,
 ) : AbstractCandidate() {
+
+    override var dispatchReceiver: FirExpression? = dispatchReceiver?.tryToSetSourceForImplicitReceiver()
+        set(value) {
+            field = value?.tryToSetSourceForImplicitReceiver()
+        }
+
+    override var chosenExtensionReceiver: FirExpression? = givenExtensionReceiverOptions.singleOrNull()?.tryToSetSourceForImplicitReceiver()
+        set(value) {
+            field = value?.tryToSetSourceForImplicitReceiver()
+        }
+
+    var contextReceiverArguments: List<FirExpression>? = null
+        set(value) {
+            field = value?.map { it.tryToSetSourceForImplicitReceiver() }
+        }
 
     private var systemInitialized: Boolean = false
     val system: NewConstraintSystemImpl by lazy(LazyThreadSafetyMode.NONE) {
@@ -84,10 +99,6 @@ class Candidate(
     var currentApplicability = CandidateApplicability.RESOLVED
         private set
 
-    override var chosenExtensionReceiver: FirExpression? = givenExtensionReceiverOptions.singleOrNull()
-
-    var contextReceiverArguments: List<FirExpression>? = null
-
     override val applicability: CandidateApplicability
         get() = currentApplicability
 
@@ -109,28 +120,22 @@ class Candidate(
 
     // FirExpressionStub can be located here in case of callable reference resolution
     fun dispatchReceiverExpression(): FirExpression =
-        dispatchReceiver
-            ?.takeIf { it !is FirExpressionStub }
-            ?.let(::applyImplicitReceiverSourceIfNecessary)
-            ?: FirNoReceiverExpression
+        dispatchReceiver?.takeIf { it !is FirExpressionStub } ?: FirNoReceiverExpression
 
     // FirExpressionStub can be located here in case of callable reference resolution
     fun chosenExtensionReceiverExpression(): FirExpression =
-        chosenExtensionReceiver
-            ?.takeIf { it !is FirExpressionStub }
-            ?.let(::applyImplicitReceiverSourceIfNecessary)
-            ?: FirNoReceiverExpression
+        chosenExtensionReceiver?.takeIf { it !is FirExpressionStub } ?: FirNoReceiverExpression
 
     fun contextReceiverArguments(): List<FirExpression> =
-        contextReceiverArguments?.map(::applyImplicitReceiverSourceIfNecessary) ?: emptyList()
+        contextReceiverArguments ?: emptyList()
 
-    private fun applyImplicitReceiverSourceIfNecessary(it: FirExpression): FirExpression {
-        if (it is FirThisReceiverExpression && it.isImplicit) {
-            return buildThisReceiverExpressionCopy(it) {
+    private fun FirExpression.tryToSetSourceForImplicitReceiver(): FirExpression {
+        if (this is FirThisReceiverExpression && isImplicit) {
+            return buildThisReceiverExpressionCopy(this) {
                 source = callInfo.callSite.source?.fakeElement(KtFakeSourceElementKind.ImplicitReceiver)
             }
         }
-        return it
+        return this
     }
 
     var hasVisibleBackingField = false
