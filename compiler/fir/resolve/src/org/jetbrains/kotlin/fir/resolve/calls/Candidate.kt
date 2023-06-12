@@ -48,19 +48,25 @@ class Candidate(
     val isFromOriginalTypeInPresenceOfSmartCast: Boolean = false,
 ) : AbstractCandidate() {
 
-    override var dispatchReceiver: FirExpression? = dispatchReceiver?.tryToSetSourceForImplicitReceiver()
+    private var _dispatchReceiverChanged = true
+    override var dispatchReceiver: FirExpression? = dispatchReceiver
         set(value) {
-            field = value?.tryToSetSourceForImplicitReceiver()
+            _dispatchReceiverChanged = true
+            field = value
         }
 
-    override var chosenExtensionReceiver: FirExpression? = givenExtensionReceiverOptions.singleOrNull()?.tryToSetSourceForImplicitReceiver()
+    private var _extensionReceiverChanged = true
+    override var chosenExtensionReceiver: FirExpression? = givenExtensionReceiverOptions.singleOrNull()
         set(value) {
-            field = value?.tryToSetSourceForImplicitReceiver()
+            _extensionReceiverChanged = true
+            field = value
         }
 
+    private var _contextReceiverArgumentsChanged = true
     var contextReceiverArguments: List<FirExpression>? = null
         set(value) {
-            field = value?.map { it.tryToSetSourceForImplicitReceiver() }
+            _contextReceiverArgumentsChanged = true
+            field = value
         }
 
     private var systemInitialized: Boolean = false
@@ -119,15 +125,30 @@ class Candidate(
     var passedStages: Int = 0
 
     // FirExpressionStub can be located here in case of callable reference resolution
-    fun dispatchReceiverExpression(): FirExpression =
-        dispatchReceiver?.takeIf { it !is FirExpressionStub } ?: FirNoReceiverExpression
+    fun dispatchReceiverExpression(): FirExpression {
+        if (_dispatchReceiverChanged) {
+            dispatchReceiver = dispatchReceiver?.tryToSetSourceForImplicitReceiver()
+            _dispatchReceiverChanged = false
+        }
+        return dispatchReceiver?.takeIf { it !is FirExpressionStub } ?: FirNoReceiverExpression
+    }
 
     // FirExpressionStub can be located here in case of callable reference resolution
-    fun chosenExtensionReceiverExpression(): FirExpression =
-        chosenExtensionReceiver?.takeIf { it !is FirExpressionStub } ?: FirNoReceiverExpression
+    fun chosenExtensionReceiverExpression(): FirExpression {
+        if (_extensionReceiverChanged) {
+            chosenExtensionReceiver = chosenExtensionReceiver?.tryToSetSourceForImplicitReceiver()
+            _extensionReceiverChanged = false
+        }
+        return chosenExtensionReceiver?.takeIf { it !is FirExpressionStub } ?: FirNoReceiverExpression
+    }
 
-    fun contextReceiverArguments(): List<FirExpression> =
-        contextReceiverArguments ?: emptyList()
+    fun contextReceiverArguments(): List<FirExpression> {
+        if (_contextReceiverArgumentsChanged) {
+            contextReceiverArguments = contextReceiverArguments?.map { it.tryToSetSourceForImplicitReceiver() }
+            _contextReceiverArgumentsChanged = false
+        }
+        return contextReceiverArguments ?: emptyList()
+    }
 
     private fun FirExpression.tryToSetSourceForImplicitReceiver(): FirExpression {
         if (this is FirThisReceiverExpression && isImplicit) {
