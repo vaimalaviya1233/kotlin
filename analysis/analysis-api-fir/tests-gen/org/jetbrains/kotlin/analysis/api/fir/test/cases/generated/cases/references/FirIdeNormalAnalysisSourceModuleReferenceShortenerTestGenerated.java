@@ -83,6 +83,12 @@ public class FirIdeNormalAnalysisSourceModuleReferenceShortenerTestGenerated ext
     }
 
     @Test
+    @TestMetadata("classWithWrongNumberOfTypeArguments.kt")
+    public void testClassWithWrongNumberOfTypeArguments() throws Exception {
+        runTest("analysis/analysis-api/testData/components/referenceShortener/referenceShortener/classWithWrongNumberOfTypeArguments.kt");
+    }
+
+    @Test
     @TestMetadata("classesWithSameName.kt")
     public void testClassesWithSameName() throws Exception {
         runTest("analysis/analysis-api/testData/components/referenceShortener/referenceShortener/classesWithSameName.kt");

@@ -366,24 +366,22 @@ private class ElementsToShortenCollector(
     }
 
     private fun processTypeRef(resolvedTypeRef: FirResolvedTypeRef) {
-        val wholeTypeReference = resolvedTypeRef.realPsi as? KtTypeReference ?: return
-        if (!wholeTypeReference.textRange.intersects(selection)) return
+        val nonErrorResolvedTypeRef = if (resolvedTypeRef is FirErrorTypeRef) {
+            resolvedTypeRef.partiallyResolvedTypeRef as? FirResolvedTypeRef ?: resolvedTypeRef
+        } else resolvedTypeRef
 
-        val wholeTypeElement = wholeTypeReference.typeElement?.unwrapNullability() as? KtUserType ?: return
-        if (wholeTypeElement.qualifier == null) return
+        val typeElement = when (val realPsi = nonErrorResolvedTypeRef.realPsi) {
+            is KtTypeReference -> realPsi.typeElement
+            is KtNameReferenceExpression -> realPsi.parent as? KtTypeElement
+            else -> null
+        }?.unwrapNullability() as? KtUserType ?: return
 
-        for (typeElement in wholeTypeElement.qualifiedTypesWithSelf) {
-            val typeRef = when (val fir = typeElement.getOrBuildFir(firResolveSession)) {
-                is FirPropertyAccessExpression -> fir.typeRef
-                else -> fir
-            } as? FirResolvedTypeRef
+        if (!typeElement.textRange.intersects(selection)) return
+        if (typeElement.qualifier == null) return
 
-            val classifierId = typeRef?.type?.lowerBoundIfFlexible()?.candidateClassId ?: continue
-            val element = findTypeToShorten(classifierId, typeElement) ?: continue
+        val classifierId = nonErrorResolvedTypeRef.type.lowerBoundIfFlexible().candidateClassId ?: return
 
-            addElementToShorten(element)
-            break
-        }
+        findTypeToShorten(classifierId, typeElement)?.let(::addElementToShorten)
     }
 
     val ConeKotlinType.candidateClassId: ClassId?
