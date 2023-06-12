@@ -1,6 +1,8 @@
 // FILE: main.kt
 class SortedSet
 
-fun test(set: SortedSet) {
+fun test() {
     val a = <expr>java.util.SortedSet</expr>
 }
+
+fun foo(set: SortedSet)

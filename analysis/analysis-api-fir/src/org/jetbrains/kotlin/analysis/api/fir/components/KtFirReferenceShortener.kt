@@ -147,8 +147,6 @@ private enum class ImportKind {
 
     infix fun hasHigherPriorityThan(that: ImportKind): Boolean = this < that
 
-    val canBeOverwrittenByExplicitImport: Boolean get() = DEFAULT_EXPLICIT hasHigherPriorityThan this
-
     companion object {
         fun fromScope(scope: FirScope): ImportKind {
             return when (scope) {
@@ -707,17 +705,12 @@ private class ElementsToShortenCollector(
     private fun importedClassifierOverwritesAvailableClassifier(
         availableClassifier: AvailableSymbol<ClassId>,
         importAllInParent: Boolean
-    ): Boolean = when {
-        // star import overwrites members implicitly imported by default.
-        availableClassifier.importKind == ImportKind.DEFAULT_STAR && importAllInParent -> true
-
-        // explicit import overwrites members star-imported or in package
-        availableClassifier.importKind.canBeOverwrittenByExplicitImport && !importAllInParent -> true
-
-        else -> false
+    ): Boolean {
+        val importKindFromOption = if (importAllInParent) ImportKind.STAR else ImportKind.EXPLICIT
+        return importKindFromOption.hasHigherPriorityThan(availableClassifier.importKind)
     }
 
-    private fun importAffectsUsagesOfClassesWithSameName(classId: ClassId, file: KtFile, importAllInParent: Boolean): Boolean {
+    private fun importAffectsUsagesOfClassesWithSameName(classToImport: ClassId, file: KtFile, importAllInParent: Boolean): Boolean {
         var importAffectsUsages = false
 
         file.accept(object : KtVisitorVoid() {
@@ -733,14 +726,17 @@ private class ElementsToShortenCollector(
                 if (importAffectsUsages) return
                 if (KtPsiUtil.isSelectorInQualified(expression)) return
 
-                val shortClassName = classId.shortClassName
+                val shortClassName = classToImport.shortClassName
                 if (expression.getReferencedNameAsName() != shortClassName) return
 
-                val positionScopes = shorteningContext.findScopesAtPosition(expression, getNamesToImport(), towerContextProvider) ?: return
+                val contextProvider = LowLevelFirApiFacadeForResolveOnAir.getOnAirGetTowerContextProvider(firResolveSession, expression)
+                val positionScopes = shorteningContext.findScopesAtPosition(expression, getNamesToImport(), contextProvider) ?: return
                 val availableClassifier = shorteningContext.findFirstClassifierInScopesByName(positionScopes, shortClassName) ?: return
                 when {
-                    availableClassifier.symbol == classId -> return
-                    importedClassifierOverwritesAvailableClassifier(availableClassifier, importAllInParent) -> importAffectsUsages = true
+                    availableClassifier.symbol == classToImport -> return
+                    importedClassifierOverwritesAvailableClassifier(availableClassifier, importAllInParent) -> {
+                        importAffectsUsages = true
+                    }
                 }
             }
         })
