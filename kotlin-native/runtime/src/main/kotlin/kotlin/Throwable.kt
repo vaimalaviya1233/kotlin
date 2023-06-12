@@ -50,7 +50,7 @@ public open class Throwable(open val message: String?, open val cause: Throwable
             (0 until stackTrace.size).map { index -> stackTrace[index].toLong() }
 
     /**
-     * Prints the [detailed description][Throwable.stackTraceToString] of this throwable to the standard output.
+     * Prints the [detailed description][Throwable.stackTraceToString] of this throwable to the standard error output.
      */
     public fun printStackTrace(): Unit = ExceptionTraceBuilder(this).print()
 
@@ -73,7 +73,7 @@ public open class Throwable(open val message: String?, open val cause: Throwable
 
         private fun StringBuilder.endln() {
             if (printOut) {
-                println(this)
+                println_error(this.toString())
                 clear()
             } else {
                 appendLine()
@@ -165,7 +165,7 @@ private external fun getStackTraceStrings(stackTrace: NativePtrArray): Array<Str
 public actual fun Throwable.stackTraceToString(): String = dumpStackTrace()
 
 /**
- * Prints the [detailed description][Throwable.stackTraceToString] of this throwable to the standard output.
+ * Prints the [detailed description][Throwable.stackTraceToString] of this throwable to the standard error output.
  */
 @SinceKotlin("1.4")
 @Suppress("EXTENSION_SHADOWED_BY_MEMBER")
