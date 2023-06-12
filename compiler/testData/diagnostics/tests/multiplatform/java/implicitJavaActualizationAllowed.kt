@@ -3,7 +3,9 @@
 // MODULE: m1-common
 // FILE: common.kt
 
-@OptIn(kotlin.UnsafeJvmImplicitActualization::class)
+import kotlin.jvm.UnsafeJvmImplicitActualization
+
+@OptIn(UnsafeJvmImplicitActualization::class)
 expect class Foo() {
     fun foo()
 }

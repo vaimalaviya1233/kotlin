@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.resolve.checkers.OptInUsageChecker
 import org.jetbrains.kotlin.resolve.descriptorUtil.module
 import org.jetbrains.kotlin.resolve.multiplatform.ExpectedActualResolver
 
-private val unsafeJvmImplicitActualizationFqn = FqName("kotlin.UnsafeJvmImplicitActualization")
+private val unsafeJvmImplicitActualizationFqn = FqName("kotlin.jvm.UnsafeJvmImplicitActualization")
 
 object JavaImplicitActualizationChecker : DeclarationChecker {
     override fun check(declaration: KtDeclaration, descriptor: DeclarationDescriptor, context: DeclarationCheckerContext) {
