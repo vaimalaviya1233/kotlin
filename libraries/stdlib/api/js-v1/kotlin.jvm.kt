@@ -6,6 +6,15 @@ public final annotation class Synchronized : kotlin.Annotation {
     public constructor Synchronized()
 }
 
+@kotlin.RequiresOptIn
+@kotlin.annotation.Retention(value = AnnotationRetention.BINARY)
+@kotlin.annotation.Target(allowedTargets = {AnnotationTarget.CLASS})
+@kotlin.annotation.MustBeDocumented
+@kotlin.SinceKotlin(version = "1.9")
+public final annotation class UnsafeJvmImplicitActualization : kotlin.Annotation {
+    public constructor UnsafeJvmImplicitActualization()
+}
+
 @kotlin.annotation.Target(allowedTargets = {AnnotationTarget.FIELD})
 @kotlin.annotation.Retention(value = AnnotationRetention.SOURCE)
 @kotlin.Deprecated(message = "This annotation has no effect in Kotlin/JS. Use kotlin.concurrent.Volatile annotation in multiplatform code instead.", replaceWith = kotlin.ReplaceWith(expression = "kotlin.concurrent.Volatile", imports = {"kotlin.concurrent.Volatile"}))
