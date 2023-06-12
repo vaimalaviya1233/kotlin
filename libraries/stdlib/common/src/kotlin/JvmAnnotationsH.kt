@@ -51,6 +51,17 @@ public expect annotation class JvmName(val name: String)
 @OptionalExpectation
 public expect annotation class JvmMultifileClass()
 
+/**
+ * This annotation marks Kotlin `expect` declarations that are implicitly actualized by Java.
+ *
+ * See: [KT-58545](https://youtrack.jetbrains.com/issue/KT-58545)
+ */
+@RequiresOptIn
+@Retention(AnnotationRetention.BINARY)
+@Target(AnnotationTarget.CLASS)
+@MustBeDocumented
+@SinceKotlin("1.9")
+public annotation class UnsafeJvmImplicitActualization
 
 /**
  * Instructs the Kotlin compiler not to generate getters/setters for this property and expose it as a field.
