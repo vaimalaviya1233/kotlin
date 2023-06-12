@@ -19619,6 +19619,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
             }
 
             @Test
+            @TestMetadata("literalInCompletedGeneric.kt")
+            public void testLiteralInCompletedGeneric() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/integerLiterals/literalInCompletedGeneric.kt");
+            }
+
+            @Test
             @TestMetadata("literalsInInference.kt")
             public void testLiteralsInInference() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/integerLiterals/literalsInInference.kt");
