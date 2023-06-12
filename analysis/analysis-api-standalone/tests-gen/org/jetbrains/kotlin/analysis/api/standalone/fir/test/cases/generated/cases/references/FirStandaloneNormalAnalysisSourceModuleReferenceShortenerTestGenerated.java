@@ -395,6 +395,12 @@ public class FirStandaloneNormalAnalysisSourceModuleReferenceShortenerTestGenera
     }
 
     @Test
+    @TestMetadata("typeArgument.kt")
+    public void testTypeArgument() throws Exception {
+        runTest("analysis/analysis-api/testData/components/referenceShortener/referenceShortener/typeArgument.kt");
+    }
+
+    @Test
     @TestMetadata("typeParams.kt")
     public void testTypeParams() throws Exception {
         runTest("analysis/analysis-api/testData/components/referenceShortener/referenceShortener/typeParams.kt");

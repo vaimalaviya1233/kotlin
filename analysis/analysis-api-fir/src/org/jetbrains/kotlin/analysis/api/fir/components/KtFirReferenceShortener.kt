@@ -376,7 +376,7 @@ private class ElementsToShortenCollector(
             else -> null
         }?.unwrapNullability() as? KtUserType ?: return
 
-        if (!typeElement.textRange.intersects(selection)) return
+        if (typeElement.referenceExpression?.textRange?.intersects(selection) != true) return
         if (typeElement.qualifier == null) return
 
         val classifierId = nonErrorResolvedTypeRef.type.lowerBoundIfFlexible().candidateClassId ?: return
@@ -940,7 +940,10 @@ private class ElementsToShortenCollector(
 
         val qualifiedCallExpression = functionCall.psi as? KtDotQualifiedExpression ?: return
         val callExpression = qualifiedCallExpression.selectorExpression as? KtCallExpression ?: return
-        if (callExpression.calleeExpression?.textRange?.intersects(selection) != true) return
+
+        val calleeTextRange = callExpression.calleeExpression?.textRange
+        val qualifierTextRange = qualifiedCallExpression.receiverExpression.textRange
+        if (calleeTextRange?.intersects(selection) != true && !qualifierTextRange.intersects(selection)) return
 
         val calleeReference = functionCall.calleeReference
         val calledSymbol = findUnambiguousReferencedCallableId(calleeReference) ?: return
