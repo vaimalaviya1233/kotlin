@@ -82,7 +82,7 @@ internal class JsUsefulDeclarationProcessor(
                 context.intrinsics.jsObjectCreateSymbol -> {
                     val classToCreate = expression.getTypeArgument(0)!!.classifierOrFail.owner as IrClass
                     classToCreate.enqueue(data, "intrinsic: jsObjectCreateSymbol")
-                    constructedClasses += classToCreate
+                    addToConstructedClasses(classToCreate)
                 }
 
                 context.intrinsics.jsCreateThisSymbol -> {
@@ -97,7 +97,7 @@ internal class JsUsefulDeclarationProcessor(
                     val classToCreate = classTypeToCreate.classifierOrFail.owner as IrClass
 
                     classToCreate.enqueue(data, "intrinsic: jsCreateThis")
-                    constructedClasses += classToCreate
+                    addToConstructedClasses(classToCreate)
                 }
 
                 context.intrinsics.jsEquals -> {
@@ -126,7 +126,14 @@ internal class JsUsefulDeclarationProcessor(
                 }
             }
         }
+    }
 
+    override fun addToConstructedClasses(irClass: IrClass) {
+        super.addToConstructedClasses(irClass)
+        val defaultConstructor = runIf(irClass.isClass) {
+            context.findDefaultConstructorFor(irClass)
+        }
+        defaultConstructor?.enqueue(irClass, "intrinsic: KClass<*>.createInstance")
     }
 
     override fun processSuperTypes(irClass: IrClass) {
@@ -187,7 +194,7 @@ internal class JsUsefulDeclarationProcessor(
         super.processSimpleFunction(irFunction)
 
         if (irFunction.isEs6ConstructorReplacement) {
-            constructedClasses += irFunction.dispatchReceiverParameter?.type?.classOrNull?.owner!!
+            addToConstructedClasses(irFunction.dispatchReceiverParameter?.type?.classOrNull?.owner!!)
         }
 
         if (irFunction.isReal && irFunction.body != null) {

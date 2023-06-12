@@ -29038,6 +29038,16 @@ public class IrCodegenBoxWasmTestGenerated extends AbstractIrCodegenBoxWasmTest 
                 KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/reflection/classes"), Pattern.compile("^([^_](.+))\\.kt$"), null, TargetBackend.WASM, true);
             }
 
+            @TestMetadata("createInstance.kt")
+            public void testCreateInstance() throws Exception {
+                runTest("compiler/testData/codegen/box/reflection/classes/createInstance.kt");
+            }
+
+            @TestMetadata("createInstanceByInstance.kt")
+            public void testCreateInstanceByInstance() throws Exception {
+                runTest("compiler/testData/codegen/box/reflection/classes/createInstanceByInstance.kt");
+            }
+
             @TestMetadata("localClassSimpleName.kt")
             public void testLocalClassSimpleName() throws Exception {
                 runTest("compiler/testData/codegen/box/reflection/classes/localClassSimpleName.kt");

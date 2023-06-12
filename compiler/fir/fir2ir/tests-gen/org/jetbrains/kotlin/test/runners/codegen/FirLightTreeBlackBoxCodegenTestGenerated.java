@@ -44425,6 +44425,12 @@ public class FirLightTreeBlackBoxCodegenTestGenerated extends AbstractFirLightTr
             }
 
             @Test
+            @TestMetadata("createInstanceByInstance.kt")
+            public void testCreateInstanceByInstance() throws Exception {
+                runTest("compiler/testData/codegen/box/reflection/classes/createInstanceByInstance.kt");
+            }
+
+            @Test
             @TestMetadata("declaredMembers.kt")
             public void testDeclaredMembers() throws Exception {
                 runTest("compiler/testData/codegen/box/reflection/classes/declaredMembers.kt");

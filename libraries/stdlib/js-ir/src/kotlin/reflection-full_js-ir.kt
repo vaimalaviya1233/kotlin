@@ -7,6 +7,7 @@ package kotlin.reflect.full
 
 import kotlin.reflect.KClass
 
+@OptIn(JsIntrinsic::class)
 public fun <T : Any> KClass<T>.createInstance(): T {
     val jsClass = js.asDynamic()
 
@@ -15,12 +16,9 @@ public fun <T : Any> KClass<T>.createInstance(): T {
     val noArgsConstructor = jsClass.`$metadata$`.unsafeCast<Metadata?>()?.defaultConstructor
         ?: throw IllegalArgumentException("Class \"$simpleName\" should have a single no-arg constructor")
 
-    return if (!isEsClass(jsClass) || noArgsConstructor === jsClass) {
-        js("new noArgsConstructor()")
-    } else {
+    return if (jsIsEs6() && noArgsConstructor !== jsClass) {
         js("noArgsConstructor.call(jsClass)")
+    } else {
+        js("new noArgsConstructor()")
     }
 }
-
-@Suppress("UNUSED_PARAMETER")
-private fun isEsClass(reference: dynamic): Boolean = js("reference.toString()[0] === 'c'")

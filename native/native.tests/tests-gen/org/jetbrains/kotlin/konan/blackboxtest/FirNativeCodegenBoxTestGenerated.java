@@ -36043,6 +36043,18 @@ public class FirNativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTe
                 }
 
                 @Test
+                @TestMetadata("createInstance.kt")
+                public void testCreateInstance() throws Exception {
+                    runTest("compiler/testData/codegen/box/reflection/classes/createInstance.kt");
+                }
+
+                @Test
+                @TestMetadata("createInstanceByInstance.kt")
+                public void testCreateInstanceByInstance() throws Exception {
+                    runTest("compiler/testData/codegen/box/reflection/classes/createInstanceByInstance.kt");
+                }
+
+                @Test
                 @TestMetadata("localClassSimpleName.kt")
                 public void testLocalClassSimpleName() throws Exception {
                     runTest("compiler/testData/codegen/box/reflection/classes/localClassSimpleName.kt");

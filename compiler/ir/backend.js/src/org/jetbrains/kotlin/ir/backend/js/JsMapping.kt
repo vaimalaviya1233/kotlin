@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.ir.backend.js.utils.MutableReference
 import org.jetbrains.kotlin.ir.declarations.*
 
 class JsMapping : DefaultMapping() {
-    val classesWithExtendedMetadata = DefaultDelegateFactory.newDeclarationToValueMapping<IrClass, Boolean>()
     val esClassWhichNeedBoxParameters = DefaultDelegateFactory.newDeclarationToValueMapping<IrClass, Boolean>()
     val esClassToPossibilityForOptimization = DefaultDelegateFactory.newDeclarationToValueMapping<IrClass, MutableReference<Boolean>>()
 

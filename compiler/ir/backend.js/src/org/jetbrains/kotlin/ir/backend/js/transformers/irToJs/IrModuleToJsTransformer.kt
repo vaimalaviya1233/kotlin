@@ -179,7 +179,7 @@ class IrModuleToJsTransformer(
         doStaticMembersLowering(allModules)
 
         return exportData.map {
-            { generateProgramFragment(it, minimizedMemberNames = false, optimized = false) }
+            { generateProgramFragment(it, minimizedMemberNames = false) }
         }
     }
 
@@ -210,7 +210,7 @@ class IrModuleToJsTransformer(
                 JsIrModule(
                     data.fragment.safeName,
                     data.fragment.externalModuleName(),
-                    data.files.map { generateProgramFragment(it, mode.minimizedMemberNames, mode.production) }
+                    data.files.map { generateProgramFragment(it, mode.minimizedMemberNames) }
                 )
             }
         )
@@ -222,11 +222,7 @@ class IrModuleToJsTransformer(
     private val pathPrefixMap = backendContext.configuration.getMap(JSConfigurationKeys.FILE_PATHS_PREFIX_MAP)
     private val optimizeGeneratedJs = backendContext.configuration.get(JSConfigurationKeys.OPTIMIZE_GENERATED_JS, true)
 
-    private fun generateProgramFragment(
-        fileExports: IrFileExports,
-        minimizedMemberNames: Boolean,
-        optimized: Boolean
-    ): JsIrProgramFragment {
+    private fun generateProgramFragment(fileExports: IrFileExports, minimizedMemberNames: Boolean): JsIrProgramFragment {
         val nameGenerator = JsNameLinkingNamer(backendContext, minimizedMemberNames, isEsModules)
 
         val globalNameScope = NameTable<IrDeclaration>()
@@ -235,7 +231,6 @@ class IrModuleToJsTransformer(
             backendContext = backendContext,
             irNamer = nameGenerator,
             globalNameScope = globalNameScope,
-            shouldOptimize = optimized
         )
 
         val result = JsIrProgramFragment(fileExports.file.packageFqName.asString()).apply {
