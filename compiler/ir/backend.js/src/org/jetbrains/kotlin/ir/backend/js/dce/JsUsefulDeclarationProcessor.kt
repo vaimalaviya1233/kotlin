@@ -72,11 +72,7 @@ internal class JsUsefulDeclarationProcessor(
                 }
 
                 context.reflectionSymbols.getKClass -> {
-                    val classToCreate = expression.getTypeArgument(0)!!.classifierOrFail.owner as IrClass
-                    val defaultConstructor = runIf(classToCreate.isClass) {
-                        context.findDefaultConstructorFor(classToCreate)
-                    }
-                    defaultConstructor?.enqueue(data, "intrinsic: KClass<*>.createInstance")
+                    addToConstructedClasses(expression.getTypeArgument(0)!!.classifierOrFail.owner as IrClass)
                 }
 
                 context.intrinsics.jsObjectCreateSymbol -> {
@@ -130,10 +126,10 @@ internal class JsUsefulDeclarationProcessor(
 
     override fun addToConstructedClasses(irClass: IrClass) {
         super.addToConstructedClasses(irClass)
-        val defaultConstructor = runIf(irClass.isClass) {
-            context.findDefaultConstructorFor(irClass)
+
+        if (irClass.isClass) {
+            context.findDefaultConstructorFor(irClass)?.enqueue(irClass, "intrinsic: KClass<*>.createInstance")
         }
-        defaultConstructor?.enqueue(irClass, "intrinsic: KClass<*>.createInstance")
     }
 
     override fun processSuperTypes(irClass: IrClass) {

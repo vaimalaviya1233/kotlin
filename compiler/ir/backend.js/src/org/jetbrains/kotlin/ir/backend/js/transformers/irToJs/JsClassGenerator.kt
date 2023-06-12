@@ -339,9 +339,7 @@ class JsClassGenerator(private val irClass: IrClass, val context: JsGenerationCo
         val name = generateSimpleName()
         val interfaces = generateInterfacesList()
         val metadataConstructor = getMetadataConstructor()
-        val defaultConstructor = runIf(irClass.isClass) {
-            findDefaultConstructor()
-        }
+        val defaultConstructor = runIf(irClass.isClass, ::findDefaultConstructor)
         val associatedObjectKey = generateAssociatedObjectKey()
         val associatedObjects = generateAssociatedObjects()
         val suspendArity = generateSuspendArity()

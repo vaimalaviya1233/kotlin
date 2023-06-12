@@ -230,7 +230,7 @@ class IrModuleToJsTransformer(
         val staticContext = JsStaticContext(
             backendContext = backendContext,
             irNamer = nameGenerator,
-            globalNameScope = globalNameScope,
+            globalNameScope = globalNameScope
         )
 
         val result = JsIrProgramFragment(fileExports.file.packageFqName.asString()).apply {

@@ -1017,7 +1017,7 @@ val optimizationLoweringList = listOf<Lowering>(
     es6PrimaryConstructorOptimizationLowering,
     es6PrimaryConstructorUsageOptimizationLowering,
     purifyObjectInstanceGetters,
-    inlineObjectsWithPureInitialization,
+    inlineObjectsWithPureInitialization
 )
 
 val jsOptimizationPhases = SameTypeNamedCompilerPhase(
