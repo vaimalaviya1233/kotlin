@@ -58,8 +58,12 @@ internal annotation class marker
  *
  */
 @Retention(AnnotationRetention.BINARY)
-@Target(CLASS, FUNCTION, PROPERTY, CONSTRUCTOR, PROPERTY_GETTER, PROPERTY_SETTER)
+@Target(FILE, CLASS, FUNCTION, PROPERTY, CONSTRUCTOR, PROPERTY_GETTER, PROPERTY_SETTER)
 public actual annotation class JsName(actual val name: String)
+
+@Retention(AnnotationRetention.BINARY)
+@Target(FILE)
+public actual annotation class JsFileName(actual val name: String)
 
 /**
  * Denotes an `external` declaration that must be imported from native JavaScript library.
