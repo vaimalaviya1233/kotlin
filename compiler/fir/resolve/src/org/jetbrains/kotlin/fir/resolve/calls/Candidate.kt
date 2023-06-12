@@ -7,9 +7,9 @@ package org.jetbrains.kotlin.fir.resolve.calls
 
 import org.jetbrains.kotlin.KtFakeSourceElementKind
 import org.jetbrains.kotlin.fakeElement
+import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.declarations.FirValueParameter
-import org.jetbrains.kotlin.fir.expressions.FirExpression
-import org.jetbrains.kotlin.fir.expressions.FirThisReceiverExpression
+import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.expressions.builder.buildThisReceiverExpressionCopy
 import org.jetbrains.kotlin.fir.expressions.impl.FirExpressionStub
 import org.jetbrains.kotlin.fir.expressions.impl.FirNoReceiverExpression
@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.fir.scopes.FirScope
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.types.ConeKotlinType
 import org.jetbrains.kotlin.fir.types.ConeTypeVariable
+import org.jetbrains.kotlin.fir.visitors.FirTransformer
 import org.jetbrains.kotlin.resolve.calls.inference.ConstraintSystemOperation
 import org.jetbrains.kotlin.resolve.calls.inference.model.ConstraintStorage
 import org.jetbrains.kotlin.resolve.calls.inference.model.ConstraintSystemError
@@ -151,6 +152,20 @@ class Candidate(
     }
 
     private fun FirExpression.tryToSetSourceForImplicitReceiver(): FirExpression {
+        if (this is FirSmartCastExpression) {
+            return this.transform(
+                object : FirTransformer<Nothing?>() {
+                    override fun <E : FirElement> transformElement(element: E, data: Nothing?): E {
+                        return element
+                    }
+
+                    override fun transformExpression(expression: FirExpression, data: Nothing?): FirStatement {
+                        return expression.tryToSetSourceForImplicitReceiver()
+                    }
+                }, null
+            )
+        }
+
         if (this is FirThisReceiverExpression && isImplicit) {
             return buildThisReceiverExpressionCopy(this) {
                 source = callInfo.callSite.source?.fakeElement(KtFakeSourceElementKind.ImplicitReceiver)
