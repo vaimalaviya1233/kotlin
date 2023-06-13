@@ -1135,6 +1135,10 @@ open class RawFirBuilder(
                                 extractAnnotationsTo = { extractAnnotationsTo(it) },
                             ) {
                                 toFirOrImplicitType()
+                            }.apply {
+                                statements.forEach {
+                                    (it as FirProperty).destructuringDeclarationContainerVariable = destructuringContainerVar.symbol
+                                }
                             }
                             statements.add(destructuringContainerVar)
                             statements.addAll(destructuringBlock.statements)

@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 val (abc, def) = A()
 
 val rv = abc + def

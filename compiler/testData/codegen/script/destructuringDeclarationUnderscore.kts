@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 val (_, b, _) = A()
 
 class A {

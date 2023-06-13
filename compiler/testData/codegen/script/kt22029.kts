@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 
 data class Pair(val first: Int, val second: Int)
 
