@@ -44,11 +44,11 @@ object LightClassUtil {
 
     fun getLightClassAccessorMethods(accessor: KtPropertyAccessor): List<PsiMethod> {
         val property = accessor.getNonStrictParentOfType<KtProperty>() ?: return emptyList()
-        val wrappers = getPsiMethodWrappers(property)
-        return wrappers.filter { wrapper ->
+        val wrappers = getPsiMethodWrappers(property, null) { wrapper ->
             (accessor.isGetter && !JvmAbi.isSetterName(wrapper.name)) ||
                     (accessor.isSetter && JvmAbi.isSetterName(wrapper.name))
-        }.toList()
+        }
+        return wrappers.toList()
     }
 
     fun getLightFieldForCompanionObject(companionObject: KtClassOrObject): PsiField? {
@@ -124,10 +124,14 @@ object LightClassUtil {
         return getPsiMethodWrappers(declaration).firstOrNull()
     }
 
-    private fun getPsiMethodWrappers(declaration: KtDeclaration, name: String? = null): Sequence<KtLightMethod> =
+    private fun getPsiMethodWrappers(
+        declaration: KtDeclaration,
+        name: String? = null,
+        nameFilter: (KtLightMethod) -> Boolean = { name == null || name == it.name }
+    ): Sequence<KtLightMethod> =
         getWrappingClasses(declaration).flatMap { it.methods.asSequence() }
             .filterIsInstance<KtLightMethod>()
-            .filter { name == null || name == it.name }
+            .filter(nameFilter)
             .filter { it.kotlinOrigin === declaration || it.navigationElement === declaration }
 
     private fun getWrappingClass(declaration: KtDeclaration): PsiClass? {
