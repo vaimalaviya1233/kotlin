@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
 import org.jetbrains.kotlin.mpp.DeclarationSymbolMarker
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.resolve.calls.mpp.AbstractExpectActualCompatibilityChecker
 import org.jetbrains.kotlin.resolve.multiplatform.ExpectActualCompatibility
 
@@ -62,6 +63,9 @@ internal class ExpectActualCollector(
     ) {
         val linkCollector = ExpectActualLinkCollector(destination, classActualizationInfo, typeSystemContext, diagnosticsReporter)
         dependentFragments.forEach { linkCollector.visitModuleFragment(it) }
+        if (mainFragment.descriptor.platform?.isCommon() != true) {
+            linkCollector.visitModuleFragment(mainFragment) // Check for NO_ACTUAL_FOR_EXPECT errors
+        }
     }
 }
 
