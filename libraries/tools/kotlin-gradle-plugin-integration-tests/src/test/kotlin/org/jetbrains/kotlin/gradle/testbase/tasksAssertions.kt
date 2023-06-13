@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.gradle.testbase
 import org.gradle.api.logging.LogLevel
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.TaskOutcome
+import kotlin.test.assertFalse
 
 /**
  * Asserts given tasks are not present in the build task graph
@@ -37,6 +38,23 @@ fun BuildResult.assertTasksExecuted(vararg tasks: String) {
         assert(task(task)?.outcome == TaskOutcome.SUCCESS) {
             printBuildOutput()
             "Task $task didn't have 'SUCCESS' state: ${task(task)?.outcome}"
+        }
+    }
+}
+
+/**
+ * Asserts all tasks match given [tasksRegex] have 'SUCCESS' execution state.
+ */
+fun BuildResult.assertTasksExecuted(tasksRegex: Regex) {
+    val matchedTasks = this.tasks.filter { task ->
+        tasksRegex.matches(task.path)
+    }.toList()
+
+    assertFalse(matchedTasks.isEmpty(), "There are no tasks that match the $tasksRegex")
+    matchedTasks.forEach { task ->
+        assert(task?.outcome == TaskOutcome.SUCCESS) {
+            printBuildOutput()
+            "Task $task didn't have 'SUCCESS' state: ${task?.outcome}"
         }
     }
 }
