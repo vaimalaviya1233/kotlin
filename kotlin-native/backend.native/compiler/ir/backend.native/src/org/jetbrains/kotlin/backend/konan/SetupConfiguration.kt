@@ -248,7 +248,7 @@ fun CompilerConfiguration.setupFromArguments(arguments: K2NativeCompilerArgument
         }
     })
     put(LAZY_IR_FOR_CACHES, when (arguments.lazyIrForCaches) {
-        null -> true
+        null -> false
         "enable" -> true
         "disable" -> false
         else -> {
