@@ -126,7 +126,6 @@
                                 <artifact>org.jetbrains.kotlin:kotlin-script-runtime:${project.version}</artifact>
                                 <artifact>org.jetbrains.kotlin:kotlin-stdlib:${project.version}</artifact>
                                 <artifact>org.jetbrains.kotlin:kotlin-stdlib-common:${project.version}</artifact>
-                                <artifact>org.jetbrains.kotlin:kotlin-stdlib-js:${project.version}</artifact>
                                 <artifact>org.jetbrains.kotlin:kotlin-stdlib-jdk7:${project.version}</artifact>
                                 <artifact>org.jetbrains.kotlin:kotlin-stdlib-jdk8:${project.version}</artifact>
                                 <artifact>org.jetbrains.kotlin:kotlin-reflect:${project.version}</artifact>
@@ -136,7 +135,6 @@
                                 <artifact>org.jetbrains.kotlin:kotlin-test-junit:${project.version}</artifact>
                                 <artifact>org.jetbrains.kotlin:kotlin-test-junit5:${project.version}</artifact>
                                 <artifact>org.jetbrains.kotlin:kotlin-test-testng:${project.version}</artifact>
-                                <artifact>org.jetbrains.kotlin:kotlin-test-js:${project.version}</artifact>
                                 <artifact>org.jetbrains.kotlin:kotlin-bom:${project.version}:pom</artifact>
                             </extraArtifacts>
                             <showErrors>true</showErrors>
@@ -211,13 +209,7 @@
                                         <pomExclude>test-enable-extensions/pom.xml</pomExclude>
                                         <pomExclude>test-kapt-allopen/pom.xml</pomExclude>
                                         <pomExclude>test-lombok-with-kapt/pom.xml</pomExclude>
-                                        <!-- exclude js and mpp -->
-                                        <pomExclude>test-js-moduleKind/pom.xml</pomExclude>
-                                        <pomExclude>test-js-accessToInternal/pom.xml</pomExclude>
-                                        <pomExclude>test-js-suppressWarnings/pom.xml</pomExclude>
-                                        <pomExclude>test-js-sourceMap/pom.xml</pomExclude>
-                                        <pomExclude>test-js-extraArguments/pom.xml</pomExclude>
-                                        <pomExclude>test-js-sourceMapEmbedSources/pom.xml</pomExclude>
+                                        <!-- exclude mpp -->
                                         <pomExclude>test-multiplatform/pom.xml</pomExclude>
                                         <!-- exclude kts -->
                                         <pomExclude>test-helloworld-kts/pom.xml</pomExclude>
