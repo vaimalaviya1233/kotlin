@@ -152,26 +152,17 @@ class Candidate(
     }
 
     private fun FirExpression.tryToSetSourceForImplicitReceiver(): FirExpression {
-        if (this is FirSmartCastExpression) {
-            return this.transform(
-                object : FirTransformer<Nothing?>() {
-                    override fun <E : FirElement> transformElement(element: E, data: Nothing?): E {
-                        return element
-                    }
-
-                    override fun transformExpression(expression: FirExpression, data: Nothing?): FirStatement {
-                        return expression.tryToSetSourceForImplicitReceiver()
-                    }
-                }, null
-            )
-        }
-
-        if (this is FirThisReceiverExpression && isImplicit) {
-            return buildThisReceiverExpressionCopy(this) {
-                source = callInfo.callSite.source?.fakeElement(KtFakeSourceElementKind.ImplicitReceiver)
+        return when {
+            this is FirSmartCastExpression -> {
+                this.apply { replaceOriginalExpression(this.originalExpression.tryToSetSourceForImplicitReceiver()) }
             }
+            this is FirThisReceiverExpression && isImplicit -> {
+                buildThisReceiverExpressionCopy(this) {
+                    source = callInfo.callSite.source?.fakeElement(KtFakeSourceElementKind.ImplicitReceiver)
+                }
+            }
+            else -> this
         }
-        return this
     }
 
     var hasVisibleBackingField = false
