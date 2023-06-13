@@ -709,8 +709,21 @@ class IrBuiltInsOverFir(
                         origin = IrDeclarationOrigin.IR_EXTERNAL_DECLARATION_STUB
                         build()
                         irFactory.createClass(
-                            startOffset, endOffset, origin, symbol, name, kind, visibility, modality,
-                            isCompanion, isInner, isData, isExternal, isValue, isExpect, isFun
+                            startOffset = startOffset,
+                            endOffset = endOffset,
+                            origin = origin,
+                            name = name,
+                            visibility = visibility,
+                            symbol = symbol,
+                            kind = kind,
+                            modality = modality,
+                            isExternal = isExternal,
+                            isCompanion = isCompanion,
+                            isInner = isInner,
+                            isData = isData,
+                            isValue = isValue,
+                            isExpect = isExpect,
+                            isFun = isFun,
                         )
                     }.also {
                         it.parent = parent
@@ -775,8 +788,8 @@ class IrBuiltInsOverFir(
                 origin = IrDeclarationOrigin.IR_EXTERNAL_DECLARATION_STUB
                 builderBlock()
                 irFactory.createClass(
-                    startOffset, endOffset, origin, symbol, name, kind, visibility, modality,
-                    isCompanion, isInner, isData, isExternal, isValue, isExpect, isFun
+                    startOffset, endOffset, origin, name, visibility, symbol, kind, modality,
+                    isExternal, isCompanion, isInner, isData, isValue, isExpect, isFun
                 )
             }.also {
                 it.parent = this

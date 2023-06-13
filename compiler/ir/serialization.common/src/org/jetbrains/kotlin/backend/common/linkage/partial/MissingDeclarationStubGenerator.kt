@@ -69,10 +69,10 @@ internal class MissingDeclarationStubGenerator(private val builtIns: IrBuiltIns)
             startOffset = UNDEFINED_OFFSET,
             endOffset = UNDEFINED_OFFSET,
             origin = PartiallyLinkedDeclarationOrigin.MISSING_DECLARATION,
-            symbol = symbol,
             name = symbol.guessName(),
-            kind = ClassKind.CLASS,
             visibility = DescriptorVisibilities.DEFAULT_VISIBILITY,
+            symbol = symbol,
+            kind = ClassKind.CLASS,
             modality = Modality.OPEN
         ).apply {
             setCommonParent()
