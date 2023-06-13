@@ -96,3 +96,7 @@ fun FirSimpleFunction.isEquals(): Boolean {
     val parameter = valueParameters.first()
     return parameter.returnTypeRef.isNullableAny
 }
+
+private object CodeFragmentTowerDataContext : FirDeclarationDataKey()
+
+var FirCodeFragment.towerDataContext: FirTowerDataContext? by FirDeclarationDataRegistry.data(CodeFragmentTowerDataContext)
