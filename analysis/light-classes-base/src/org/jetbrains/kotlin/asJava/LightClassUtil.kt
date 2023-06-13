@@ -18,9 +18,12 @@ import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.asJava.elements.KtLightField
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.elements.isSetter
+import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
+import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil.getLiteralStringFromAnnotation
 import org.jetbrains.kotlin.load.java.JvmAbi
+import org.jetbrains.kotlin.name.JvmNames
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
+import org.jetbrains.kotlin.resolve.DataClassResolver
 import org.jetbrains.kotlin.utils.checkWithAttachment
 
 object LightClassUtil {
@@ -43,12 +46,24 @@ object LightClassUtil {
         getLightClassAccessorMethods(accessor).firstOrNull()
 
     fun getLightClassAccessorMethods(accessor: KtPropertyAccessor): List<PsiMethod> {
-        val property = accessor.getNonStrictParentOfType<KtProperty>() ?: return emptyList()
-        val wrappers = getPsiMethodWrappers(property)
-        return wrappers.filter { wrapper ->
-            (accessor.isGetter && !JvmAbi.isSetterName(wrapper.name)) ||
-                    (accessor.isSetter && JvmAbi.isSetterName(wrapper.name))
-        }.toList()
+        val property = accessor.property
+        val customName =
+            accessor.annotationEntries.find { JvmNames.JVM_NAME.shortName() == it.shortName }?.let { getLiteralStringFromAnnotation(it) }
+        val propertyName = accessor.property.name ?: return emptyList()
+        val wrappers = getPsiMethodWrappers(property) { wrapper ->
+            val wrapperName = wrapper.name
+            if (customName != null) {
+                customName == wrapperName
+            } else if (accessor.isGetter) {
+                val getterName = JvmAbi.getterName(propertyName)
+                wrapperName == getterName ||
+                        wrapperName.startsWith("$getterName$")//mangled
+            } else {
+                val setterName = JvmAbi.setterName(propertyName)
+                wrapperName == setterName || wrapperName.startsWith("$setterName$")
+            }
+        }
+        return wrappers.toList()
     }
 
     fun getLightFieldForCompanionObject(companionObject: KtClassOrObject): PsiField? {
@@ -124,10 +139,14 @@ object LightClassUtil {
         return getPsiMethodWrappers(declaration).firstOrNull()
     }
 
-    private fun getPsiMethodWrappers(declaration: KtDeclaration, name: String? = null): Sequence<KtLightMethod> =
+    private fun getPsiMethodWrappers(
+        declaration: KtDeclaration,
+        name: String? = null,
+        nameFilter: (KtLightMethod) -> Boolean = { name == null || name == it.name }
+    ): Sequence<KtLightMethod> =
         getWrappingClasses(declaration).flatMap { it.methods.asSequence() }
             .filterIsInstance<KtLightMethod>()
-            .filter { name == null || name == it.name }
+            .filter(nameFilter)
             .filter { it.kotlinOrigin === declaration || it.navigationElement === declaration }
 
     private fun getWrappingClass(declaration: KtDeclaration): PsiClass? {
@@ -178,12 +197,35 @@ object LightClassUtil {
         return PsiTreeUtil.getParentOfType(declaration, KtFunction::class.java, KtProperty::class.java) == null
     }
 
-    private fun extractPropertyAccessors(
-        ktDeclaration: KtDeclaration,
+    private fun <T> extractPropertyAccessors(
+        ktDeclaration: T,
         specialGetter: PsiMethod?, specialSetter: PsiMethod?
-    ): PropertyAccessorsPsiMethods {
+    ): PropertyAccessorsPsiMethods where T : KtValVarKeywordOwner, T : KtNamedDeclaration {
 
-        val (setters, getters) = getPsiMethodWrappers(ktDeclaration).partition { it.isSetter }
+        val isSpecialNameProvided = ktDeclaration.annotationEntries.any { anno ->
+            val target = if (JvmNames.JVM_NAME.shortName() == anno.shortName) anno.useSiteTarget?.getAnnotationUseSiteTarget() else null
+            target == AnnotationUseSiteTarget.PROPERTY_GETTER || target == AnnotationUseSiteTarget.PROPERTY_SETTER
+        }
+
+        val accessorWrappers = if (isSpecialNameProvided)
+            getPsiMethodWrappers(ktDeclaration)
+        else {
+            val currentName = ktDeclaration.name
+            val getterName = currentName?.let { JvmAbi.getterName(currentName) }
+            val setterName = currentName?.let { JvmAbi.setterName(currentName) }
+            getPsiMethodWrappers(ktDeclaration) { wrapper ->
+                val wrapperName = wrapper.name
+                currentName == null ||
+                        currentName == wrapperName ||
+                        wrapperName == getterName ||
+                        wrapperName.startsWith("$getterName$") || //mangled
+                        wrapperName == setterName ||
+                        wrapperName.startsWith("$setterName$") || //mangled
+                        DataClassResolver.isComponentLike(wrapperName)
+            }
+        }
+
+        val (setters, getters) = accessorWrappers.partition { it.isSetter }
 
         val allGetters = listOfNotNull(specialGetter) + getters.filterNot { it == specialGetter }
         val allSetters = listOfNotNull(specialSetter) + setters.filterNot { it == specialSetter }
