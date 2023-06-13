@@ -103,22 +103,22 @@ class IrBuiltInsOverDescriptors(
         }
 
         val symbol = symbolTable.declareSimpleFunctionIfNotExists(operatorDescriptor) {
-            val operator = irFactory.createFunction(
-                UNDEFINED_OFFSET,
-                UNDEFINED_OFFSET,
-                BUILTIN_OPERATOR,
-                it,
-                Name.identifier(name),
-                DescriptorVisibilities.PUBLIC,
-                Modality.FINAL,
-                returnType,
+            val operator = irFactory.createSimpleFunction(
+                startOffset = UNDEFINED_OFFSET,
+                endOffset = UNDEFINED_OFFSET,
+                origin = BUILTIN_OPERATOR,
+                name = Name.identifier(name),
+                visibility = DescriptorVisibilities.PUBLIC,
                 isInline = false,
-                isExternal = false,
+                isExpect = false,
+                returnType = returnType,
+                modality = Modality.FINAL,
+                symbol = it,
                 isTailrec = false,
                 isSuspend = false,
                 isOperator = false,
                 isInfix = false,
-                isExpect = false,
+                isExternal = false,
                 isFakeOverride = false
             )
             operator.parent = operatorsPackageFragment
@@ -211,13 +211,23 @@ class IrBuiltInsOverDescriptors(
                 buildSimpleType()
             }
 
-            irFactory.createFunction(
-                UNDEFINED_OFFSET, UNDEFINED_OFFSET, BUILTIN_OPERATOR,
-                operatorSymbol, name,
-                DescriptorVisibilities.PUBLIC, Modality.FINAL,
-                returnIrType,
-                isInline = false, isExternal = false, isTailrec = false, isSuspend = false, isOperator = false, isInfix = false,
-                isExpect = false, isFakeOverride = false
+            irFactory.createSimpleFunction(
+                startOffset = UNDEFINED_OFFSET,
+                endOffset = UNDEFINED_OFFSET,
+                origin = BUILTIN_OPERATOR,
+                name = name,
+                visibility = DescriptorVisibilities.PUBLIC,
+                isInline = false,
+                isExpect = false,
+                returnType = returnIrType,
+                modality = Modality.FINAL,
+                symbol = operatorSymbol,
+                isTailrec = false,
+                isSuspend = false,
+                isOperator = false,
+                isInfix = false,
+                isExternal = false,
+                isFakeOverride = false,
             ).also { operator ->
                 operator.parent = operatorsPackageFragment
                 operatorsPackageFragment.declarations += operator
