@@ -14,8 +14,10 @@ import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
 import org.jetbrains.kotlin.analysis.api.components.ShortenOption
 import org.jetbrains.kotlin.analysis.api.fir.KtFirAnalysisSession
 import org.jetbrains.kotlin.analysis.api.fir.components.ElementsToShortenCollector.PartialOrderOfScope.Companion.toPartialOrder
+import org.jetbrains.kotlin.analysis.api.fir.references.KDocReferenceResolver
 import org.jetbrains.kotlin.analysis.api.fir.utils.FirBodyReanalyzingVisitorVoid
 import org.jetbrains.kotlin.analysis.api.fir.utils.computeImportableName
+import org.jetbrains.kotlin.analysis.api.fir.utils.firSymbol
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
@@ -62,6 +64,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.calls.tower.CandidateApplicability
 import org.jetbrains.kotlin.utils.addIfNotNull
+import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
 internal class KtFirReferenceShortener(
     override val analysisSession: KtFirAnalysisSession,
@@ -112,7 +115,6 @@ internal class KtFirReferenceShortener(
 
         val kDocQualifiersToShorten = collectKDocQualifiersToShorten(
             file,
-            towerContext,
             selection,
             classShortenOption = { minOf(classShortenOption(it), ShortenOption.SHORTEN_IF_ALREADY_IMPORTED) },
             callableShortenOption = { minOf(callableShortenOption(it), ShortenOption.SHORTEN_IF_ALREADY_IMPORTED) },
@@ -130,7 +132,6 @@ internal class KtFirReferenceShortener(
 
     private fun collectKDocQualifiersToShorten(
         file: KtFile,
-        towerContext: FirTowerContextProvider,
         selection: TextRange,
         classShortenOption: (KtClassLikeSymbol) -> ShortenOption,
         callableShortenOption: (KtCallableSymbol) -> ShortenOption,
@@ -147,7 +148,6 @@ internal class KtFirReferenceShortener(
                     else -> {
                         val shouldShortenKDocQualifier = shouldShortenKDocQualifier(
                             element,
-                            towerContext,
                             classShortenOption = { classShortenOption(buildSymbol(it) as KtClassLikeSymbol) },
                             callableShortenOption = { callableShortenOption(buildSymbol(it) as KtCallableSymbol) },
                         )
@@ -156,9 +156,7 @@ internal class KtFirReferenceShortener(
                         } else {
                             element.acceptChildren(this)
 
-                            val deepestKDocNameWithQualifier = generateSequence(element) { it.getQualifier() }
-                                .takeWhile { it.getQualifier() != null }
-                                .last()
+                            val deepestKDocNameWithQualifier = element.qualifiedKDocNamesWithSelf.last()
                             if (deepestKDocNameWithQualifier.getQualifier()?.getNameText() == ROOT_PREFIX_FOR_IDE_RESOLUTION_MODE) {
                                 kDocQualifiersToShorten.add(ShortenKDocQualifier(deepestKDocNameWithQualifier))
                             }
@@ -173,30 +171,37 @@ internal class KtFirReferenceShortener(
 
     private fun shouldShortenKDocQualifier(
         kDocName: KDocName,
-        towerContext: FirTowerContextProvider,
         classShortenOption: (FirClassLikeSymbol<*>) -> ShortenOption,
         callableShortenOption: (FirCallableSymbol<*>) -> ShortenOption,
     ): Boolean {
-        val positionScopes = context.findScopesAtPosition(kDocName, newImports = emptySequence(), towerContext) ?: emptyList()
         val fqName = kDocName.getQualifiedNameAsFqName().withoutFakeRootPrefix()
 
-        val availableCallable = context.findFirstCallableInScopesByName(positionScopes, fqName.shortName())?.symbol
+        val resolvedSymbols = with(analysisSession) {
+            val shortFqName = FqName(fqName.shortName().asString())
+            val owner = kDocName.getContainingDoc().owner
+
+            KDocReferenceResolver.resolveKdocFqName(shortFqName, shortFqName, owner ?: kDocName.containingKtFile)
+        }
+        val availableCallable = resolvedSymbols.firstIsInstanceOrNull<KtCallableSymbol>()?.firSymbol
+
         if (availableCallable != null) {
             return if (availableCallable.callableId.asSingleFqName() == fqName) {
                 callableShortenOption(availableCallable) != ShortenOption.DO_NOT_SHORTEN
             } else false
         }
 
-        val availableClassifier = context.findFirstClassifierInScopesByName(positionScopes, fqName.shortName())?.symbol
+        val availableClassifier = resolvedSymbols.firstIsInstanceOrNull<KtClassLikeSymbol>()?.firSymbol as? FirClassLikeSymbol<*>
         if (availableClassifier != null) {
-            return if (availableClassifier.asSingleFqName() == fqName) {
-                val availableClassifierSymbol = context.toClassSymbol(availableClassifier) ?: return false
-                classShortenOption(availableClassifierSymbol) != ShortenOption.DO_NOT_SHORTEN
+            return if (availableClassifier.classId.asSingleFqName() == fqName) {
+                classShortenOption(availableClassifier) != ShortenOption.DO_NOT_SHORTEN
             } else false
         }
 
         return false
     }
+
+    private val KDocName.qualifiedKDocNamesWithSelf: Sequence<KDocName>
+        get() = generateSequence(this) { it.getQualifier() }.takeWhile { it.getQualifier() != null }
 
     private fun buildSymbol(firSymbol: FirBasedSymbol<*>): KtSymbol = analysisSession.firSymbolBuilder.buildSymbol(firSymbol)
 }
@@ -204,13 +209,8 @@ internal class KtFirReferenceShortener(
 private fun FqName.withoutFakeRootPrefix(): FqName {
     val pathSegments = pathSegments()
     return if (pathSegments.firstOrNull()?.asString() == ROOT_PREFIX_FOR_IDE_RESOLUTION_MODE) {
-        pathSegments.takeLast(pathSegments.size - 1).toFqName()
+        FqName.fromSegments(pathSegments.drop(1).map { it.asString() })
     } else this
-}
-
-private fun List<Name>.toFqName(): FqName = when {
-    isEmpty() -> FqName.ROOT
-    else -> FqName(joinToString("."))
 }
 
 private inline fun <reified T : KtElement> KtFile.findSmallestElementOfTypeContainingSelection(selection: TextRange): T? =
@@ -283,16 +283,6 @@ private class FirShorteningContext(val analysisSession: KtFirAnalysisSession) {
         return null
     }
 
-    fun findFirstCallableInScopesByName(positionScopes: List<FirScope>, targetCallableName: Name): AvailableSymbol<FirCallableSymbol<*>>? {
-        for (scope in positionScopes) {
-            val callableSymbol = scope.findFirstCallableByName(targetCallableName) ?: continue
-            return AvailableSymbol(callableSymbol, ImportKind.fromScope(scope))
-        }
-
-        return null
-    }
-
-
     fun findClassifiersInScopesByName(scopes: List<FirScope>, targetClassName: Name): List<ClassifierCandidate> =
         scopes.mapNotNull { scope ->
             val classifierSymbol = scope.findFirstClassifierByName(targetClassName) ?: return@mapNotNull null
@@ -330,23 +320,6 @@ private class FirShorteningContext(val analysisSession: KtFirAnalysisSession) {
         var element: FirClassifierSymbol<*>? = null
 
         processClassifiersByName(name) {
-            if (element == null) {
-                element = it
-            }
-        }
-
-        return element
-    }
-
-    private fun FirScope.findFirstCallableByName(name: Name): FirCallableSymbol<*>? {
-        var element: FirCallableSymbol<*>? = null
-
-        processFunctionsByName(name) {
-            if (element == null) {
-                element = it
-            }
-        }
-        processPropertiesByName(name) {
             if (element == null) {
                 element = it
             }
