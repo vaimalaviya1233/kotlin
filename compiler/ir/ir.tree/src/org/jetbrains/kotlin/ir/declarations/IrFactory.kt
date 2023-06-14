@@ -170,12 +170,12 @@ interface IrFactory {
     fun createTypeAlias(
         startOffset: Int,
         endOffset: Int,
-        symbol: IrTypeAliasSymbol,
+        origin: IrDeclarationOrigin,
         name: Name,
         visibility: DescriptorVisibility,
-        expandedType: IrType,
+        symbol: IrTypeAliasSymbol,
         isActual: Boolean,
-        origin: IrDeclarationOrigin,
+        expandedType: IrType,
     ): IrTypeAlias
 
     fun createTypeParameter(
