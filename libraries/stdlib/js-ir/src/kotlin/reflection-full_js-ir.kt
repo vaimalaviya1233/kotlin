@@ -8,6 +8,7 @@ package kotlin.reflect.full
 import kotlin.reflect.KClass
 
 @OptIn(JsIntrinsic::class)
+@ExperimentalJsReflectionCreateInstance
 public fun <T : Any> KClass<T>.createInstance(): T {
     val jsClass = js.asDynamic()
 

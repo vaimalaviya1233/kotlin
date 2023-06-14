@@ -137,6 +137,12 @@ private val validateIrAfterLowering = makeCustomJsModulePhase(
     description = "Validate IR after lowering"
 ).toModuleLowering()
 
+private val collectClassDefaultConstructorsPhase = makeDeclarationTransformerPhase(
+    ::CollectClassDefaultConstructorsLowering,
+    name = "CollectClassDefaultConstructorsLowering",
+    description = "Collect classes default constructors to add it to metadata on code generating phase"
+)
+
 private val preventExportOfSyntheticDeclarationsLowering = makeDeclarationTransformerPhase(
     ::ExcludeSyntheticDeclarationsFromExportLowering,
     name = "ExcludeSyntheticDeclarationsFromExportLowering",
@@ -890,6 +896,7 @@ val loweringList = listOf<Lowering>(
     initializersLoweringPhase,
     initializersCleanupLoweringPhase,
     kotlinNothingValueExceptionPhase,
+    collectClassDefaultConstructorsPhase,
     // Common prefix ends
     enumWhenPhase,
     enumEntryInstancesLoweringPhase,

@@ -44,6 +44,10 @@ object Object
 interface Interface
 enum class EnumFoo { A, B }
 
+abstract class AbstractClass
+
+sealed class SealedClass
+
 // -----------
 
 inline fun <reified T : Any> test() {
@@ -76,6 +80,8 @@ fun box(): String {
     testFail<Object>()
     testFail<Interface>()
     testFail<EnumFoo>()
+    testFail<AbstractClass>()
+    testFail<SealedClass>()
 
     return "OK"
 }

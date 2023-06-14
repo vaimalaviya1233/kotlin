@@ -139,7 +139,7 @@ abstract class UsefulDeclarationProcessor(
 
     val usefulPolyfilledDeclarations = hashSetOf<IrDeclaration>()
 
-    protected open fun addToConstructedClasses(irClass: IrClass) {
+    protected open fun addConstructedClass(irClass: IrClass) {
         constructedClasses += irClass
     }
 
@@ -180,7 +180,7 @@ abstract class UsefulDeclarationProcessor(
         // Collect instantiated classes.
         irConstructor.constructedClass.let {
             it.enqueue(irConstructor, "constructed class")
-            addToConstructedClasses(it)
+            addConstructedClass(it)
         }
     }
 

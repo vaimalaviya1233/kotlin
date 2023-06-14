@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.js.config.JSConfigurationKeys
 import org.jetbrains.kotlin.serialization.js.ModuleKind
-import org.jetbrains.kotlin.utils.addToStdlib.runIf
 
 internal class JsUsefulDeclarationProcessor(
     override val context: JsIrBackendContext,
@@ -72,13 +71,13 @@ internal class JsUsefulDeclarationProcessor(
                 }
 
                 context.reflectionSymbols.getKClass -> {
-                    addToConstructedClasses(expression.getTypeArgument(0)!!.classifierOrFail.owner as IrClass)
+                    addConstructedClass(expression.getTypeArgument(0)!!.classifierOrFail.owner as IrClass)
                 }
 
                 context.intrinsics.jsObjectCreateSymbol -> {
                     val classToCreate = expression.getTypeArgument(0)!!.classifierOrFail.owner as IrClass
                     classToCreate.enqueue(data, "intrinsic: jsObjectCreateSymbol")
-                    addToConstructedClasses(classToCreate)
+                    addConstructedClass(classToCreate)
                 }
 
                 context.intrinsics.jsCreateThisSymbol -> {
@@ -93,7 +92,7 @@ internal class JsUsefulDeclarationProcessor(
                     val classToCreate = classTypeToCreate.classifierOrFail.owner as IrClass
 
                     classToCreate.enqueue(data, "intrinsic: jsCreateThis")
-                    addToConstructedClasses(classToCreate)
+                    addConstructedClass(classToCreate)
                 }
 
                 context.intrinsics.jsEquals -> {
@@ -124,8 +123,8 @@ internal class JsUsefulDeclarationProcessor(
         }
     }
 
-    override fun addToConstructedClasses(irClass: IrClass) {
-        super.addToConstructedClasses(irClass)
+    override fun addConstructedClass(irClass: IrClass) {
+        super.addConstructedClass(irClass)
 
         if (irClass.isClass) {
             context.findDefaultConstructorFor(irClass)?.enqueue(irClass, "intrinsic: KClass<*>.createInstance")
@@ -190,7 +189,7 @@ internal class JsUsefulDeclarationProcessor(
         super.processSimpleFunction(irFunction)
 
         if (irFunction.isEs6ConstructorReplacement) {
-            addToConstructedClasses(irFunction.dispatchReceiverParameter?.type?.classOrNull?.owner!!)
+            addConstructedClass(irFunction.dispatchReceiverParameter?.type?.classOrNull?.owner!!)
         }
 
         if (irFunction.isReal && irFunction.body != null) {

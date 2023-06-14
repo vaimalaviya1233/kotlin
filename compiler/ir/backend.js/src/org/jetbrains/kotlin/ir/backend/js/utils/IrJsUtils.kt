@@ -131,19 +131,7 @@ fun IrField.isObjectInstanceField(): Boolean {
 }
 
 fun JsIrBackendContext.findDefaultConstructorFor(irClass: IrClass): IrFunction? {
-    return when {
-        es6mode -> irClass.declarations
-            .filterIsInstanceAnd<IrSimpleFunction> { it.isEs6ConstructorReplacement }
-        else -> mapping.classToItsSecondaryConstructors[irClass].orEmpty()
+    return mapping.classToItsDefaultConstructor[irClass]?.let {
+        mapping.secondaryConstructorToFactory[it] ?: it
     }
-        .plus(listOfNotNull(irClass.primaryConstructor?.takeIf { !it.isSyntheticPrimaryConstructor && !it.isSyntheticConstructorForExport }))
-        .singleOrNull { it.visibility == DescriptorVisibilities.PUBLIC && it.isDefaultConstructor() }
 }
-
-private fun IrFunction.isDefaultConstructor(): Boolean {
-    return valueParameters.isEmpty() || valueParameters.all { it.hasDefaultValue() }
-}
-
-private fun IrValueParameter.hasDefaultValue(): Boolean =
-    origin == JsLoweredDeclarationOrigin.JS_SHADOWED_DEFAULT_PARAMETER || isBoxParameter
-
