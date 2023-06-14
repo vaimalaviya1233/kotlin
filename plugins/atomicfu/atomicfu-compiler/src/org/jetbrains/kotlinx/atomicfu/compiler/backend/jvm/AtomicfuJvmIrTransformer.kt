@@ -57,8 +57,6 @@ class AtomicfuJvmIrTransformer(
     override val atomicFunctionsTransformer: AtomicFunctionCallTransformer
         get() = JvmAtomicFunctionCallTransformer()
 
-    private val propertyToAtomicHandler = mutableMapOf<IrProperty, IrProperty>()
-
     private inner class JvmAtomicPropertiesTransformer : AtomicPropertiesTransformer() {
 
         override fun IrClass.addTransformedInClassAtomic(atomicProperty: IrProperty): IrProperty? {
@@ -80,17 +78,20 @@ class AtomicfuJvmIrTransformer(
              * Atomic property is replaced with the private volatile field that is atomically updated via
              * java.util.concurrent.Atomic*FieldUpdater class. Atomic*FieldUpdater can only update a field that is the member of a class.
              * For this reason, all volatile fields are placed inside the `VolatileWrapper` class.
+             * Visibility of the wrapper class and class instance equals visibility of the property.
              *
              * One wrapper class is created per file.
              *
-             * Only private top-level properties are permitted.
+             * internal class AVolatileWrapper$internal {
+             *   private @Volatile var a: Int = 0
              *
-             * private class AVolatileWrapper {
-             *   @Volatile var a: Int = 0
+             *   companion object {
+             *     internal static val a$FU = AtomicIntegerFieldUpdater.newUpdater(AVolatileWrapper::class, "a")
+             *   }
              * }
-             * private static val a$FU = AtomicIntegerFieldUpdater.newUpdater(AVolatileWrapper::class, "a")
+             * internal val wrapperClassInstance = AVolatileWrapper$internal()
              */
-            val wrapperClass = getOrBuildVolatileWrapper()
+            val wrapperClass = getOrBuildVolatileWrapper(atomicProperty)
             wrapperClass.addVolatilePropertyWithAtomicUpdater(atomicProperty)
             return atomicPropertyToVolatile[atomicProperty]
         }
@@ -119,7 +120,7 @@ class AtomicfuJvmIrTransformer(
             val parentClass = this
             with(atomicSymbols.createBuilder(from.symbol)) {
                 val volatileField = buildVolatileBackingField(from, parentClass, true)
-                parentClass.addProperty(volatileField, from.visibility, isVar = true, isStatic = false).also {
+                parentClass.addProperty(volatileField, DescriptorVisibilities.PRIVATE, isVar = true, isStatic = false).also {
                     atomicPropertyToVolatile[from] = it
                 }
                 val atomicUpdaterField = irJavaAtomicFieldUpdater(volatileField, parentClass)
@@ -157,17 +158,17 @@ class AtomicfuJvmIrTransformer(
             }
         }
 
-        private fun IrDeclarationContainer.getOrBuildVolatileWrapper(): IrClass {
-            findDeclaration<IrClass> { it.isVolatileWrapper() }?.let { return it }
+        private fun IrDeclarationContainer.getOrBuildVolatileWrapper(atomicProperty: IrProperty): IrClass {
+            findDeclaration<IrClass> { it.isVolatileWrapper(atomicProperty) && it.visibility == atomicProperty.visibility }?.let { return it }
             val parentContainer = this
-            // AKt$VolatileWrapper$atomicfu
             return with(atomicSymbols.createBuilder((this as IrSymbolOwner).symbol)) {
                 irClassWithPrivateConstructor(
-                    mangleVolatileWrapperClassName(parentContainer),
+                    mangleVolatileWrapperClassName(parentContainer) + "\$${atomicProperty.visibility.name}",
+                    atomicProperty.visibility,
                     parentContainer
                 ).also {
                     val wrapperInstance = buildClassInstance(it, parentContainer, true)
-                    addProperty(wrapperInstance, DescriptorVisibilities.PRIVATE, isVar = false, isStatic = true)
+                    addProperty(wrapperInstance, atomicProperty.visibility, isVar = false, isStatic = true)
                 }
             }
         }
@@ -471,7 +472,10 @@ class AtomicfuJvmIrTransformer(
                     val getAtomicProperty = if (isArrayReceiver) atomicCallReceiver.dispatchReceiver as IrCall else atomicCallReceiver
                     val atomicProperty = getAtomicProperty.getCorrespondingProperty()
                     val atomicHandlerProperty = propertyToAtomicHandler[atomicProperty]
-                        ?: error("No atomic handler found for the atomic property ${atomicProperty.render()}")
+                        ?: error("No atomic handler found for the atomic property ${atomicProperty.render()}, \n" +
+                                         "these properties were registered: ${
+                                             propertyToAtomicHandler.keys.toList().joinToString("\n") { it.render() }
+                                         }")
                     with(atomicSymbols.createBuilder(atomicCallReceiver.symbol)) {
                         // dispatchReceiver for get-a$FU() is null, because a$FU is a static property
                         // dispatchReceiver for get-arr'() is equal to the dispatchReceiver of the original getter

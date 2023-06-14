@@ -49,6 +49,8 @@ abstract class AbstractAtomicfuTransformer(
     private val ATOMIC_ARRAY_TYPES = setOf("AtomicIntArray", "AtomicLongArray", "AtomicBooleanArray", "AtomicArray")
 
     protected val atomicPropertyToVolatile = mutableMapOf<IrProperty, IrProperty>()
+    // todo move back to jvm
+    protected val propertyToAtomicHandler = mutableMapOf<IrProperty, IrProperty>()
 
     fun transform(moduleFragment: IrModuleFragment) {
         transformAtomicProperties(moduleFragment)
@@ -104,10 +106,10 @@ abstract class AbstractAtomicfuTransformer(
             when {
                 isAtomic() -> {
                     if (isTopLevel) {
-                        checkIsPrivate()
+                        checkVisibility()
                         parentContainer.addTransformedStaticAtomic(atomicProperty)
                     } else {
-                        checkIsPrivate()
+                        checkVisibility()
                         (parentContainer as IrClass).addTransformedInClassAtomic(atomicProperty)
                     }?.also {
                         parentContainer.declarations.remove(atomicProperty)
@@ -291,14 +293,15 @@ abstract class AbstractAtomicfuTransformer(
             getValueArgument(0)?.deepCopyWithSymbols()
                 ?: error("Atomic array constructor should take at least one argument: ${this.render()}")
 
-        private fun IrProperty.checkIsPrivate() {
-            require(visibility == DescriptorVisibilities.PRIVATE) {
-                "Please declare atomic property ${this.render()} as private val. \n" +
-                "To expose the value of an atomic property to the public, use a delegated property declared in the same scope:\n" +
-                 "private val _a = atomic<T>(initial) \n" +
-                 "public var foo: T by _foo \n"
+        private fun IrProperty.checkVisibility() =
+            check(visibility == DescriptorVisibilities.PRIVATE || visibility == DescriptorVisibilities.INTERNAL) {
+                "Please declare atomic property ${this.render()} as private or internal. \n" +
+                        "To expose the value of an atomic property to the public, use a delegated property declared in the same scope: \n" +
+                        "```\n" +
+                        "private val _a = atomic<T>(initial) \n" +
+                        "public var a: T by _a \n" +
+                        "```\n"
             }
-        }
     }
 
     protected abstract inner class AtomicExtensionTransformer : IrElementTransformerVoid() {
@@ -590,7 +593,7 @@ abstract class AbstractAtomicfuTransformer(
             } ?: error("In the sequence of parents for the local function ${this.render()} no containing function was found")
         }
 
-    // A.kt -> A$VolatileWrapper$atmicfu
+    // A.kt -> A$VolatileWrapper$atomicfu
     // B -> B$VolatileWrapper$atomicfu
     protected fun mangleVolatileWrapperClassName(parent: IrDeclarationContainer): String =
         ((if (parent is IrFile) parent.name else (parent as IrClass).name.asString())).substringBefore(".") + VOLATILE_WRAPPER_SUFFIX
@@ -600,8 +603,8 @@ abstract class AbstractAtomicfuTransformer(
 
     protected fun String.isMangledAtomicArrayExtension() = endsWith("$$ATOMICFU$$ARRAY")
 
-    protected fun IrClass.isVolatileWrapper(): Boolean =
-        this.name.asString() == mangleVolatileWrapperClassName(this.parent as IrDeclarationContainer)
+    protected fun IrClass.isVolatileWrapper(atomicProperty: IrProperty): Boolean =
+        this.name.asString() == mangleVolatileWrapperClassName(this.parent as IrDeclarationContainer) + atomicProperty.visibility.name
 
     protected fun IrValueParameter.capture(): IrGetValue = IrGetValueImpl(startOffset, endOffset, symbol.owner.type, symbol)
 

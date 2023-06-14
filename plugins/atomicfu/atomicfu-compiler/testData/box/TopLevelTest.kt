@@ -7,6 +7,12 @@ private val c = atomic(true)
 private val abcNode = atomic(ANode(BNode(CNode(8))))
 private val any = atomic<Any?>(null)
 
+internal val a_internal = atomic(0)
+internal val b_internal = atomic(2424920024888888848)
+internal val c_internal = atomic(true)
+internal val abcNode_internal = atomic(ANode(BNode(CNode(8))))
+internal val any_internal = atomic<Any?>(null)
+
 private val intArr = AtomicIntArray(3)
 private val longArr = AtomicLongArray(5)
 private val booleanArr = AtomicBooleanArray(4)

@@ -90,6 +90,7 @@ abstract class AbstractAtomicfuIrBuilder(
 
     fun irClassWithPrivateConstructor(
         name: String,
+        visibility: DescriptorVisibility,
         parentContainer: IrDeclarationContainer
     ): IrClass = context.irFactory.buildClass {
         this.name = Name.identifier(name)
@@ -102,7 +103,7 @@ abstract class AbstractAtomicfuIrBuilder(
             this.name = Name.identifier("\$this")
             type = IrSimpleTypeImpl(irClass.symbol, false, emptyList(), emptyList())
         }
-        irClass.visibility = DescriptorVisibilities.PRIVATE
+        irClass.visibility = visibility
         addConstructor {
             isPrimary = true
         }.apply {
