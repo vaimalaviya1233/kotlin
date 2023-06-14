@@ -14,11 +14,14 @@ output/javaClasses
 output/sources
 
 # kotlinc
+-language-version 2.0
 -cp %KOTLIN_STDLIB%
 -d output/ap
 ap/Processor.kt
 
 # kapt
+-language-version 2.0
+-Xdisable-kapt-fallback-mode
 -Kapt-mode=stubsAndApt
 -Kapt-stubs=output/stubs
 -Kapt-classes=output/classes
@@ -36,6 +39,8 @@ Test.kt
 output/sources/generated/Property.java
 
 # kotlinc
+-language-version 2.0
+-Xdisable-kapt-fallback-mode
 -d output/classes
 -cp output/ap:output/classes:output/javaClasses:%KOTLIN_STDLIB%
 Test.kt
