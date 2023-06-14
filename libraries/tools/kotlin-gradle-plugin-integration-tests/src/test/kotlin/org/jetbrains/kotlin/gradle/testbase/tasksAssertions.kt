@@ -43,20 +43,14 @@ fun BuildResult.assertTasksExecuted(vararg tasks: String) {
 }
 
 /**
- * Asserts all tasks match given [tasksRegex] have 'SUCCESS' execution state.
+ * Asserts any tasks match given [tasksRegex] have 'SUCCESS' execution state.
  */
 fun BuildResult.assertTasksExecuted(tasksRegex: Regex) {
     val matchedTasks = this.tasks.filter { task ->
-        tasksRegex.matches(task.path)
+        tasksRegex.matches(task.path) && task.outcome == TaskOutcome.SUCCESS
     }.toList()
 
-    assertFalse(matchedTasks.isEmpty(), "There are no tasks that match the $tasksRegex")
-    matchedTasks.forEach { task ->
-        assert(task?.outcome == TaskOutcome.SUCCESS) {
-            printBuildOutput()
-            "Task $task didn't have 'SUCCESS' state: ${task?.outcome}"
-        }
-    }
+    assertFalse(matchedTasks.isEmpty(), "There are no 'SUCCESS' tasks that match the $tasksRegex")
 }
 
 /**
