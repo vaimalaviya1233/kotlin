@@ -103,6 +103,7 @@ abstract class SymbolLightClassForNamedClassLike : SymbolLightClassForClassLike<
             ?.getDeclaredMemberScope()
             ?.getCallableSymbols()
             ?.filterIsInstance<KtPropertySymbol>()
+            ?.filter { it.hasBackingField || it.isDelegatedProperty }
             ?.applyIf(isInterface) {
                 filter { it.isConstOrJvmField }
             }

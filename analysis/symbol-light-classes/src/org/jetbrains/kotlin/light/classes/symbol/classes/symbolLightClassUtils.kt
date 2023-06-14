@@ -609,6 +609,7 @@ internal fun SymbolLightClassBase.addPropertyBackingFields(
 ) {
     val propertySymbols = symbolWithMembers.getDeclaredMemberScope().getCallableSymbols()
         .filterIsInstance<KtPropertySymbol>()
+        .filter { it.hasBackingField || it.isDelegatedProperty }
         .applyIf(symbolWithMembers is KtClassOrObjectSymbol && symbolWithMembers.classKind == KtClassKind.COMPANION_OBJECT) {
             // All fields for companion object of classes are generated to the containing class
             // For interfaces, only @JvmField-annotated properties are generated to the containing class
