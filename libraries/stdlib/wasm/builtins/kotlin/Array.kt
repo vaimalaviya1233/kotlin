@@ -26,7 +26,7 @@ public class Array<T> @PublishedApi internal constructor(size: Int) {
     internal val storage: WasmAnyArray
 
     init {
-        if (size < 0) throw IllegalArgumentException("Negative array size: $size")
+        if (size < 0) throw IllegalArgumentException("Negative array size")
         storage = WasmAnyArray(size)
     }
 
@@ -94,7 +94,7 @@ internal fun <T> arrayIterator(array: Array<T>) = object : Iterator<T> {
 }
 
 internal inline fun <reified T> createAnyArray(size: Int, init: (Int) -> T): Array<T> {
-    if (size < 0) throw IllegalArgumentException("Negative array size: $size")
+    if (size < 0) throw IllegalArgumentException("Negative array size")
     val result = WasmAnyArray(size)
     result.fill(size, init)
     return Array(result)
