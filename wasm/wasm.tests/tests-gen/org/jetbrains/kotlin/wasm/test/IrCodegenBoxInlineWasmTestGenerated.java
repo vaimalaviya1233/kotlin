@@ -686,11 +686,6 @@ public class IrCodegenBoxInlineWasmTestGenerated extends AbstractIrCodegenBoxInl
             runTest("compiler/testData/codegen/boxInline/argumentOrder/simpleInClass.kt");
         }
 
-        @TestMetadata("varargAndDefaultParameters.kt")
-        public void testVarargAndDefaultParameters() throws Exception {
-            runTest("compiler/testData/codegen/boxInline/argumentOrder/varargAndDefaultParameters.kt");
-        }
-
         @TestMetadata("varargAndDefaultParametersWithCorrectOrder.kt")
         public void testVarargAndDefaultParametersWithCorrectOrder() throws Exception {
             runTest("compiler/testData/codegen/boxInline/argumentOrder/varargAndDefaultParametersWithCorrectOrder.kt");

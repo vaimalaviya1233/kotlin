@@ -763,12 +763,6 @@ public class IrJsES6CodegenInlineTestGenerated extends AbstractIrJsES6CodegenInl
         }
 
         @Test
-        @TestMetadata("varargAndDefaultParameters.kt")
-        public void testVarargAndDefaultParameters() throws Exception {
-            runTest("compiler/testData/codegen/boxInline/argumentOrder/varargAndDefaultParameters.kt");
-        }
-
-        @Test
         @TestMetadata("varargAndDefaultParametersWithCorrectOrder.kt")
         public void testVarargAndDefaultParametersWithCorrectOrder() throws Exception {
             runTest("compiler/testData/codegen/boxInline/argumentOrder/varargAndDefaultParametersWithCorrectOrder.kt");
