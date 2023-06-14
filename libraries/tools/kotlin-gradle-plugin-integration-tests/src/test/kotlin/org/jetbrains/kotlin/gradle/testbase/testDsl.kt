@@ -56,7 +56,7 @@ fun KGPBaseTest.project(
     )
     projectPath.addDefaultBuildFiles()
     projectPath.enableCacheRedirector()
-    projectPath.enableAndroidSdk()
+    if (defaultBuildOptions.enableAndroidSdk) projectPath.enableAndroidSdk()
 
     val gradleRunner = GradleRunner
         .create()
