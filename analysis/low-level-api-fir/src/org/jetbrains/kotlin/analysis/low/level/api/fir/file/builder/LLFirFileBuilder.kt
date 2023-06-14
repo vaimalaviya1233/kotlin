@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.analysis.utils.errors.checkWithAttachmentBuilder
 import org.jetbrains.kotlin.fir.builder.BodyBuildingMode
 import org.jetbrains.kotlin.fir.builder.RawFirBuilder
 import org.jetbrains.kotlin.fir.declarations.FirFile
+import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtFile
 
 /**
@@ -41,6 +42,7 @@ internal class LLFirFileBuilder(val moduleComponents: LLFirModuleResolveComponen
                 // TODO: remove this clause when proper support for scripts is implemented in K2.
                 BodyBuildingMode.NORMAL
             }
+            ktFile is KtCodeFragment -> BodyBuildingMode.NORMAL
             else -> BodyBuildingMode.LAZY_BODIES
         }
 

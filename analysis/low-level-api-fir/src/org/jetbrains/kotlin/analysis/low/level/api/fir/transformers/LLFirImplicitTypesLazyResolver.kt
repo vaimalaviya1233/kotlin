@@ -91,7 +91,8 @@ internal class LLFirImplicitBodyTargetResolver(
             is FirFileAnnotationsContainer,
             is FirScript,
             is FirAnonymousInitializer,
-            is FirCallableDeclaration -> {
+            is FirCallableDeclaration,
+            is FirCodeFragment -> {
                 // No implicit bodies here
             }
             else -> throwUnexpectedFirElementError(target)

@@ -77,7 +77,8 @@ private class LLFirContractsTargetResolver(
             is FirFileAnnotationsContainer,
             is FirTypeAlias,
             is FirScript,
-            is FirCallableDeclaration -> {
+            is FirCallableDeclaration,
+            is FirCodeFragment -> {
                 // No contracts here
             }
             else -> throwUnexpectedFirElementError(target)

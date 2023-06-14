@@ -253,7 +253,7 @@ internal class NonReanalyzableClassDeclarationStructureElement(
 internal class NonReanalyzableNonClassDeclarationStructureElement(
     firFile: FirFile,
     val fir: FirDeclaration,
-    override val psi: KtDeclaration,
+    override val psi: KtAnnotated,
     moduleComponents: LLFirModuleResolveComponents,
 ) : NonReanalyzableDeclarationStructureElement(firFile, moduleComponents) {
 
