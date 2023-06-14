@@ -6,7 +6,6 @@
 package org.jetbrains.kotlin.ir.declarations.impl
 
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.IrBlockBody
 import org.jetbrains.kotlin.ir.expressions.IrExpression
@@ -169,18 +168,18 @@ abstract class AbstractIrFactoryImpl : IrFactory {
         startOffset: Int,
         endOffset: Int,
         origin: IrDeclarationOrigin,
-        symbol: IrPropertySymbol,
         name: Name,
         visibility: DescriptorVisibility,
         modality: Modality,
+        symbol: IrPropertySymbol,
         isVar: Boolean,
         isConst: Boolean,
         isLateinit: Boolean,
         isDelegated: Boolean,
         isExternal: Boolean,
+        containerSource: DeserializedContainerSource?,
         isExpect: Boolean,
         isFakeOverride: Boolean,
-        containerSource: DeserializedContainerSource?,
     ): IrProperty =
         IrPropertyImpl(
             startOffset, endOffset, origin, symbol, name, visibility, modality,

@@ -578,19 +578,19 @@ internal class ReflectionReferencesGenerator(statementGenerator: StatementGenera
                 val offset = UNDEFINED_OFFSET
                 context.symbolTable.declareProperty(offset, offset, IrDeclarationOrigin.SYNTHETIC_JAVA_PROPERTY_DELEGATE, descriptor) {
                     context.irFactory.createProperty(
-                        offset,
-                        offset,
-                        IrDeclarationOrigin.SYNTHETIC_JAVA_PROPERTY_DELEGATE,
-                        symbol,
-                        descriptor.name,
-                        descriptor.visibility,
-                        descriptor.modality,
-                        descriptor.isVar,
-                        descriptor.isConst,
-                        descriptor.isLateInit,
-                        descriptor.isDelegated,
-                        descriptor.isExternal,
-                        descriptor.isExpect,
+                        startOffset = offset,
+                        endOffset = offset,
+                        origin = IrDeclarationOrigin.SYNTHETIC_JAVA_PROPERTY_DELEGATE,
+                        name = descriptor.name,
+                        visibility = descriptor.visibility,
+                        modality = descriptor.modality,
+                        symbol = symbol,
+                        isVar = descriptor.isVar,
+                        isConst = descriptor.isConst,
+                        isLateinit = descriptor.isLateInit,
+                        isDelegated = descriptor.isDelegated,
+                        isExternal = descriptor.isExternal,
+                        isExpect = descriptor.isExpect,
                         isFakeOverride = false
                     ).also {
                         it.parent = scope.getLocalDeclarationParent()

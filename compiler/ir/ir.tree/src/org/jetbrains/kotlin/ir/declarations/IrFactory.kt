@@ -6,7 +6,6 @@
 package org.jetbrains.kotlin.ir.declarations
 
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.expressions.IrBlockBody
 import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrExpressionBody
@@ -139,18 +138,18 @@ interface IrFactory {
         startOffset: Int,
         endOffset: Int,
         origin: IrDeclarationOrigin,
-        symbol: IrPropertySymbol,
         name: Name,
         visibility: DescriptorVisibility,
         modality: Modality,
+        symbol: IrPropertySymbol,
         isVar: Boolean,
         isConst: Boolean,
         isLateinit: Boolean,
         isDelegated: Boolean,
         isExternal: Boolean,
+        containerSource: DeserializedContainerSource? = null,
         isExpect: Boolean = false,
-        isFakeOverride: Boolean = origin == IrDeclarationOrigin.FAKE_OVERRIDE,
-        containerSource: DeserializedContainerSource? = null
+        isFakeOverride: Boolean = origin == IrDeclarationOrigin.FAKE_OVERRIDE
     ): IrProperty
 
     fun createPropertyWithLateBinding(

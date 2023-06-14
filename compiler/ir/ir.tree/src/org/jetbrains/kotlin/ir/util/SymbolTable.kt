@@ -798,9 +798,11 @@ open class SymbolTable(
         isDelegated: Boolean = descriptor.isDelegated,
         propertyFactory: (IrPropertySymbol) -> IrProperty = { symbol ->
             irFactory.createProperty(
-                startOffset, endOffset, origin, symbol, name = nameProvider.nameForDeclaration(descriptor),
-                visibility = descriptor.visibility,
+                startOffset = startOffset,
+                endOffset = endOffset,
+                origin = origin, name = nameProvider.nameForDeclaration(descriptor), visibility = descriptor.visibility,
                 modality = descriptor.modality,
+                symbol = symbol,
                 isVar = descriptor.isVar,
                 isConst = descriptor.isConst,
                 isLateinit = descriptor.isLateInit,
