@@ -116,6 +116,7 @@ internal class KtFirReferenceShortener(
         val kDocQualifiersToShorten = collectKDocQualifiersToShorten(
             file,
             selection,
+            collector,
             classShortenOption = { minOf(classShortenOption(it), ShortenOption.SHORTEN_IF_ALREADY_IMPORTED) },
             callableShortenOption = { minOf(callableShortenOption(it), ShortenOption.SHORTEN_IF_ALREADY_IMPORTED) },
         )
@@ -133,6 +134,7 @@ internal class KtFirReferenceShortener(
     private fun collectKDocQualifiersToShorten(
         file: KtFile,
         selection: TextRange,
+        collector: ElementsToShortenCollector,
         classShortenOption: (KtClassLikeSymbol) -> ShortenOption,
         callableShortenOption: (KtCallableSymbol) -> ShortenOption,
     ): List<ShortenKDocQualifier> {
@@ -148,6 +150,7 @@ internal class KtFirReferenceShortener(
                     else -> {
                         val shouldShortenKDocQualifier = shouldShortenKDocQualifier(
                             element,
+                            collector,
                             classShortenOption = { classShortenOption(buildSymbol(it) as KtClassLikeSymbol) },
                             callableShortenOption = { callableShortenOption(buildSymbol(it) as KtCallableSymbol) },
                         )
@@ -171,10 +174,14 @@ internal class KtFirReferenceShortener(
 
     private fun shouldShortenKDocQualifier(
         kDocName: KDocName,
+        collector: ElementsToShortenCollector,
         classShortenOption: (FirClassLikeSymbol<*>) -> ShortenOption,
         callableShortenOption: (FirCallableSymbol<*>) -> ShortenOption,
     ): Boolean {
         val fqName = kDocName.getQualifiedNameAsFqName().withoutFakeRootPrefix()
+
+        // KDocs are only shortened if they are available without imports, so all the imports to add are already in `collector`
+        if (fqName.isInImports(collector)) return true
 
         val resolvedSymbols = with(analysisSession) {
             val shortFqName = FqName(fqName.shortName().asString())
@@ -199,6 +206,9 @@ internal class KtFirReferenceShortener(
 
         return false
     }
+
+    private fun FqName.isInImports(collector: ElementsToShortenCollector): Boolean =
+        this in collector.getNamesToImport(starImport = false) || this.parent() in collector.getNamesToImport(starImport = true)
 
     private val KDocName.qualifiedKDocNamesWithSelf: Sequence<KDocName>
         get() = generateSequence(this) { it.getQualifier() }.takeWhile { it.getQualifier() != null }
