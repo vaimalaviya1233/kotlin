@@ -93,7 +93,7 @@ class AtomicArrayClass {
     val booleanArr = AtomicBooleanArray(10)
     val refArr = atomicArrayOfNulls<ARef>(10)
     val anyArr = atomicArrayOfNulls<Any?>(10)
-    val a = atomic(ARef(8))
+    internal val a = atomic(ARef(8))
 }
 
 data class ARef(val n: Int)

@@ -28,7 +28,7 @@ public class AtomicfuJvmIrTestGenerated extends AbstractAtomicfuJvmIrTest {
     @Test
     @TestMetadata("ArithmeticTest.kt")
     public void testArithmeticTest() throws Exception {
-        runTest("plugins/atomicfu/atomicfu-compiler/testData/box/ArithmeticTest.kt");
+        runTest("plugins/atomicfu/atomicfu-compiler/testData/box/atomics_basic/ArithmeticTest.kt");
     }
 
     @Test
@@ -46,7 +46,7 @@ public class AtomicfuJvmIrTestGenerated extends AbstractAtomicfuJvmIrTest {
     @Test
     @TestMetadata("AtomicArrayTest.kt")
     public void testAtomicArrayTest() throws Exception {
-        runTest("plugins/atomicfu/atomicfu-compiler/testData/box/AtomicArrayTest.kt");
+        runTest("plugins/atomicfu/atomicfu-compiler/testData/box/arrays_basic/AtomicArrayTest.kt");
     }
 
     @Test
@@ -82,7 +82,7 @@ public class AtomicfuJvmIrTestGenerated extends AbstractAtomicfuJvmIrTest {
     @Test
     @TestMetadata("IndexArrayElementGetterTest.kt")
     public void testIndexArrayElementGetterTest() throws Exception {
-        runTest("plugins/atomicfu/atomicfu-compiler/testData/box/IndexArrayElementGetterTest.kt");
+        runTest("plugins/atomicfu/atomicfu-compiler/testData/box/arrays_basic/IndexArrayElementGetterTest.kt");
     }
 
     @Test
@@ -191,5 +191,11 @@ public class AtomicfuJvmIrTestGenerated extends AbstractAtomicfuJvmIrTest {
     @TestMetadata("UncheckedCastTest.kt")
     public void testUncheckedCastTest() throws Exception {
         runTest("plugins/atomicfu/atomicfu-compiler/testData/box/UncheckedCastTest.kt");
+    }
+
+    @Test
+    @TestMetadata("PropertyGetterInvocationTest.kt")
+    public void testPropertyGetterInvocationTest() throws Exception {
+        runTest("plugins/atomicfu/atomicfu-compiler/testData/box/errors/PropertyGetterInvocationTest.kt");
     }
 }
