@@ -49,13 +49,13 @@ abstract class AbstractAtomicfuTransformer(
     private val ATOMIC_ARRAY_TYPES = setOf("AtomicIntArray", "AtomicLongArray", "AtomicBooleanArray", "AtomicArray")
 
     protected val atomicPropertyToVolatile = mutableMapOf<IrProperty, IrProperty>()
-    // todo move back to jvm
     protected val propertyToAtomicHandler = mutableMapOf<IrProperty, IrProperty>()
 
     fun transform(moduleFragment: IrModuleFragment) {
         transformAtomicProperties(moduleFragment)
         transformAtomicExtensions(moduleFragment)
         transformAtomicFunctions(moduleFragment)
+        finalTransformationCheck(moduleFragment)
         for (irFile in moduleFragment.files) {
             irFile.patchDeclarationParents()
         }
@@ -80,6 +80,13 @@ abstract class AbstractAtomicfuTransformer(
     private fun transformAtomicFunctions(moduleFragment: IrModuleFragment) {
         for (irFile in moduleFragment.files) {
             irFile.transform(atomicFunctionsTransformer, null)
+        }
+    }
+
+    private fun finalTransformationCheck(moduleFragment: IrModuleFragment) {
+        val finalTransformationChecker = FinalTransformationChecker()
+        for (irFile in moduleFragment.files) {
+            irFile.accept(finalTransformationChecker, null)
         }
     }
 
@@ -295,8 +302,8 @@ abstract class AbstractAtomicfuTransformer(
 
         private fun IrProperty.checkVisibility() =
             check(visibility == DescriptorVisibilities.PRIVATE || visibility == DescriptorVisibilities.INTERNAL) {
-                "Please declare atomic property ${this.render()} as private or internal. \n" +
-                        "To expose the value of an atomic property to the public, use a delegated property declared in the same scope: \n" +
+                "Please make atomic property [${this.atomicfuRender()}] declared in ${this.parent.render()} as private or internal. \n" +
+                        "To expose atomic property value to the public, you can use a delegated property declared in the same scope, e.g: \n" +
                         "```\n" +
                         "private val _a = atomic<T>(initial) \n" +
                         "public var a: T by _a \n" +
@@ -394,7 +401,7 @@ abstract class AbstractAtomicfuTransformer(
                         )
                         return super.visitCall(irCall, data)
                     }
-                    return super.visitCall(expression, data)
+                    //return super.visitCall(expression, data)
                 }
             }
             return super.visitCall(expression, data)
@@ -491,6 +498,20 @@ abstract class AbstractAtomicfuTransformer(
                 it.isTraceCall()
             }
             return super.visitContainerExpression(expression, data)
+        }
+    }
+
+    private inner class FinalTransformationChecker: IrElementTransformer<IrFunction?> {
+        override fun visitFunction(declaration: IrFunction, data: IrFunction?): IrStatement {
+            return super.visitFunction(declaration, declaration)
+        }
+
+        override fun visitCall(expression: IrCall, data: IrFunction?): IrElement {
+            if (expression.symbol.owner.isGetter && (expression.type.isAtomicValueType() || expression.type.isAtomicArrayType())) {
+                val atomicProperty = expression.getCorrespondingProperty()
+                error("Invocation of atomic get or update function is expected on property [${atomicProperty.atomicfuRender()}] in ${data?.render()}")
+            }
+            return super.visitCall(expression, data)
         }
     }
 
@@ -609,4 +630,7 @@ abstract class AbstractAtomicfuTransformer(
     protected fun IrValueParameter.capture(): IrGetValue = IrGetValueImpl(startOffset, endOffset, symbol.owner.type, symbol)
 
     protected fun IrType.isObject() = classOrNull?.owner?.kind == ClassKind.OBJECT
+
+    private fun IrProperty.atomicfuRender(): String =
+        "val " + name.asString() + ": " + backingField?.type?.render()
 }
