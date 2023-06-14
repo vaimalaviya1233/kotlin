@@ -12,15 +12,9 @@ import org.jetbrains.kotlin.analysis.low.level.api.fir.test.configurators.Analys
 import org.jetbrains.kotlin.analysis.test.framework.services.expressionMarkerProvider
 import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.declarations.FirImport
-import org.jetbrains.kotlin.fir.renderer.FirFileAnnotationsContainerRenderer
-import org.jetbrains.kotlin.fir.renderer.FirPackageDirectiveRenderer
-import org.jetbrains.kotlin.fir.renderer.FirRenderer
-import org.jetbrains.kotlin.fir.renderer.FirResolvePhaseRenderer
+import org.jetbrains.kotlin.fir.renderer.*
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
-import org.jetbrains.kotlin.test.builders.TestConfigurationBuilder
-import org.jetbrains.kotlin.test.directives.model.SimpleDirectivesContainer
 import org.jetbrains.kotlin.test.services.TestModuleStructure
 import org.jetbrains.kotlin.test.services.TestServices
 import org.jetbrains.kotlin.test.services.assertions
@@ -54,6 +48,7 @@ private fun render(firElement: FirElement?): String = when (firElement) {
         fileAnnotationsContainerRenderer = FirFileAnnotationsContainerRenderer(),
         packageDirectiveRenderer = FirPackageDirectiveRenderer(),
         resolvePhaseRenderer = FirResolvePhaseRenderer(),
+        declarationRenderer = FirDeclarationRendererWithAttributes(FirDeclarationRendererWithAttributes.COMMON_IGNORED_ATTRIBUTES),
     ).renderElementAsString(firElement)
 }
 

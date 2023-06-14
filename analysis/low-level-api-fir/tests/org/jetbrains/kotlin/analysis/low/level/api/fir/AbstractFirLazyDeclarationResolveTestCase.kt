@@ -40,7 +40,7 @@ abstract class AbstractFirLazyDeclarationResolveTestCase : AbstractLowLevelApiSi
         val resultBuilder = StringBuilder()
         val renderer = FirRenderer(
             builder = resultBuilder,
-            declarationRenderer = FirDeclarationRendererWithAttributes(),
+            declarationRenderer = FirDeclarationRendererWithAttributes(FirDeclarationRendererWithAttributes.COMMON_IGNORED_ATTRIBUTES),
             resolvePhaseRenderer = FirResolvePhaseRenderer(),
             errorExpressionRenderer = FirErrorExpressionExtendedRenderer(),
             fileAnnotationsContainerRenderer = FirFileAnnotationsContainerRenderer(),
