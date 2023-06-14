@@ -990,8 +990,14 @@ open class SymbolTable(
         descriptor: TypeParameterDescriptor,
         typeParameterFactory: (IrTypeParameterSymbol) -> IrTypeParameter = {
             irFactory.createTypeParameter(
-                startOffset, endOffset, origin, it, nameProvider.nameForDeclaration(descriptor),
-                it.descriptor.index, it.descriptor.isReified, it.descriptor.variance
+                startOffset = startOffset,
+                endOffset = endOffset,
+                origin = origin,
+                name = nameProvider.nameForDeclaration(descriptor),
+                symbol = it,
+                variance = it.descriptor.variance,
+                index = it.descriptor.index,
+                isReified = it.descriptor.isReified
             )
         }
     ): IrTypeParameter =
@@ -1017,8 +1023,14 @@ open class SymbolTable(
         descriptor: TypeParameterDescriptor,
         typeParameterFactory: (IrTypeParameterSymbol) -> IrTypeParameter = {
             irFactory.createTypeParameter(
-                startOffset, endOffset, origin, it, nameProvider.nameForDeclaration(descriptor),
-                it.descriptor.index, it.descriptor.isReified, it.descriptor.variance
+                startOffset = startOffset,
+                endOffset = endOffset,
+                origin = origin,
+                name = nameProvider.nameForDeclaration(descriptor),
+                symbol = it,
+                variance = it.descriptor.variance,
+                index = it.descriptor.index,
+                isReified = it.descriptor.isReified
             )
         }
     ): IrTypeParameter =
