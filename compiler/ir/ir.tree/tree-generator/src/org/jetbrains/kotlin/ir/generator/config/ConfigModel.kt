@@ -37,6 +37,8 @@ class ElementConfig(
 
     var ownsChildren = true // If false, acceptChildren/transformChildren will NOT be generated.
 
+    var isForcedLeaf = false
+
     var typeKind: TypeKind? = null
 
     var generationCallback: (TypeSpec.Builder.() -> Unit)? = null
