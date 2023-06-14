@@ -209,6 +209,13 @@ public final annotation class ExperimentalJsExport : kotlin.Annotation {
     public constructor ExperimentalJsExport()
 }
 
+@kotlin.RequiresOptIn(level = Level.WARNING)
+@kotlin.annotation.MustBeDocumented
+@kotlin.annotation.Retention(value = AnnotationRetention.BINARY)
+public final annotation class ExperimentalJsFileName : kotlin.Annotation {
+    public constructor ExperimentalJsFileName()
+}
+
 public external object JSON {
     public final fun <T> parse(text: kotlin.String): T
 
@@ -263,6 +270,14 @@ public final annotation class JsExternalArgument : kotlin.Annotation {
 @kotlin.SinceKotlin(version = "1.9")
 public final annotation class JsExternalInheritorsOnly : kotlin.Annotation {
     public constructor JsExternalInheritorsOnly()
+}
+
+@kotlin.annotation.Retention(value = AnnotationRetention.BINARY)
+@kotlin.annotation.Target(allowedTargets = {AnnotationTarget.FILE})
+public final annotation class JsFileName : kotlin.Annotation {
+    public constructor JsFileName(name: kotlin.String)
+
+    public final val name: kotlin.String { get; }
 }
 
 @kotlin.annotation.Retention(value = AnnotationRetention.BINARY)
