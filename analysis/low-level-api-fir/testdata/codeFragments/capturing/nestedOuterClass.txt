@@ -1,0 +1,2 @@
+ContainingClass[name: <this>; isMutated: false; displayText: this@Foo] = class Foo : R|kotlin/Any|
+ContainingClass[name: <this>; isMutated: false; displayText: this@Bar] = class Bar : R|kotlin/Any|

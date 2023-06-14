@@ -1,0 +1,2 @@
+Local[name: a; isMutated: false; displayText: a] = a: R|kotlin/Int|
+Local[name: b; isMutated: false; displayText: b] = b: R|kotlin/String|

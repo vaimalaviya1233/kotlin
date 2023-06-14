@@ -116,6 +116,14 @@ internal fun TestGroupSuite.generateFirLowLevelApiTests() {
         testClass<AbstractFirNonLocalDeclarationAnchorTest> {
             model("nonLocalDeclarationAnchors")
         }
+
+        testClass<AbstractCodeFragmentCompilationTest> {
+            model("codeFragments/compilation", pattern = TestGeneratorUtil.KT_WITHOUT_DOTS_IN_NAME)
+        }
+
+        testClass<AbstractCodeFragmentCapturingTest> {
+            model("codeFragments/capturing", pattern = TestGeneratorUtil.KT_WITHOUT_DOTS_IN_NAME)
+        }
     }
 
     testGroup(

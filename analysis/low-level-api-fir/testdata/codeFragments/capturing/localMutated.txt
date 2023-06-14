@@ -1,0 +1,1 @@
+Local[name: x; isMutated: true; displayText: x] = lvar x: R|kotlin/Int| = Int(0)
