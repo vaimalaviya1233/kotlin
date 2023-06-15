@@ -71,16 +71,12 @@ interface AbiFunction : AbiDeclaration {
     val isConstructor: Boolean
     val isInline: Boolean
 
-    /**
-     * Additional value parameter flags that might affect binary compatibility and that should be rendered along with the function itself.
-     */
+    /** Additional value parameter flags that might affect binary compatibility and that should be rendered along with the function itself. */
     val valueParameterFlags: ValueParameterFlags?
 
     enum class ValueParameterFlag { HAS_DEFAULT_ARG, NOINLINE, CROSSINLINE }
 
-    /**
-     * @property flags A map where keys are value parameter indices (starting from 0)
-     */
+    /** @property flags A map where keys are value parameter indices (starting from 0) */
     data class ValueParameterFlags(val flags: SortedMap<Int, SortedSet<ValueParameterFlag>>)
 }
 
