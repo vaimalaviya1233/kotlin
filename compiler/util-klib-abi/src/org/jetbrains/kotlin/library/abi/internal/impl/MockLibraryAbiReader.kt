@@ -474,8 +474,17 @@ private fun finalVar(sv1: String, sv2: String) = AbiPropertyImpl(
     mutability = AbiProperty.Mutability.VAR
 )
 
-private fun valueParameterFlags(vararg flags: Pair<Int, AbiFunction.ValueParameterFlag>) =
-    AbiFunction.ValueParameterFlags(flags.associateTo(TreeMap()) { it.first to sortedSetOf(it.second) })
+private fun valueParameterFlags(vararg flags: Pair<Int, AbiFunction.ValueParameterFlag>): AbiFunction.ValueParameterFlags =
+    if (flags.isEmpty()) {
+        AbiFunction.ValueParameterFlags(emptyList())
+    } else {
+        val maxIndex = flags.maxOf { it.first }
+        val map = flags.associate { it.first to sortedSetOf(it.second) }
+        val list = List<SortedSet<AbiFunction.ValueParameterFlag>>(maxIndex + 1) { index ->
+            map[index] ?: sortedSetOf()
+        }
+        AbiFunction.ValueParameterFlags(list)
+    }
 
 private fun finalFun(sv1: String, sv2: String, valueParameterFlags: AbiFunction.ValueParameterFlags? = null) = AbiFunctionImpl(
     signatures = AbiSignaturesImpl(sv1, sv2),

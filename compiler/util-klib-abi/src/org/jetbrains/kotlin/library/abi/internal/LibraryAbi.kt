@@ -75,9 +75,7 @@ interface AbiFunction : AbiDeclaration {
     val valueParameterFlags: ValueParameterFlags?
 
     enum class ValueParameterFlag { HAS_DEFAULT_ARG, NOINLINE, CROSSINLINE }
-
-    /** @property flags A map where keys are value parameter indices (starting from 0) */
-    data class ValueParameterFlags(val flags: SortedMap<Int, SortedSet<ValueParameterFlag>>)
+    data class ValueParameterFlags(val flags: List<SortedSet<ValueParameterFlag>>)
 }
 
 interface AbiProperty : AbiDeclaration {

@@ -120,9 +120,10 @@ fun Appendable.appendMutability(mutability: AbiProperty.Mutability): Appendable 
 )
 
 fun Appendable.appendValueParameterFlags(valueParameterFlags: AbiFunction.ValueParameterFlags?): Appendable {
-    if (valueParameterFlags != null) {
+    if (valueParameterFlags != null && valueParameterFlags.flags.isNotEmpty()) {
         append('[')
-        valueParameterFlags.flags.entries.joinTo(this, separator = " ") { (index, flags) ->
+        valueParameterFlags.flags.mapIndexedNotNull { index, flags ->
+            if (flags.isEmpty()) return@mapIndexedNotNull null
             "$index:" + flags.joinToString(separator = ",") { flag ->
                 when (flag!!) {
                     AbiFunction.ValueParameterFlag.HAS_DEFAULT_ARG -> "default_arg"
@@ -130,7 +131,7 @@ fun Appendable.appendValueParameterFlags(valueParameterFlags: AbiFunction.ValueP
                     AbiFunction.ValueParameterFlag.CROSSINLINE -> "crossinline"
                 }
             }
-        }
+        }.joinTo(this, separator = " ")
         append(']')
     }
     return this
