@@ -1325,15 +1325,15 @@ internal object DevirtualizationAnalysis {
             if (coercion == null)
                 value
             else irCall(coercion).apply {
+                require(coercion.owner.dispatchReceiverParameter == null &&
+                        coercion.owner.extensionReceiverParameter == null &&
+                        coercion.owner.valueParameters.size == 1
+                ) { "Coercion function must be static with one value parameter" }
                 putValueArgument(0, value)
             }
 
     private fun IrBuilderWithScope.irCoerce(value: IrExpression, coercion: DataFlowIR.FunctionSymbol.Declared?) =
-            if (coercion == null)
-                value
-            else irCall(coercion.irFunction!!).apply {
-                putValueArgument(0, value)
-            }
+            irCoerce(value, coercion?.let { it.irFunction?.symbol!! })
 
     sealed class PossiblyCoercedValue(private val coercion: IrFunctionSymbol?) {
         abstract fun getValue(irBuilder: IrBuilderWithScope): IrExpression
