@@ -7301,6 +7301,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("when.kt")
+            public void testWhen() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/controlStructures/when.kt");
+            }
+
+            @Test
             @TestMetadata("whenInResultOfLambda.kt")
             public void testWhenInResultOfLambda() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/controlStructures/whenInResultOfLambda.kt");

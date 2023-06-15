@@ -2283,6 +2283,7 @@ open class RawFirBuilder(
 
             @OptIn(FirContractViolation::class)
             val ref = FirExpressionRef<FirWhenExpression>()
+            var shouldBind = hasSubject
             return buildWhenExpression {
                 source = expression.toFirSourceElement()
                 this.subject = subjectExpression
@@ -2307,12 +2308,22 @@ open class RawFirBuilder(
                             val ktCondition = entry.conditions.first()
                             buildWhenBranch {
                                 source = entrySource
-                                condition = ((ktCondition as? KtWhenConditionWithExpression)?.expression
-                                    ?: ktCondition)
-                                    .toFirExpression(
+                                condition = ((ktCondition as? KtWhenConditionWithExpression)?.expression ?: ktCondition).toFirExpression(
                                         "No expression in condition with expression",
                                         DiagnosticKind.ExpressionExpected
-                                    )
+                                    ).let { condition ->
+                                        if (condition is FirErrorExpression && condition.nonExpressionElement == null) {
+                                            condition.replaceNonExpressionElement(
+                                                ktCondition.toFirWhenCondition(
+                                                    ref,
+                                                    { toFirExpression(it) },
+                                                    { toFirOrErrorType() },
+                                                )
+                                            )
+                                            shouldBind = true
+                                        }
+                                        condition
+                                    }
                                 result = branchBody
                             }
                         }
@@ -2325,7 +2336,7 @@ open class RawFirBuilder(
                     }
                 }
             }.also {
-                if (hasSubject) {
+                if (shouldBind) {
                     ref.bind(it)
                 }
             }

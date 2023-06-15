@@ -61,4 +61,8 @@ internal class FirErrorExpressionImpl(
     override fun replaceAnnotations(newAnnotations: List<FirAnnotation>) {
         annotations = newAnnotations.toMutableOrEmpty()
     }
+
+    override fun replaceNonExpressionElement(newNonExpressionElement: FirElement?) {
+        nonExpressionElement = newNonExpressionElement
+    }
 }

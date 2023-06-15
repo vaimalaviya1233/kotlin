@@ -16,7 +16,8 @@ data class WhenEntry(
     val conditions: List<FirExpression>,
     val firBlock: FirBlock,
     val node: LighterASTNode,
-    val isElse: Boolean = false
+    val isElse: Boolean = false,
+    val shouldBindSubject: Boolean = false,
 ) {
     fun toFirWhenCondition(): FirExpression {
         require(conditions.isNotEmpty())

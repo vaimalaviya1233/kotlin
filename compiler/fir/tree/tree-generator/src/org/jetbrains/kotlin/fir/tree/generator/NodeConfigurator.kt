@@ -120,7 +120,7 @@ object NodeConfigurator : AbstractFieldConfigurator<FirTreeBuilder>(FirTreeBuild
 
         errorExpression.configure {
             +field("expression", expression, nullable = true)
-            +field("nonExpressionElement", baseFirElement, nullable = true)
+            +field("nonExpressionElement", baseFirElement, nullable = true, withReplace = true)
         }
 
         errorFunction.configure {
