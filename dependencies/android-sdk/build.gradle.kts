@@ -30,10 +30,6 @@ dependencies {
     implicitDependencies("google:build-tools:r29.0.3:windows@zip")
     implicitDependencies("google:build-tools:r29.0.3:macosx@zip")
 
-    implicitDependencies("google:build-tools:r28.0.3:linux@zip")
-    implicitDependencies("google:build-tools:r28.0.3:windows@zip")
-    implicitDependencies("google:build-tools:r28.0.3:macosx@zip")
-
     implicitDependencies("google:platform-tools:r28.0.1:linux@zip")
     implicitDependencies("google:platform-tools:r28.0.1:windows@zip")
     implicitDependencies("google:platform-tools:r28.0.1:darwin@zip")
@@ -148,7 +144,6 @@ unzipSdkTask("platform", "26_r02", "platforms/android-26", "", androidPlatform, 
 unzipSdkTask("android_m2repository", "r44", "extras/android", "")
 unzipSdkTask("platform-tools", "r28.0.1", "", toolsOsDarwin)
 unzipSdkTask("sdk-tools-$toolsOsDarwin", "4333796"/*26.1.1*/, "", "")
-unzipSdkTask("build-tools", "r28.0.3", "build-tools/28.0.3", toolsOs, buildTools, 1)
 unzipSdkTask("build-tools", "r29.0.3", "build-tools/29.0.3", toolsOs, buildTools, 1)
 unzipSdkTask("emulator-$toolsOsDarwin", "5264690", "", "", prepareTask = prepareEmulator)
 unzipSdkTask("armeabi-v7a", "19", "system-images/android-19/default","r05", prepareTask = prepareEmulator)
