@@ -132,7 +132,7 @@ fun Appendable.appendValueParameterFlags(valueParameterFlags: AbiFunction.ValueP
 
 fun Appendable.appendSignatures(declaration: AbiDeclaration, settings: AbiRenderingSettings): Appendable =
     settings.renderedSignatureVersions.joinTo(this, separator = ", ") { signatureVersion ->
-        declaration.signatures[signatureVersion] ?: error("No signature $signatureVersion for ${declaration::class.java}, $declaration")
+        declaration.signatures[signatureVersion] ?: settings.whenSignatureNotFound(declaration, signatureVersion)
     }
 
 /**
@@ -143,6 +143,9 @@ fun Appendable.appendSignatures(declaration: AbiDeclaration, settings: AbiRender
  */
 class AbiRenderingSettings(
     renderedSignatureVersions: Set<AbiSignatureVersion>,
+    val whenSignatureNotFound: (AbiDeclaration, AbiSignatureVersion) -> String = { declaration, signatureVersion ->
+        error("No signature $signatureVersion for ${declaration::class.java}, $declaration")
+    },
     val renderingOrder: AbiRenderingOrder = AbiRenderingOrder.Default
 ) {
     init {
