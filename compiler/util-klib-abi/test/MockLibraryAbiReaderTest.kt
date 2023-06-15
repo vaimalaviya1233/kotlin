@@ -4,10 +4,7 @@
  */
 
 import com.intellij.openapi.util.text.StringUtilRt.convertLineSeparators
-import org.jetbrains.kotlin.library.abi.internal.AbiRenderingSettings
-import org.jetbrains.kotlin.library.abi.internal.AbiSignatureVersion
-import org.jetbrains.kotlin.library.abi.internal.LibraryAbiReader
-import org.jetbrains.kotlin.library.abi.internal.renderTopLevelsTo
+import org.jetbrains.kotlin.library.abi.internal.*
 import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -27,12 +24,9 @@ class MockLibraryAbiReaderTest {
         val expectedAbiText = readAbiTextFile("mock-klib-abi-dump-v1.txt")
 
         val libraryAbi = LibraryAbiReader.readAbiInfo(fakeLibrary)
-        val actualAbiText = buildString {
-            libraryAbi.topLevelDeclarations.renderTopLevelsTo(
-                output = this,
-                AbiRenderingSettings(renderedSignatureVersions = setOf(AbiSignatureVersion.V1))
-            )
-        }
+        val actualAbiText = libraryAbi.topLevelDeclarations.renderTopLevels(
+            AbiRenderingSettings(renderedSignatureVersions = setOf(AbiSignatureVersion.V1))
+        )
 
         assertEquals(expectedAbiText, actualAbiText)
     }
@@ -42,12 +36,9 @@ class MockLibraryAbiReaderTest {
         val expectedAbiText = readAbiTextFile("mock-klib-abi-dump-v2.txt")
 
         val libraryAbi = LibraryAbiReader.readAbiInfo(fakeLibrary)
-        val actualAbiText = buildString {
-            libraryAbi.topLevelDeclarations.renderTopLevelsTo(
-                output = this,
-                AbiRenderingSettings(renderedSignatureVersions = setOf(AbiSignatureVersion.V2))
-            )
-        }
+        val actualAbiText = libraryAbi.topLevelDeclarations.renderTopLevels(
+            AbiRenderingSettings(renderedSignatureVersions = setOf(AbiSignatureVersion.V2))
+        )
 
         assertEquals(expectedAbiText, actualAbiText)
     }
@@ -57,12 +48,9 @@ class MockLibraryAbiReaderTest {
         val expectedAbiText = readAbiTextFile("mock-klib-abi-dump-v1v2.txt")
 
         val libraryAbi = LibraryAbiReader.readAbiInfo(fakeLibrary)
-        val actualAbiText = buildString {
-            libraryAbi.topLevelDeclarations.renderTopLevelsTo(
-                output = this,
-                AbiRenderingSettings(renderedSignatureVersions = setOf(AbiSignatureVersion.V1, AbiSignatureVersion.V2))
-            )
-        }
+        val actualAbiText = libraryAbi.topLevelDeclarations.renderTopLevels(
+            AbiRenderingSettings(renderedSignatureVersions = setOf(AbiSignatureVersion.V1, AbiSignatureVersion.V2))
+        )
 
         assertEquals(expectedAbiText, actualAbiText)
     }

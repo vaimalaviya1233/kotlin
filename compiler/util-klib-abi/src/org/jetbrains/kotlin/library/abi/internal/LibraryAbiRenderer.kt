@@ -12,6 +12,10 @@ import java.lang.Appendable
 /**
  * The default rendering implementation.
  */
+fun AbiTopLevelDeclarations.renderTopLevels(settings: AbiRenderingSettings): String = buildString {
+    renderTopLevelsTo(this, settings)
+}
+
 fun AbiTopLevelDeclarations.renderTopLevelsTo(output: Appendable, settings: AbiRenderingSettings) {
     settings.renderingOrder.renderWithSpecificOrder(
         this,
