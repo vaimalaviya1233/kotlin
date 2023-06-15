@@ -10,9 +10,9 @@ import org.jetbrains.kotlin.descriptors.Modality
 import java.util.*
 
 /**
- * [manifestInfo] - information from manifest that might be useful
- * [supportedSignatureVersions] - the versions of signatures supported by the given KLIB
- * [topLevelDeclarations] - top-level declarations
+ * @property manifestInfo Information from manifest that might be useful.
+ * @property supportedSignatureVersions The versions of signatures supported by the given KLIB.
+ * @property topLevelDeclarations Top-level declarations.
  */
 class LibraryAbi(
     val manifestInfo: LibraryManifestInfo,
