@@ -74,7 +74,9 @@ enum class EvaluationMode {
         }
 
         override fun canEvaluateBlock(block: IrBlock): Boolean = block.statements.size == 1
-        override fun canEvaluateExpression(expression: IrExpression): Boolean = expression is IrCall
+        override fun canEvaluateExpression(expression: IrExpression): Boolean {
+            return expression is IrCall && expression.getAllArgumentsWithIr().none { it.second?.type?.isUnsigned() == true }
+        }
     },
 
     ONLY_INTRINSIC_CONST {
@@ -88,7 +90,10 @@ enum class EvaluationMode {
         }
 
         override fun canEvaluateBlock(block: IrBlock): Boolean = block.origin == IrStatementOrigin.WHEN || block.statements.size == 1
-        override fun canEvaluateExpression(expression: IrExpression): Boolean = expression is IrCall || expression is IrWhen
+
+        override fun canEvaluateExpression(expression: IrExpression): Boolean {
+            return ONLY_BUILTINS.canEvaluateExpression(expression) || expression is IrWhen
+        }
     };
 
     open fun canEvaluateFunction(function: IrFunction): Boolean = false
