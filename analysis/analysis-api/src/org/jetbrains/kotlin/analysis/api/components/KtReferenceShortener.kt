@@ -121,8 +121,8 @@ public interface KtReferenceShortenerMixIn : KtAnalysisSessionMixIn {
 
 public interface ShortenCommand {
     public val targetFile: SmartPsiElementPointer<KtFile>
-    public val importsToAdd: List<FqName>
-    public val starImportsToAdd: List<FqName>
+    public val importsToAdd: Set<FqName>
+    public val starImportsToAdd: Set<FqName>
     public val typesToShorten: List<SmartPsiElementPointer<KtUserType>>
     public val qualifiersToShorten: List<SmartPsiElementPointer<KtDotQualifiedExpression>>
     public val kDocQualifiersToShorten: List<SmartPsiElementPointer<KDocName>>

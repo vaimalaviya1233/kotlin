@@ -78,7 +78,8 @@ internal object KDocReferenceResolver {
     context(KtAnalysisSession)
     private fun resolveKdocFqName(fqName: FqName, contextElement: KtElement): Collection<KtSymbol> {
         (getSymbolsFromScopes(fqName, contextElement) + listOfNotNull(getPackageSymbolIfPackageExists(fqName))).ifNotEmpty { return this }
-        return getNonImportedSymbolsByFullyQualifiedName(fqName)
+        getNonImportedSymbolsByFullyQualifiedName(fqName).ifNotEmpty { return this }
+        return emptyList()
     }
 
     context(KtAnalysisSession)

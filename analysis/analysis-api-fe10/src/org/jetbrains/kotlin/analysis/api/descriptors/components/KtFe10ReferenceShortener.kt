@@ -40,8 +40,8 @@ internal class KtFe10ReferenceShortener(
 
         return object : ShortenCommand {
             override val targetFile: SmartPsiElementPointer<KtFile> get() = ktFilePointer
-            override val importsToAdd: List<FqName> get() = emptyList()
-            override val starImportsToAdd: List<FqName> get() = emptyList()
+            override val importsToAdd: Set<FqName> get() = emptySet()
+            override val starImportsToAdd: Set<FqName> get() = emptySet()
             override val typesToShorten: List<SmartPsiElementPointer<KtUserType>> get() = emptyList()
             override val qualifiersToShorten: List<SmartPsiElementPointer<KtDotQualifiedExpression>> get() = emptyList()
             override val kDocQualifiersToShorten: List<SmartPsiElementPointer<KDocName>> get() = emptyList()
