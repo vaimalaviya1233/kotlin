@@ -3,6 +3,13 @@ import org.jetbrains.kotlin.gradle.targets.js.d8.D8RootExtension
 import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnRootExtension
 import org.spdx.sbom.gradle.SpdxSbomExtension
 
+
+/*
+ * When called with `--write-verification-metadata` resolves all build dependencies including implicit dependecies for all platforms and
+ * dependencies downloaded by plugins. Usefull to populate Gradle dependency cache or update `verification-metadata.xml` properly.
+ *
+ * `./gradlew resolveDependencies --write-verification-metadata md5,sha256`
+ */
 tasks.register("resolveDependencies") {
     doFirst {
         allprojects {
