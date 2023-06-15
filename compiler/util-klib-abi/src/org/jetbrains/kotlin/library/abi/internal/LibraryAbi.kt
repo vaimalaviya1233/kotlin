@@ -52,14 +52,15 @@ interface AbiDeclaration {
     val modality: Modality
 }
 
-/**
- * [superTypes] - the set of non-trivial supertypes (i.e. excluding [kotlin/Any] for regular classes, [kotlin/Enum] for enums, etc).
- */
 interface AbiClass : AbiDeclaration, AbiDeclarationsContainer {
     val kind: ClassKind
     val isInner: Boolean
     val isValue: Boolean
     val isFunction: Boolean
+
+    /**
+     * The set of non-trivial supertypes (i.e. excluding [kotlin.Any] for regular classes, [kotlin.Enum] for enums, etc).
+     */
     val superTypes: SortedSet<AbiSuperType>
 }
 
