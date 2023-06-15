@@ -98,14 +98,7 @@ fun Appendable.appendIndent(indent: UInt): Appendable {
 val AbiDeclaration.needToRenderModality: Boolean
     get() = this !is AbiFunction || !isConstructor || modality != Modality.FINAL
 
-fun Appendable.appendModality(modality: Modality): Appendable = append(
-    when (modality) {
-        Modality.SEALED -> "sealed"
-        Modality.ABSTRACT -> "abstract"
-        Modality.OPEN -> "open"
-        Modality.FINAL -> "final"
-    }
-)
+fun Appendable.appendModality(modality: Modality): Appendable = append(modality.name.lowercase())
 
 fun Appendable.appendClassKind(classKind: ClassKind): Appendable = append(
     classKind.codeRepresentation ?: if (classKind == ClassKind.ENUM_ENTRY) "enum entry" else error("Unexpected class kind: $classKind")
