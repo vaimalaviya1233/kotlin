@@ -103,11 +103,12 @@ fun BuildResult.assertOutputDoesNotContain(
  */
 fun BuildResult.assertOutputContains(
     expected: Regex,
+    message: String = "Build output does not contain any line matching '$expected' regex.",
 ) {
     assert(output.contains(expected)) {
         printBuildOutput()
 
-        "Build output does not contain any line matching '$expected' regex."
+        message
     }
 }
 

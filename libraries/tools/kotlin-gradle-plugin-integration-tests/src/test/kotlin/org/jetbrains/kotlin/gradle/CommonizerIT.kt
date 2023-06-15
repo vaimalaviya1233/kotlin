@@ -5,7 +5,6 @@
 
 package org.jetbrains.kotlin.gradle
 
-import groovy.json.StringEscapeUtils
 import org.gradle.api.logging.LogLevel
 import org.gradle.internal.os.OperatingSystem
 import org.gradle.testkit.runner.BuildResult
@@ -19,7 +18,6 @@ import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.konan.target.KonanTarget.*
 import org.junit.jupiter.api.DisplayName
 import kotlin.io.path.*
-import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import kotlin.test.fail
 
@@ -66,7 +64,7 @@ open class CommonizerIT : KGPBaseTest() {
     fun testCommonizeCurlInteropUTDCheck(gradleVersion: GradleVersion) {
         nativeProject("commonizeCurlInterop", gradleVersion) {
 
-            preparedProject()
+            configureCommonizerTargets()
 
             build(":commonize") {
                 assertTasksExecuted(":commonizeNativeDistribution")
@@ -90,7 +88,9 @@ open class CommonizerIT : KGPBaseTest() {
                 assertTasksExecuted(":commonizeCInterop")
             }
 
-            buildGradleKts.writeText(buildGradleKts.readText().lineSequence().filter { "curl" !in it }.joinToString("\n"))
+            buildGradleKts.modify {
+                it.lineSequence().filter { "curl" !in it }.joinToString("\n")
+            }
             build(":commonize") {
                 assertNativeDistributionCommonizationCacheHit()
                 assertTasksNotExecuted(":cinteropCurlTargetA")
@@ -104,11 +104,11 @@ open class CommonizerIT : KGPBaseTest() {
     fun testCommonizeCurlInteropFeatureFlag(gradleVersion: GradleVersion) {
         nativeProject("commonizeCurlInterop", gradleVersion) {
 
-            preparedProject()
+            configureCommonizerTargets()
 
             // Remove feature flag from gradle.properties
-            gradleProperties.apply {
-                writeText(readText().lineSequence().filter { "enableCInteropCommonization" !in it }.joinToString("\n"))
+            gradleProperties.modify {
+                it.lineSequence().filter { "enableCInteropCommonization" !in it }.joinToString("\n")
             }
 
             build(":commonize") {
@@ -140,7 +140,7 @@ open class CommonizerIT : KGPBaseTest() {
     fun testCommonizeCurlInteropcopyCommonizeCInteropForIde(gradleVersion: GradleVersion) {
         nativeProject("commonizeCurlInterop", gradleVersion) {
 
-            preparedProject()
+            configureCommonizerTargets()
 
             val expectedOutputDirectoryForIde = projectPath.resolve(".gradle/kotlin/commonizer")
             val expectedOutputDirectoryForBuild = projectPath.resolve("build/classes/kotlin/commonizer")
@@ -149,24 +149,24 @@ open class CommonizerIT : KGPBaseTest() {
                 assertTasksExecuted(":cinteropCurlTargetB")
                 assertTasksExecuted(":commonizeCInterop")
 
-                assertDirectoryExists(expectedOutputDirectoryForIde)
-                assertDirectoryExists(expectedOutputDirectoryForBuild)
+                assertDirectoryExists(expectedOutputDirectoryForIde, "Missing output directory for IDE")
+                assertDirectoryExists(expectedOutputDirectoryForBuild, "Missing output directory for build")
                 assertEqualDirectories(expectedOutputDirectoryForBuild.toFile(), expectedOutputDirectoryForIde.toFile(), false)
             }
 
             build(":clean") {
-                assertDirectoryExists(expectedOutputDirectoryForIde)
-                assertFalse(expectedOutputDirectoryForBuild.exists(), "Expected output directory for build to be cleaned")
+                assertDirectoryExists(expectedOutputDirectoryForIde, "Expected ide output directory to survive cleaning")
+                assertFileNotExists(expectedOutputDirectoryForBuild, "Expected output directory for build to be cleaned")
             }
         }
     }
 
     @DisplayName("Commonize Curl Interop compilation")
     @GradleTest
-    fun testCommonizeCurlInteropcopyCompilation(gradleVersion: GradleVersion) {
+    fun testCommonizeCurlInteropCopyCompilation(gradleVersion: GradleVersion) {
         nativeProject("commonizeCurlInterop", gradleVersion) {
 
-            preparedProject()
+            configureCommonizerTargets()
 
             build(":compileNativeMainKotlinMetadata") {
                 assertTasksExecuted(":commonizeNativeDistribution")
@@ -191,7 +191,7 @@ open class CommonizerIT : KGPBaseTest() {
     fun testCommonizeCurlInteropcopyExecution(gradleVersion: GradleVersion) {
         nativeProject("commonizeCurlInterop", gradleVersion) {
 
-            preparedProject()
+            configureCommonizerTargets()
 
             if (CommonizableTargets.targetA.isExecutable) {
                 build(":targetATest")
@@ -207,7 +207,7 @@ open class CommonizerIT : KGPBaseTest() {
     fun testCommonizeSQLiteInterop(gradleVersion: GradleVersion) {
         nativeProject("commonizeSQLiteInterop", gradleVersion) {
 
-            preparedProject()
+            configureCommonizerTargets()
 
             build(":commonize") {
                 assertTasksExecuted(":cinteropSqliteTargetA")
@@ -222,7 +222,7 @@ open class CommonizerIT : KGPBaseTest() {
     fun testCommonizeSQLiteAndCurlInterop(gradleVersion: GradleVersion) {
         nativeProject("commonizeSQLiteAndCurlInterop", gradleVersion) {
 
-            preparedProject()
+            configureCommonizerTargets()
 
             build(":commonize") {
                 assertTasksExecuted(":cinteropSqliteTargetA")
@@ -247,7 +247,7 @@ open class CommonizerIT : KGPBaseTest() {
     fun testCommonizeInteropUsingPosixAPIs(gradleVersion: GradleVersion) {
         nativeProject("commonizeInteropUsingPosixApis", gradleVersion) {
 
-            preparedProject()
+            configureCommonizerTargets()
 
             build(":commonizeCInterop") {
                 assertTasksExecuted(":cinteropWithPosixTargetA")
@@ -332,7 +332,10 @@ open class CommonizerIT : KGPBaseTest() {
         val nativeMainContainsCInteropDependencyRegex = Regex(""".*Dependency:.*cinterop-sampleInterop.*""")
         nativeProject("commonize-kt-48856-singleNativeTargetPropagation-testSourceSet", gradleVersion) {
             build("listNativeTestDependencies") {
-                assertOutputContains(nativeMainContainsCInteropDependencyRegex)
+                assertOutputContains(
+                    nativeMainContainsCInteropDependencyRegex,
+                    "Expected sourceSet 'nativeTest' to list cinterop dependency"
+                )
             }
 
             build("assemble")
@@ -401,9 +404,9 @@ open class CommonizerIT : KGPBaseTest() {
                 assertTasksExecuted(":p1:commonizeCInterop")
                 assertTasksExecuted(":p2:commonizeCInterop")
 
-                assertTasksExecuted(":p1:cinteropTestWithPosix.*".toRegex())
-                assertTasksExecuted(":p2:cinteropTestWithPosix.*".toRegex())
-                assertTasksExecuted(":p2:cinteropTestWithPosixP2.*".toRegex())
+                assertAnyTaskHasBeenExecuted(findTasksByPattern(":p1:cinteropTestWithPosix.*".toRegex()))
+                assertAnyTaskHasBeenExecuted(findTasksByPattern(":p2:cinteropTestWithPosix.*".toRegex()))
+                assertAnyTaskHasBeenExecuted(findTasksByPattern(":p2:cinteropTestWithPosixP2.*".toRegex()))
 
                 /* Make sure that we correctly reference any compile tasks in this test (test is useless otherwise) */
                 assertOutputContains("Register task :p1.*compile.*".toRegex())
@@ -458,19 +461,11 @@ open class CommonizerIT : KGPBaseTest() {
     fun testCInteropCaching(gradleVersion: GradleVersion) {
         nativeProject("commonizeCurlInterop", gradleVersion) {
 
-            preparedProject()
+            configureCommonizerTargets()
 
             val localBuildCacheDir = projectPath.resolve("local-build-cache-dir").also { assertTrue(it.toFile().mkdirs()) }
-            settingsGradleKts.appendText(
-                """
-                
-                buildCache {
-                    local {
-                        directory = "${StringEscapeUtils.escapeJava(localBuildCacheDir.absolutePathString())}"
-                    }
-                }
-            """.trimIndent()
-            )
+            enableLocalBuildCache(localBuildCacheDir)
+
             build(":commonize", buildOptions = defaultBuildOptions.copy(buildCacheEnabled = true)) {
                 assertTasksExecuted(":cinteropCurlTargetA", ":cinteropCurlTargetB")
             }
@@ -670,7 +665,7 @@ open class CommonizerIT : KGPBaseTest() {
 
     }
 
-    private fun TestProject.preparedProject() {
+    private fun TestProject.configureCommonizerTargets() {
         buildGradleKts.replaceText("<targetA>", CommonizableTargets.targetA.value)
         buildGradleKts.replaceText("<targetB>", CommonizableTargets.targetB.value)
     }

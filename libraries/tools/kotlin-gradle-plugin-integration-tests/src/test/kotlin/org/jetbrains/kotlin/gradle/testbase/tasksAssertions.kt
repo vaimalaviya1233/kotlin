@@ -8,7 +8,6 @@ package org.jetbrains.kotlin.gradle.testbase
 import org.gradle.api.logging.LogLevel
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.TaskOutcome
-import kotlin.test.assertFalse
 
 /**
  * Asserts given tasks are not present in the build task graph
@@ -43,14 +42,17 @@ fun BuildResult.assertTasksExecuted(vararg tasks: String) {
 }
 
 /**
- * Asserts any tasks match given [tasksRegex] have 'SUCCESS' execution state.
+ * Asserts any of [tasks] has 'SUCCESS' execution state.
  */
-fun BuildResult.assertTasksExecuted(tasksRegex: Regex) {
-    val matchedTasks = this.tasks.filter { task ->
-        tasksRegex.matches(task.path) && task.outcome == TaskOutcome.SUCCESS
-    }.toList()
-
-    assertFalse(matchedTasks.isEmpty(), "There are no 'SUCCESS' tasks that match the $tasksRegex")
+fun BuildResult.assertAnyTaskHasBeenExecuted(tasks: Set<String>) {
+    assert(
+        tasks.any { task ->
+            task(task)?.outcome == TaskOutcome.SUCCESS
+        }
+    ) {
+        printBuildOutput()
+        "There are no 'SUCCESS' tasks in the $tasks"
+    }
 }
 
 /**
@@ -160,7 +162,7 @@ fun BuildResult.assertTasksPackedToCache(vararg tasks: String) {
 fun BuildResult.assertNativeTasksClasspath(
     vararg tasksPaths: String,
     toolName: NativeToolKind = NativeToolKind.KONANC,
-    assertions: (List<String>) -> Unit
+    assertions: (List<String>) -> Unit,
 ) = tasksPaths.forEach { taskPath -> assertions(extractNativeCompilerClasspath(getOutputForTask(taskPath), toolName)) }
 
 /**
@@ -201,7 +203,7 @@ fun TestProject.buildAndAssertAllTasks(
  */
 fun BuildResult.assertTasksInBuildOutput(
     expectedPresentTasks: List<String> = emptyList(),
-    expectedAbsentTasks: List<String> = emptyList()
+    expectedAbsentTasks: List<String> = emptyList(),
 ) {
     val registeredTasks = getAllTasksFromTheOutput()
     expectedPresentTasks.forEach {
