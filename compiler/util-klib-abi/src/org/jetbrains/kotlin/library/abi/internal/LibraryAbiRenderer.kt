@@ -82,7 +82,8 @@ inline fun <T : AbiDeclaration> T.renderCommonDeclarationTo(
     doBeforeSignatures: T.() -> Unit,
     doAfterSignatures: T.() -> Unit = {},
 ) {
-    output.appendIndent(indent).appendModality(modality).append(' ')
+    output.appendIndent(indent)
+    if (needToRenderModality) output.appendModality(modality).append(' ')
     doBeforeSignatures()
     output.append(' ').appendSignatures(this, settings)
     doAfterSignatures()
@@ -93,6 +94,9 @@ fun Appendable.appendIndent(indent: UInt): Appendable {
     for (i in 0u until indent) append("    ")
     return this
 }
+
+val AbiDeclaration.needToRenderModality: Boolean
+    get() = this !is AbiFunction || !isConstructor || modality != Modality.FINAL
 
 fun Appendable.appendModality(modality: Modality): Appendable = append(
     when (modality) {

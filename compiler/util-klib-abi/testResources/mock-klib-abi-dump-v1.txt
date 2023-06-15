@@ -1,40 +1,40 @@
 abstract class klib.abi.test/AbstractClass|null[0] : klib.abi.test/FunctionInterface, klib.abi.test/Interface {
-    final constructor klib.abi.test/AbstractClass.<init>|-5645683436151566731[0]
+    constructor klib.abi.test/AbstractClass.<init>|-5645683436151566731[0]
 }
 final annotation class klib.abi.test/AnnotationClass|null[0] {
-    final constructor klib.abi.test/AnnotationClass.<init>|-5645683436151566731[0]
+    constructor klib.abi.test/AnnotationClass.<init>|-5645683436151566731[0]
 }
 final class klib.abi.test/Class|null[0] {
-    final constructor klib.abi.test/Class.<init>|-5645683436151566731[0]
+    constructor klib.abi.test/Class.<init>|-5645683436151566731[0]
     final val klib.abi.test/Class.valOfClass|433973585083875737[0]
     final fun klib.abi.test/Class.valOfClass.<get-valOfClass>|5369084220387716246[0]
     final fun klib.abi.test/Class.funOfClass|-797013061710964143[0]
     final object klib.abi.test/Class.Companion|null[0]
     final inner class klib.abi.test/Class.Inner|null[0] {
-        final constructor klib.abi.test/Class.Inner.<init>|-5645683436151566731[0]
+        constructor klib.abi.test/Class.Inner.<init>|-5645683436151566731[0]
         final val klib.abi.test/Class.Inner.valOfInner|7828569960507871692[0]
         final fun klib.abi.test/Class.Inner.valOfInner.<get-valOfInner>|-2946052066369038659[0]
         final fun klib.abi.test/Class.Inner.funOfInner|3010729524886683981[0]
         final inner class klib.abi.test/Class.Inner.InnerOfInner|null[0] {
-            final constructor klib.abi.test/Class.Inner.InnerOfInner.<init>|-5645683436151566731[0]
+            constructor klib.abi.test/Class.Inner.InnerOfInner.<init>|-5645683436151566731[0]
             final val klib.abi.test/Class.Inner.InnerOfInner.valOfInnerOfInner|-7036138277816820418[0]
             final fun klib.abi.test/Class.Inner.InnerOfInner.valOfInnerOfInner.<get-valOfInnerOfInner>|4226646688399547436[0]
             final fun klib.abi.test/Class.Inner.InnerOfInner.funOfInnerOfInner|-1588191082896750619[0]
         }
     }
     final class klib.abi.test/Class.Nested|null[0] {
-        final constructor klib.abi.test/Class.Nested.<init>|-5645683436151566731[0]
+        constructor klib.abi.test/Class.Nested.<init>|-5645683436151566731[0]
         final val klib.abi.test/Class.Nested.valOfNested|-5321144969073740296[0]
         final fun klib.abi.test/Class.Nested.valOfNested.<get-valOfNested>|-5624075254170403138[0]
         final fun klib.abi.test/Class.Nested.funOfNested|-1263241914935971934[0]
         final inner class klib.abi.test/Class.Nested.InnerOfNested|null[0] {
-            final constructor klib.abi.test/Class.Nested.InnerOfNested.<init>|-5645683436151566731[0]
+            constructor klib.abi.test/Class.Nested.InnerOfNested.<init>|-5645683436151566731[0]
             final val klib.abi.test/Class.Nested.InnerOfNested.valOfInnerOfNested|-7130048892740966353[0]
             final fun klib.abi.test/Class.Nested.InnerOfNested.valOfInnerOfNested.<get-valOfInnerOfNested>|2771438287613059430[0]
             final fun klib.abi.test/Class.Nested.InnerOfNested.funOfInnerOfNested|2020651343652422702[0]
         }
         final class klib.abi.test/Class.Nested.NestedOfNested|null[0] {
-            final constructor klib.abi.test/Class.Nested.NestedOfNested.<init>|-5645683436151566731[0]
+            constructor klib.abi.test/Class.Nested.NestedOfNested.<init>|-5645683436151566731[0]
             final val klib.abi.test/Class.Nested.NestedOfNested.valOfNestedOfNested|3623806239156077906[0]
             final fun klib.abi.test/Class.Nested.NestedOfNested.valOfNestedOfNested.<get-valOfNestedOfNested>|-3381702863193046068[0]
             final fun klib.abi.test/Class.Nested.NestedOfNested.funOfNestedOfNested|-1104359515243763750[0]
@@ -52,7 +52,7 @@ abstract fun interface klib.abi.test/FunctionInterface|null[0] {
 abstract interface klib.abi.test/Interface|null[0]
 final object klib.abi.test/Object|null[0]
 final value class klib.abi.test/ValueClass|null[0] {
-    final constructor klib.abi.test/ValueClass.<init>|-5182794243525578284[0]
+    constructor klib.abi.test/ValueClass.<init>|-5182794243525578284[0]
     final val klib.abi.test/ValueClass.p|6715504260787941082[0]
     final fun klib.abi.test/ValueClass.p.<get-p>|-1162552463316289847[0]
 }

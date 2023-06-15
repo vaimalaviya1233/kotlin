@@ -1,40 +1,40 @@
 abstract class klib.abi.test/AbstractClass : klib.abi.test/FunctionInterface, klib.abi.test/Interface {
-    final constructor klib.abi.test/AbstractClass.^c()
+    constructor klib.abi.test/AbstractClass.^c()
 }
 final annotation class klib.abi.test/AnnotationClass {
-    final constructor klib.abi.test/AnnotationClass.^c()
+    constructor klib.abi.test/AnnotationClass.^c()
 }
 final class klib.abi.test/Class {
-    final constructor klib.abi.test/Class.^c()
+    constructor klib.abi.test/Class.^c()
     final val klib.abi.test/Class.valOfClass=kotlin/String
     final fun klib.abi.test/Class.valOfClass.^g$()=kotlin/String
     final fun klib.abi.test/Class.funOfClass$()=kotlin/String
     final object klib.abi.test/Class.Companion
     final inner class klib.abi.test/Class.Inner {
-        final constructor klib.abi.test/Class.Inner.^c$()
+        constructor klib.abi.test/Class.Inner.^c$()
         final val klib.abi.test/Class.Inner.valOfInner=kotlin/String
         final fun klib.abi.test/Class.Inner.valOfInner.^g$()=kotlin/String
         final fun klib.abi.test/Class.Inner.funOfInner$()=kotlin/String
         final inner class klib.abi.test/Class.Inner.InnerOfInner {
-            final constructor klib.abi.test/Class.Inner.InnerOfInner.^c$()
+            constructor klib.abi.test/Class.Inner.InnerOfInner.^c$()
             final val klib.abi.test/Class.Inner.InnerOfInner.valOfInnerOfInner=kotlin/String
             final fun klib.abi.test/Class.Inner.InnerOfInner.valOfInnerOfInner.^g$()=kotlin/String
             final fun klib.abi.test/Class.Inner.InnerOfInner.funOfInnerOfInner$()=kotlin/String
         }
     }
     final class klib.abi.test/Class.Nested {
-        final constructor klib.abi.test/Class.Nested.^c()
+        constructor klib.abi.test/Class.Nested.^c()
         final val klib.abi.test/Class.Nested.valOfNested=kotlin/String
         final fun klib.abi.test/Class.Nested.valOfNested.^g$()=kotlin/String
         final fun klib.abi.test/Class.Nested.funOfNested$()=kotlin/String
         final inner class klib.abi.test/Class.Nested.InnerOfNested {
-            final constructor klib.abi.test/Class.Nested.InnerOfNested.^c$()
+            constructor klib.abi.test/Class.Nested.InnerOfNested.^c$()
             final val klib.abi.test/Class.Nested.InnerOfNested.valOfInnerOfNested=kotlin/String
             final fun klib.abi.test/Class.Nested.InnerOfNested.valOfInnerOfNested.^g$()=kotlin/String
             final fun klib.abi.test/Class.Nested.InnerOfNested.funOfInnerOfNested$()=kotlin/String
         }
         final class klib.abi.test/Class.Nested.NestedOfNested {
-            final constructor klib.abi.test/Class.Nested.NestedOfNested.^c()
+            constructor klib.abi.test/Class.Nested.NestedOfNested.^c()
             final val klib.abi.test/Class.Nested.NestedOfNested.valOfNestedOfNested=kotlin/String
             final fun klib.abi.test/Class.Nested.NestedOfNested.valOfNestedOfNested.^g$()=kotlin/String
             final fun klib.abi.test/Class.Nested.NestedOfNested.funOfNestedOfNested$()=kotlin/String
@@ -52,7 +52,7 @@ abstract fun interface klib.abi.test/FunctionInterface {
 abstract interface klib.abi.test/Interface
 final object klib.abi.test/Object
 final value class klib.abi.test/ValueClass {
-    final constructor klib.abi.test/ValueClass.^c(kotlin/Int)
+    constructor klib.abi.test/ValueClass.^c(kotlin/Int)
     final val klib.abi.test/ValueClass.p=kotlin/Int
     final fun klib.abi.test/ValueClass.p.^g$()=kotlin/Int
 }
