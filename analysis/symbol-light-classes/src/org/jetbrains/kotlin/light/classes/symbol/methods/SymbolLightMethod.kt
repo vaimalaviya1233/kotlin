@@ -5,9 +5,7 @@
 
 package org.jetbrains.kotlin.light.classes.symbol.methods
 
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiIdentifier
-import com.intellij.psi.PsiParameterList
+import com.intellij.psi.*
 import com.intellij.psi.impl.light.LightReferenceListBuilder
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
@@ -18,18 +16,23 @@ import org.jetbrains.kotlin.analysis.api.symbols.sourcePsiSafe
 import org.jetbrains.kotlin.asJava.builder.LightMemberOrigin
 import org.jetbrains.kotlin.asJava.classes.lazyPub
 import org.jetbrains.kotlin.asJava.elements.KtLightIdentifier
+import org.jetbrains.kotlin.light.classes.symbol.*
 import org.jetbrains.kotlin.light.classes.symbol.annotations.computeThrowsList
 import org.jetbrains.kotlin.light.classes.symbol.annotations.hasDeprecatedAnnotation
 import org.jetbrains.kotlin.light.classes.symbol.classes.SymbolLightClassBase
+import org.jetbrains.kotlin.light.classes.symbol.classes.SymbolLightClassForInterfaceDefaultImpls
 import org.jetbrains.kotlin.light.classes.symbol.compareSymbolPointers
 import org.jetbrains.kotlin.light.classes.symbol.isOriginEquivalentTo
 import org.jetbrains.kotlin.light.classes.symbol.isValid
+import org.jetbrains.kotlin.light.classes.symbol.parameters.*
 import org.jetbrains.kotlin.light.classes.symbol.parameters.SymbolLightParameter
+import org.jetbrains.kotlin.light.classes.symbol.parameters.SymbolLightParameterForDefaultImplsReceiver
 import org.jetbrains.kotlin.light.classes.symbol.parameters.SymbolLightParameterList
 import org.jetbrains.kotlin.light.classes.symbol.parameters.SymbolLightSuspendContinuationParameter
 import org.jetbrains.kotlin.light.classes.symbol.withSymbol
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtParameter
 import java.util.*
 
 internal abstract class SymbolLightMethod<FType : KtFunctionLikeSymbol> private constructor(
@@ -81,6 +84,10 @@ internal abstract class SymbolLightMethod<FType : KtFunctionLikeSymbol> private 
             parent = this@SymbolLightMethod,
             callableWithReceiverSymbolPointer = functionSymbolPointer,
         ) { builder ->
+            if (containingClass is SymbolLightClassForInterfaceDefaultImpls) {
+                builder.addParameter(SymbolLightParameterForDefaultImplsReceiver(this@SymbolLightMethod))
+            }
+
             withFunctionSymbol { functionSymbol ->
                 functionSymbol.valueParameters.mapIndexed { index, parameter ->
                     val needToSkip = argumentsSkipMask?.get(index) == true

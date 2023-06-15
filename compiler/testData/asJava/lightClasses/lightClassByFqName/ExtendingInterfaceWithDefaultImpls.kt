@@ -9,7 +9,7 @@ interface B: A {
     fun b() = "b"
 }
 
-interface C : B {
+interface C<T> : B {
     fun c() = "c"
 
     fun more(): String

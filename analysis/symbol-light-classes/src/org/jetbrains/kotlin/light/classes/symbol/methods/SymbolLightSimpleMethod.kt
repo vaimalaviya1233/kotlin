@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.light.classes.symbol.*
 import org.jetbrains.kotlin.light.classes.symbol.annotations.*
 import org.jetbrains.kotlin.light.classes.symbol.classes.SymbolLightClassBase
+import org.jetbrains.kotlin.light.classes.symbol.classes.SymbolLightClassForInterfaceDefaultImpls
 import org.jetbrains.kotlin.light.classes.symbol.modifierLists.GranularModifiersBox
 import org.jetbrains.kotlin.light.classes.symbol.modifierLists.SymbolLightMemberModifierList
 import org.jetbrains.kotlin.light.classes.symbol.modifierLists.with
@@ -98,7 +99,9 @@ internal class SymbolLightSimpleMethod(
             val isStatic = if (suppressStatic) {
                 false
             } else {
-                isTopLevel || withFunctionSymbol { it.isStatic || it.hasJvmStaticAnnotation() }
+                isTopLevel
+                        || withFunctionSymbol { it.isStatic || it.hasJvmStaticAnnotation() }
+                        || containingClass is SymbolLightClassForInterfaceDefaultImpls
             }
 
             mapOf(modifier to isStatic)
