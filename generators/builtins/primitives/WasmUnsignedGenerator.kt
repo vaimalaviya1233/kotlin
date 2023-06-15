@@ -236,7 +236,8 @@ private class WasmSingleUnsignedGenerator(type: UnsignedType, out: PrintWriter) 
 
             when (type) {
                 UnsignedType.ULONG -> "((this shr 32) xor this).toInt()"
-                else -> "this.toInt()"
+                UnsignedType.UINT -> "this.toInt()"
+                else -> "this.to${type.asSigned.capitalized}().toInt()"
             }.addAsSingleLineBody()
         }
     }
@@ -273,6 +274,7 @@ private class WasmSingleUnsignedGenerator(type: UnsignedType, out: PrintWriter) 
             }
             PrimitiveType.BYTE, PrimitiveType.SHORT, PrimitiveType.INT -> when (type) {
                 UnsignedType.UINT -> implementAsIntrinsic()
+                UnsignedType.ULONG -> "toLong().toULong()".addAsSingleLineBody()
                 else -> "toUInt().to${type.capitalized}()".addAsSingleLineBody()
             }
             PrimitiveType.LONG -> when (type) {

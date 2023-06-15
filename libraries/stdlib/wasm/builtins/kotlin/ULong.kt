@@ -476,7 +476,7 @@ public class ULong private constructor(private val value: ULong) : Comparable<UL
 @SinceKotlin("1.5")
 @WasExperimental(ExperimentalUnsignedTypes::class)
 @kotlin.internal.InlineOnly
-public inline fun Byte.toULong(): ULong = toUInt().toULong()
+public inline fun Byte.toULong(): ULong = toLong().toULong()
 /**
  * Converts this [Short] value to [ULong].
  *
@@ -488,7 +488,7 @@ public inline fun Byte.toULong(): ULong = toUInt().toULong()
 @SinceKotlin("1.5")
 @WasExperimental(ExperimentalUnsignedTypes::class)
 @kotlin.internal.InlineOnly
-public inline fun Short.toULong(): ULong = toUInt().toULong()
+public inline fun Short.toULong(): ULong = toLong().toULong()
 /**
  * Converts this [Int] value to [ULong].
  *
@@ -500,7 +500,7 @@ public inline fun Short.toULong(): ULong = toUInt().toULong()
 @SinceKotlin("1.5")
 @WasExperimental(ExperimentalUnsignedTypes::class)
 @kotlin.internal.InlineOnly
-public inline fun Int.toULong(): ULong = toUInt().toULong()
+public inline fun Int.toULong(): ULong = toLong().toULong()
 /**
  * Converts this [Long] value to [ULong].
  *

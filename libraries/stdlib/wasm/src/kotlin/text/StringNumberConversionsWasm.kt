@@ -130,8 +130,6 @@ actual fun Int.toString(radix: Int): String = toLong().toString(radix)
 actual fun Long.toString(radix: Int): String {
     checkRadix(radix)
 
-    fun Long.getChar() = toInt().let { if (it < 10) '0' + it else 'a' + (it - 10) }
-
     if (radix == 10) return toString()
     if (this in 0 until radix) return getChar().toString()
 
@@ -140,7 +138,7 @@ actual fun Long.toString(radix: Int): String {
 
     var currentBufferIndex = buffer.lastIndex
     var current: Long = this
-    while(current != 0L) {
+    while (current != 0L) {
         buffer[currentBufferIndex] = abs(current % radix).getChar()
         current /= radix
         currentBufferIndex--
@@ -153,3 +151,30 @@ actual fun Long.toString(radix: Int): String {
 
     return buffer.concatToString(currentBufferIndex + 1)
 }
+
+// To make unsigned/src/kotlin/UStrings.kt happy
+@kotlin.internal.InlineOnly
+internal inline fun ulongToString(value: Long, radix: Int): String {
+    checkRadix(radix)
+
+    var unsignedValue = value.toULong()
+
+    if (radix == 10) return unsignedValue.toString()
+    if (value in 0 until radix) return value.getChar().toString()
+
+    val buffer = CharArray(ULong.SIZE_BITS + 1)
+
+    val ulongRadix = radix.toULong()
+    var currentBufferIndex = buffer.lastIndex
+
+    while (unsignedValue != 0UL) {
+        buffer[currentBufferIndex] = (unsignedValue % ulongRadix).toLong().getChar()
+        unsignedValue /= ulongRadix
+        currentBufferIndex--
+    }
+
+    return buffer.concatToString(currentBufferIndex + 1)
+}
+
+private fun Long.getChar() = toInt().let { if (it < 10) '0' + it else 'a' + (it - 10) }
+

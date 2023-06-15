@@ -431,7 +431,7 @@ public class UShort private constructor(private val value: UShort) : Comparable<
 
     public override fun toString(): String = toUInt().toString()
 
-    public override fun hashCode(): Int = this.toInt()
+    public override fun hashCode(): Int = this.toShort().toInt()
 
     @kotlin.internal.IntrinsicConstEvaluation
     public override fun equals(other: Any?): Boolean =

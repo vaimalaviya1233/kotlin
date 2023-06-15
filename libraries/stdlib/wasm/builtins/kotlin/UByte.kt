@@ -430,7 +430,7 @@ public class UByte private constructor(private val value: UByte) : Comparable<UB
 
     public override fun toString(): String = toUInt().toString()
 
-    public override fun hashCode(): Int = this.toInt()
+    public override fun hashCode(): Int = this.toByte().toInt()
 
     @kotlin.internal.IntrinsicConstEvaluation
     public override fun equals(other: Any?): Boolean =
