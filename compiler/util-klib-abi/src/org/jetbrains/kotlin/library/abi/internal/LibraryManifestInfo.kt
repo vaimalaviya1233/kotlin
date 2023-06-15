@@ -9,14 +9,15 @@ import org.jetbrains.kotlin.library.*
 import java.util.*
 
 /**
- * Anything that can be retrieved from manifest and that might be helpful to know about the inspected KLIB:
- *   [uniqueName] - [KLIB_PROPERTY_UNIQUE_NAME]
- *   [platform] - [KLIB_PROPERTY_BUILTINS_PLATFORM]
- *   [nativeTargets] - [KLIB_PROPERTY_NATIVE_TARGETS]
- *   [compilerVersion] - [KLIB_PROPERTY_COMPILER_VERSION]
- *   [abiVersion] - [KLIB_PROPERTY_ABI_VERSION]
- *   [libraryVersion] - [KLIB_PROPERTY_LIBRARY_VERSION]
- *   [irProvider] - [KLIB_PROPERTY_IR_PROVIDER]
+ * Anything that can be retrieved from manifest and that might be helpful to know about the inspected KLIB.
+ *
+ * @property uniqueName [KLIB_PROPERTY_UNIQUE_NAME]
+ * @property platform [KLIB_PROPERTY_BUILTINS_PLATFORM]
+ * @property nativeTargets [KLIB_PROPERTY_NATIVE_TARGETS]
+ * @property compilerVersion [KLIB_PROPERTY_COMPILER_VERSION]
+ * @property abiVersion [KLIB_PROPERTY_ABI_VERSION]
+ * @property libraryVersion [KLIB_PROPERTY_LIBRARY_VERSION]
+ * @property irProvider [KLIB_PROPERTY_IR_PROVIDER]
  */
 data class LibraryManifestInfo(
     val uniqueName: String?,
