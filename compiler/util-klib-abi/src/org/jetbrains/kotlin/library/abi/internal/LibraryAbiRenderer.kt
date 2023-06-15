@@ -157,7 +157,7 @@ class AbiRenderingSettings(
 
 interface AbiRenderingOrder {
     fun renderWithSpecificOrder(
-        container: AbiDeclarationsContainer,
+        container: AbiDeclarationContainer,
         renderClass: (AbiClass) -> Unit,
         renderFunction: (AbiFunction) -> Unit,
         renderProperty: (AbiProperty) -> Unit,
@@ -165,7 +165,7 @@ interface AbiRenderingOrder {
 
     object Default : AbiRenderingOrder {
         override fun renderWithSpecificOrder(
-            container: AbiDeclarationsContainer,
+            container: AbiDeclarationContainer,
             renderClass: (AbiClass) -> Unit,
             renderFunction: (AbiFunction) -> Unit,
             renderProperty: (AbiProperty) -> Unit,

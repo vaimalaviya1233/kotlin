@@ -41,18 +41,18 @@ interface AbiSignatures {
  * Important: The order of [declarations] is preserved exactly as in serialized IR.
  * Would you need to use a different order while rendering, please refer to [AbiRenderingSettings.renderingOrder].
  */
-interface AbiDeclarationsContainer {
+interface AbiDeclarationContainer {
     val declarations: List<AbiDeclaration>
 }
 
-interface AbiTopLevelDeclarations : AbiDeclarationsContainer
+interface AbiTopLevelDeclarations : AbiDeclarationContainer
 
 interface AbiDeclaration {
     val signatures: AbiSignatures
     val modality: Modality
 }
 
-interface AbiClass : AbiDeclaration, AbiDeclarationsContainer {
+interface AbiClass : AbiDeclaration, AbiDeclarationContainer {
     val kind: ClassKind
     val isInner: Boolean
     val isValue: Boolean
