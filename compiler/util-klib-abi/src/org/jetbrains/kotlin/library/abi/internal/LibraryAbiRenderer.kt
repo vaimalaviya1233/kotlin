@@ -148,7 +148,7 @@ class AbiRenderingSettings(
     }
 
     val renderedSignatureVersions: List<AbiSignatureVersion> =
-        renderedSignatureVersions.sortedDescending() // The latest version always goes the first.
+        renderedSignatureVersions.sortedDescending() // The latest version always goes first.
 }
 
 interface AbiRenderingOrder {
