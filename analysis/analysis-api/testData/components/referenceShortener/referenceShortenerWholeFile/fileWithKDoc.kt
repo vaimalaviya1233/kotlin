@@ -5,7 +5,7 @@
  */
 fun test() {}
 
-fun foo<caret_onAirContext>(): a.b.c.dependency.Foo = t
+fun foo<caret>(): a.b.c.dependency.Foo = t
 
 // FILE: dependency.kt
 package a.b.c.dependency
