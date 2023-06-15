@@ -134,9 +134,10 @@ fun Appendable.appendSignatures(declaration: AbiDeclaration, settings: AbiRender
     }
 
 /**
- * [renderedSignatureVersions] - one might want to render only some signatures,
- *   ex: only [AbiSignatureVersion.V2] even if [AbiSignatureVersion.V1] are available.
- * [renderingOrder] - the order in which member declarations are rendered.
+ * @property renderingOrder The order in which member declarations are rendered.
+ *
+ * @param renderedSignatureVersions One might want to render only some signatures, e.g. only [AbiSignatureVersion.V2] even if
+ * [AbiSignatureVersion.V1] are available.
  */
 class AbiRenderingSettings(
     renderedSignatureVersions: Set<AbiSignatureVersion>,
