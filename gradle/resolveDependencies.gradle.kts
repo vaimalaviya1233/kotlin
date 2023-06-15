@@ -8,9 +8,9 @@ tasks.register("resolveDependencies") {
         allprojects {
             logger.info("Resolving dependencies in $this")
 
-            // resolve cached dependencies one by one to avoid conflicts between them
-            configurations.findByName("cachedDependencies")?.allDependencies?.forEach { cachedDependency ->
-                configurations.detachedConfiguration(cachedDependency).resolve()
+            // resolve implicit dependencies one by one to avoid conflicts between them
+            configurations.implicitDependencies.get().allDependencies.forEach { implicitDependency ->
+                configurations.detachedConfiguration(implicitDependency).resolve()
             }
 
             plugins.withId("java-base") {
