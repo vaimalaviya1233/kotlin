@@ -33,13 +33,9 @@
 
 using namespace kotlin;
 
-typedef void PrintUtf8Function(const char* utf8, uint32_t sizeBytes);
+namespace {
 
-extern "C" {
-
-// io/Console.kt
-NO_EXTERNAL_CALLS_CHECK
-void consolePrint(PrintUtf8Function printFunction, KString message) {
+std_support::string kStringToUtf8(KString message) {
     if (message->type_info() != theStringTypeInfo) {
         ThrowClassCastException(message->obj(), theStringTypeInfo);
     }
@@ -49,19 +45,26 @@ void consolePrint(PrintUtf8Function printFunction, KString message) {
     // Replace incorrect sequences with a default codepoint (see utf8::with_replacement::default_replacement)
     utf8::with_replacement::utf16to8(utf16, utf16 + message->count_, back_inserter(utf8));
 
-    kotlin::ThreadStateGuard guard(kotlin::ThreadState::kNative);
-    printFunction(utf8.c_str(), utf8.size());
+    return utf8;
 }
 
+} // namespace
+
+extern "C" {
+
+// io/Console.kt
 void Kotlin_io_Console_print(KString message) {
     // TODO: system stdout must be aware about UTF-8.
-    consolePrint(konan::consoleWriteUtf8, message);
+    auto utf8 = kStringToUtf8(message);
+    kotlin::ThreadStateGuard guard(kotlin::ThreadState::kNative);
+    konan::consoleWriteUtf8(utf8.c_str(), utf8.size());
 }
 
-NO_EXTERNAL_CALLS_CHECK
 void Kotlin_io_Console_print_error(KString message) {
     // TODO: system stderr must be aware about UTF-8.
-    consolePrint(konan::consoleErrorUtf8, message);
+    auto utf8 = kStringToUtf8(message);
+    kotlin::ThreadStateGuard guard(kotlin::ThreadState::kNative);
+    konan::consoleErrorUtf8(utf8.c_str(), utf8.size());
 }
 
 void Kotlin_io_Console_println(KString message) {
