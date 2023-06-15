@@ -287,7 +287,7 @@ val jsComponent = componentFactory.adhoc("js").apply {
 val (wasmApi, wasmRuntime) = listOf("api", "runtime").map { usage ->
     configurations.create("wasm${usage.capitalize()}") {
         isCanBeConsumed = true
-        isCanBeResolved = false
+        isCanBeResolved = true
         attributes {
             attribute(Usage.USAGE_ATTRIBUTE, objects.named("kotlin-$usage"))
             attribute(KotlinPlatformType.attribute, KotlinPlatformType.wasm)
@@ -403,12 +403,16 @@ publishing {
             "Js", "kotlin-test-js",
             setOf(jsRuntime.name), kotlinTestJsPublication
         )
-        create("wasm", MavenPublication::class) {
+        val kotlinTestWasmPublication = register("wasm", MavenPublication::class) {
             artifactId = "kotlin-test-wasm"
             from(wasmComponent)
             artifact(tasks.getByPath(":kotlin-test:kotlin-test-wasm:sourcesJar") as Jar)
             configureKotlinPomAttributes(project, "Kotlin Test for WASM", packaging = "klib")
         }
+        configureSbom(
+            "Wasm", "kotlin-test-wasm",
+            setOf(wasmRuntime.name), kotlinTestWasmPublication
+        )
         val kotlinTestCommonPublication = register("common", MavenPublication::class) {
             artifactId = "kotlin-test-common"
             from(commonMetadataComponent)
