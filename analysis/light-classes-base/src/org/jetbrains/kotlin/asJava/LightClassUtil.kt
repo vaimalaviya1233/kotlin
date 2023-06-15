@@ -18,9 +18,11 @@ import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.asJava.elements.KtLightField
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.elements.isSetter
+import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
+import org.jetbrains.kotlin.resolve.DataClassResolver
 import org.jetbrains.kotlin.utils.checkWithAttachment
 
 object LightClassUtil {
@@ -183,11 +185,25 @@ object LightClassUtil {
     }
 
     private fun extractPropertyAccessors(
-        ktDeclaration: KtDeclaration,
+        ktDeclaration: KtNamedDeclaration,
         specialGetter: PsiMethod?, specialSetter: PsiMethod?
     ): PropertyAccessorsPsiMethods {
 
-        val (setters, getters) = getPsiMethodWrappers(ktDeclaration).partition { it.isSetter }
+        val canHaveAdditionalAccessor = ktDeclaration.annotationEntries.any { anno ->
+            val target = anno.useSiteTarget?.getAnnotationUseSiteTarget()
+            target == AnnotationUseSiteTarget.PROPERTY_GETTER || target == AnnotationUseSiteTarget.PROPERTY_SETTER
+        }
+
+        val accessorWrappers = if (canHaveAdditionalAccessor)
+            getPsiMethodWrappers(ktDeclaration)
+        else {
+            val currentName = ktDeclaration.name
+            getPsiMethodWrappers(ktDeclaration, null) {
+                currentName == it.name || JvmAbi.isGetterName(it.name) || JvmAbi.isSetterName(it.name) || DataClassResolver.isComponentLike(it.name)
+            }
+        }
+
+        val (setters, getters) = accessorWrappers.partition { it.isSetter }
 
         val allGetters = listOfNotNull(specialGetter) + getters.filterNot { it == specialGetter }
         val allSetters = listOfNotNull(specialSetter) + setters.filterNot { it == specialSetter }
