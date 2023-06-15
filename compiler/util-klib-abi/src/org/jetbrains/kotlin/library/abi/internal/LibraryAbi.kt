@@ -20,11 +20,17 @@ class LibraryAbi(
     val topLevelDeclarations: AbiTopLevelDeclarations
 )
 
-/**
- * [V1] - the signatures with hashes.
- * [V2] - the self-descriptive signatures.
- */
-enum class AbiSignatureVersion { V1, V2 }
+enum class AbiSignatureVersion {
+    /**
+     *  The signatures with hashes.
+     */
+    V1,
+
+    /**
+     * The self-descriptive signatures.
+     */
+    V2,
+}
 
 interface AbiSignatures {
     /** Returns the signature of the specified [AbiSignatureVersion] **/
