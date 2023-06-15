@@ -270,10 +270,9 @@ private class BackendChecker(
                     else -> "corresponding Objective-C method"
                 }
 
-                context.report(
+                reportError(
                         method,
                         "can't override '${method.name}', override $correspondingObjCMethod instead",
-                        isError = true
                 )
             }
         }

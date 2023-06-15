@@ -121,21 +121,6 @@ tailrec fun IrDeclaration.getContainingFile(): IrFile? {
     }
 }
 
-internal fun ErrorReportingContext.report(declaration: IrDeclaration, message: String, isError: Boolean) {
-    val irFile = declaration.getContainingFile()
-    this.report(
-            declaration,
-            irFile,
-            if (irFile != null) {
-                message
-            } else {
-                "$message\n${declaration.render()}"
-            },
-            isError
-    )
-    if (isError) throw KonanCompilationException()
-}
-
 fun IrFunctionAccessExpression.addArguments(args: Map<IrValueParameter, IrExpression>) {
     val unhandledParameters = args.keys.toMutableSet()
     fun getArg(parameter: IrValueParameter) = args[parameter]?.also { unhandledParameters -= parameter }
