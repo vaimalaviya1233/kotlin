@@ -42,8 +42,14 @@ abstract class AbstractCodeFragmentCompilationTest : AbstractLowLevelApiCodeFrag
         }
 
         val compilationResult = LLCompilerFacade
-            .compile(ktCodeFragment, compilerConfiguration, testModule.languageVersionSettings, ClassBuilderFactories.BINARIES)
+            .compile(ktCodeFragment, compilerConfiguration, testModule.languageVersionSettings, ClassBuilderFactories.TEST)
             .getOrThrow()
+
+        val text = compilationResult.outputFiles
+            .filter { it.relativePath.toLowerCaseAsciiOnly().endsWith(".class") }
+            .map { it.asText() }
+
+        println(text)
 
         val actualText = if (compilationResult.diagnostics.isEmpty()) {
             compilationResult.outputFiles

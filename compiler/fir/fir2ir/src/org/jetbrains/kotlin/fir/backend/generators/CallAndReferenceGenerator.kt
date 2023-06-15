@@ -344,6 +344,15 @@ class CallAndReferenceGenerator(
         noArguments: Boolean = false
     ): IrExpression {
         try {
+            val injectedValue = extensions.findInjectedValue(qualifiedAccess.calleeReference)
+            if (injectedValue != null) {
+                return qualifiedAccess.convertWithOffsets { startOffset, endOffset ->
+                    val type = injectedValue.typeRef.toIrType()
+                    val origin = qualifiedAccess.calleeReference.statementOrigin()
+                    IrGetValueImpl(startOffset, endOffset, type, injectedValue.irParameterSymbol, origin)
+                }
+            }
+
             val type = typeRef.toIrType()
             val samConstructorCall = qualifiedAccess.tryConvertToSamConstructorCall(type)
             if (samConstructorCall != null) return samConstructorCall

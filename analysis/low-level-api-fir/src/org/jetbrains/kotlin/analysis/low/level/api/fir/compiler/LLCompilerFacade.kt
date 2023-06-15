@@ -28,10 +28,15 @@ import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.diagnostics.KtPsiDiagnostic
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.fir.FirSession
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
 import org.jetbrains.kotlin.fir.backend.*
 import org.jetbrains.kotlin.fir.backend.jvm.*
 import org.jetbrains.kotlin.fir.declarations.*
+import org.jetbrains.kotlin.fir.expressions.FirQualifiedAccessExpression
 import org.jetbrains.kotlin.fir.pipeline.signatureComposerForJvmFir2Ir
+import org.jetbrains.kotlin.fir.references.FirReference
+import org.jetbrains.kotlin.fir.references.toResolvedSymbol
+import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.ir.backend.jvm.serialization.JvmIrMangler
 import org.jetbrains.kotlin.ir.declarations.impl.IrFactoryImpl
 import org.jetbrains.kotlin.load.kotlin.toSourceElement
@@ -41,6 +46,7 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.source.PsiSourceFile
 import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedContainerSource
+import org.jetbrains.kotlin.utils.addToStdlib.runIf
 
 class LLCompilationResult(
     val outputFiles: List<OutputFile>,
@@ -76,48 +82,24 @@ object LLCompilerFacade {
             val filesToCompile = inlineCollector.files
             val firFilesToCompile = filesToCompile.map { it.getOrBuildFir(resolveSession) as FirFile }
 
-            val inlinedClasses = inlineCollector.inlinedClasses
-            val filesWithInlinedClasses = inlinedClasses.mapTo(mutableSetOf()) { it.containingKtFile }
-
             val diagnostics = session.moduleComponents.diagnosticsCollector
                 .collectDiagnosticsForFile(file, DiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
 
-            if (diagnostics.any { it.severity == Severity.ERROR }) {
+            if (diagnostics.any { it.severity == Severity.ERROR && it.factory !in INSIGNIFICANT_ERRORS }) {
                 return Result.success(LLCompilationResult(listOf(), diagnostics.toList(), listOf()))
             }
 
-            val capturedValues = when (file) {
-                is KtCodeFragment -> {
-                    val codeFragment = mainFirFile.declarations.single() as FirCodeFragment
-                    preprocessCodeFragment(session, codeFragment, effectiveConfiguration)
-                }
-                else -> emptyList()
+            val codeFragmentMappings = runIf(file is KtCodeFragment) {
+                computeCodeFragmentMappings(mainFirFile, session, effectiveConfiguration)
             }
 
-            val generateClassFilter = object : GenerationState.GenerateClassFilter() {
-                override fun shouldGeneratePackagePart(ktFile: KtFile): Boolean {
-                    return file === ktFile || ktFile in filesWithInlinedClasses
-                }
+            val fir2IrExtension = LLFir2IrExtensions(
+                delegate = JvmFir2IrExtensions(effectiveConfiguration, JvmIrDeserializerImpl(), JvmIrMangler),
+                injectedValueProvider = codeFragmentMappings?.injectedValueProvider ?: { null }
+            )
 
-                override fun shouldAnnotateClass(processingClassOrObject: KtClassOrObject): Boolean {
-                    return true
-                }
-
-                override fun shouldGenerateClass(processingClassOrObject: KtClassOrObject): Boolean {
-                    return processingClassOrObject.containingKtFile === file ||
-                            processingClassOrObject is KtObjectDeclaration && processingClassOrObject in inlinedClasses
-                }
-
-                override fun shouldGenerateScript(script: KtScript): Boolean {
-                    return script.containingKtFile === file
-                }
-
-                override fun shouldGenerateCodeFragment(script: KtCodeFragment) = false
-            }
-
+            val generateClassFilter = SingleFileGenerateClassFilter(file, inlineCollector.inlinedClasses)
             val codegenFactory = createJvmIrCodegenFactory(effectiveConfiguration)
-
-            val fir2IrExtensions = JvmFir2IrExtensions(effectiveConfiguration, JvmIrDeserializerImpl(), JvmIrMangler)
 
             val fir2IrConfiguration = Fir2IrConfiguration(
                 languageVersionSettings,
@@ -132,7 +114,7 @@ object LLCompilerFacade {
                 session,
                 scopeSession,
                 firFilesToCompile,
-                fir2IrExtensions,
+                fir2IrExtension,
                 fir2IrConfiguration,
                 JvmIrMangler,
                 IrFactoryImpl,
@@ -187,6 +169,7 @@ object LLCompilerFacade {
                     }
                 }
 
+                val capturedValues = codeFragmentMappings?.capturedValues ?: emptyList()
                 return Result.success(LLCompilationResult(outputFiles, backendDiagnostics, capturedValues))
             } finally {
                 generationState.destroy()
@@ -198,19 +181,69 @@ object LLCompilerFacade {
         }
     }
 
-    private fun preprocessCodeFragment(
+    private class CodeFragmentMappings(
+        val capturedValues: List<CodeFragmentCapturedValue>,
+        val injectedValueProvider: (FirReference) -> InjectedValue?
+    )
+
+    private fun computeCodeFragmentMappings(
+        mainFirFile: FirFile,
         session: FirSession,
-        codeFragment: FirCodeFragment,
-        configuration: CompilerConfiguration
-    ): List<CodeFragmentCapturedValue> {
-        val capturedValueMappings = CodeFragmentCapturedValueAnalyzer.analyze(session, codeFragment)
+        configuration: CompilerConfiguration,
+    ): CodeFragmentMappings {
+        val codeFragment = mainFirFile.declarations.single() as FirCodeFragment
 
-        val classId = ClassId(FqName.ROOT, Name.identifier(configuration[CODE_FRAGMENT_CLASS_NAME] ?: "CodeFragment"))
-        val methodName = Name.identifier(configuration[CODE_FRAGMENT_METHOD_NAME] ?: "run")
-        val capturedSymbols = capturedValueMappings.map { (symbol, value) -> CodeFragmentCapturedSymbol(symbol, value.isMutated) }
-        codeFragment.conversionData = CodeFragmentConversionData(classId, methodName, capturedSymbols)
+        val capturedSymbols = CodeFragmentCapturedValueAnalyzer.analyze(session, codeFragment)
+        val capturedValues = capturedSymbols.map { it.value }
 
-        return capturedValueMappings.values.toList()
+        val injectedSymbols = capturedSymbols.map { InjectedValue(it.symbol, it.typeRef, it.value.isMutated) }
+
+        codeFragment.conversionData = CodeFragmentConversionData(
+            classId = ClassId(FqName.ROOT, Name.identifier(configuration[CODE_FRAGMENT_CLASS_NAME] ?: "CodeFragment")),
+            methodName = Name.identifier(configuration[CODE_FRAGMENT_METHOD_NAME] ?: "run"),
+            injectedSymbols
+        )
+
+        val injectedSymbolMapping = injectedSymbols.associateBy { it.symbol }
+
+        return CodeFragmentMappings(capturedValues) { calleeReference ->
+            injectedSymbolMapping[calleeReference.toResolvedSymbol<FirBasedSymbol<*>>()]
+        }
+    }
+
+    private class LLFir2IrExtensions(
+        delegate: Fir2IrExtensions,
+        private val injectedValueProvider: (FirReference) -> InjectedValue?
+    ) : Fir2IrExtensions by delegate {
+        override fun findInjectedValue(calleeReference: FirReference): InjectedValue? {
+            return injectedValueProvider(calleeReference)
+        }
+    }
+
+    private class SingleFileGenerateClassFilter(
+        private val file: KtFile,
+        private val inlinedClasses: Set<KtClassOrObject>
+    ) : GenerationState.GenerateClassFilter() {
+        private val filesWithInlinedClasses = inlinedClasses.mapTo(mutableSetOf()) { it.containingKtFile }
+
+        override fun shouldGeneratePackagePart(ktFile: KtFile): Boolean {
+            return file === ktFile || ktFile in filesWithInlinedClasses
+        }
+
+        override fun shouldAnnotateClass(processingClassOrObject: KtClassOrObject): Boolean {
+            return true
+        }
+
+        override fun shouldGenerateClass(processingClassOrObject: KtClassOrObject): Boolean {
+            return processingClassOrObject.containingKtFile === file ||
+                    processingClassOrObject is KtObjectDeclaration && processingClassOrObject in inlinedClasses
+        }
+
+        override fun shouldGenerateScript(script: KtScript): Boolean {
+            return script.containingKtFile === file
+        }
+
+        override fun shouldGenerateCodeFragment(script: KtCodeFragment) = false
     }
 
     private fun createJvmIrCodegenFactory(configuration: CompilerConfiguration): JvmIrCodegenFactory {
@@ -248,3 +281,11 @@ object LLCompilerFacade {
         )
     }
 }
+
+private val INSIGNIFICANT_ERRORS = setOf(
+    FirErrors.INVISIBLE_REFERENCE,
+    FirErrors.DEPRECATION_ERROR,
+    FirErrors.DIVISION_BY_ZERO,
+    FirErrors.OPT_IN_USAGE_ERROR,
+    FirErrors.OPT_IN_OVERRIDE_ERROR
+)

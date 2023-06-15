@@ -17,48 +17,60 @@ import org.jetbrains.kotlin.fir.labelName
 import org.jetbrains.kotlin.fir.references.FirSuperReference
 import org.jetbrains.kotlin.fir.references.FirThisReference
 import org.jetbrains.kotlin.fir.references.toResolvedCallableSymbol
+import org.jetbrains.kotlin.fir.resolve.constructFunctionType
+import org.jetbrains.kotlin.fir.resolve.defaultType
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.*
 import org.jetbrains.kotlin.fir.types.FirResolvedTypeRef
+import org.jetbrains.kotlin.fir.types.FirTypeRef
+import org.jetbrains.kotlin.fir.types.builder.buildResolvedTypeRef
+import org.jetbrains.kotlin.fir.types.specialFunctionTypeKind
+import org.jetbrains.kotlin.fir.types.toFirResolvedTypeRef
 import org.jetbrains.kotlin.fir.visitors.FirDefaultVisitorVoid
 import org.jetbrains.kotlin.name.StandardClassIds
 import java.util.*
 import kotlin.collections.LinkedHashMap
 
+class CodeFragmentCapturedSymbol(
+    val value: CodeFragmentCapturedValue,
+    val symbol: FirBasedSymbol<*>,
+    val typeRef: FirTypeRef
+)
+
 object CodeFragmentCapturedValueAnalyzer {
-    fun analyze(session: FirSession, codeFragment: FirCodeFragment): Map<FirBasedSymbol<*>, CodeFragmentCapturedValue> {
+    fun analyze(session: FirSession, codeFragment: FirCodeFragment): List<CodeFragmentCapturedSymbol> {
         val selfSymbols = CodeFragmentDeclarationCollector().apply { codeFragment.accept(this) }.symbols.toSet()
         return CodeFragmentCapturedValueVisitor(session, selfSymbols).apply { codeFragment.accept(this) }.values
     }
 }
 
 private class CodeFragmentDeclarationCollector : FirDefaultVisitorVoid() {
-    private val mutableSymbols = mutableListOf<FirBasedSymbol<*>>()
+    private val collectedSymbols = mutableListOf<FirBasedSymbol<*>>()
 
     val symbols: List<FirBasedSymbol<*>>
-        get() = Collections.unmodifiableList(mutableSymbols)
+        get() = Collections.unmodifiableList(collectedSymbols)
 
     override fun visitElement(element: FirElement) {
         element.acceptChildren(this)
     }
 
     override fun visitClass(klass: FirClass) {
-        mutableSymbols += klass.symbol
+        collectedSymbols += klass.symbol
         super.visitClass(klass)
     }
 
     override fun visitFunction(function: FirFunction) {
-        mutableSymbols += function.symbol
+        collectedSymbols += function.symbol
         super.visitFunction(function)
     }
 
     override fun visitValueParameter(valueParameter: FirValueParameter) {
-        mutableSymbols += valueParameter.symbol
+        collectedSymbols += valueParameter.symbol
         super.visitValueParameter(valueParameter)
     }
 
     override fun visitVariable(variable: FirVariable) {
-        mutableSymbols += variable.symbol
+        collectedSymbols += variable.symbol
         super.visitVariable(variable)
     }
 }
@@ -67,12 +79,11 @@ private class CodeFragmentCapturedValueVisitor(
     private val session: FirSession,
     private val selfSymbols: Set<FirBasedSymbol<*>>,
 ) : FirDefaultVisitorVoid() {
-    private val mutableValues = LinkedHashMap<FirBasedSymbol<*>, CodeFragmentCapturedValue>()
-
+    private val mappings = LinkedHashMap<FirBasedSymbol<*>, CodeFragmentCapturedSymbol>()
     private val assignmentLhs = mutableListOf<FirBasedSymbol<*>>()
 
-    val values: Map<FirBasedSymbol<*>, CodeFragmentCapturedValue>
-        get() = Collections.unmodifiableMap(mutableValues)
+    val values: List<CodeFragmentCapturedSymbol>
+        get() = mappings.values.toList()
 
     override fun visitElement(element: FirElement) {
         processElement(element)
@@ -94,7 +105,8 @@ private class CodeFragmentCapturedValueVisitor(
             is FirSuperReference -> {
                 val symbol = (element.superTypeRef as? FirResolvedTypeRef)?.toRegularClassSymbol(session)
                 if (symbol != null && symbol !in selfSymbols) {
-                    mutableValues[symbol] = CodeFragmentCapturedValue.SuperClass(symbol.classId)
+                    val capturedValue = CodeFragmentCapturedValue.SuperClass(symbol.classId)
+                    mappings[symbol] = CodeFragmentCapturedSymbol(capturedValue, symbol, element.superTypeRef)
                 }
             }
             is FirThisReference -> {
@@ -102,19 +114,24 @@ private class CodeFragmentCapturedValueVisitor(
                 if (symbol != null && symbol !in selfSymbols) {
                     when (symbol) {
                         is FirRegularClassSymbol -> {
-                            mutableValues[symbol] = CodeFragmentCapturedValue.ContainingClass(symbol.classId)
+                            val capturedValue = CodeFragmentCapturedValue.ContainingClass(symbol.classId)
+                            val typeRef = buildResolvedTypeRef { type = symbol.defaultType() }
+                            mappings[symbol] = CodeFragmentCapturedSymbol(capturedValue, symbol, typeRef)
                         }
                         is FirFunctionSymbol<*> -> {
                             if (element.contextReceiverNumber >= 0) {
                                 val contextReceiver = symbol.resolvedContextReceivers[element.contextReceiverNumber]
                                 val labelName = contextReceiver.labelName
                                 if (labelName != null) {
-                                    mutableValues[symbol] = CodeFragmentCapturedValue.ContextReceiver(labelName)
+                                    val capturedValue = CodeFragmentCapturedValue.ContextReceiver(labelName)
+                                    mappings[symbol] = CodeFragmentCapturedSymbol(capturedValue, symbol, contextReceiver.typeRef)
                                 }
                             } else {
                                 val labelName = element.labelName ?: (symbol as? FirAnonymousFunctionSymbol)?.label?.name
+                                val typeRef = symbol.receiverParameter?.typeRef ?: error("Receiver parameter not found")
                                 if (labelName != null) {
-                                    mutableValues[symbol] = CodeFragmentCapturedValue.ExtensionReceiver(labelName)
+                                    val capturedValue = CodeFragmentCapturedValue.ExtensionReceiver(labelName)
+                                    mappings[symbol] = CodeFragmentCapturedSymbol(capturedValue, symbol, typeRef)
                                 }
                             }
                         }
@@ -134,25 +151,32 @@ private class CodeFragmentCapturedValueVisitor(
     private fun processCallable(symbol: FirCallableSymbol<*>) {
         when (symbol) {
             is FirValueParameterSymbol -> {
-                mutableValues[symbol] = CodeFragmentCapturedValue.Local(symbol.name, symbol.isMutated)
+                val capturedValue = CodeFragmentCapturedValue.Local(symbol.name, symbol.isMutated)
+                mappings[symbol] = CodeFragmentCapturedSymbol(capturedValue, symbol, symbol.resolvedReturnTypeRef)
             }
             is FirPropertySymbol -> {
                 if (symbol.isLocal) {
-                    mutableValues[symbol] = when {
+                    val capturedValue = when {
                         symbol.hasDelegate -> CodeFragmentCapturedValue.LocalDelegate(symbol.name, symbol.isMutated)
                         else -> CodeFragmentCapturedValue.Local(symbol.name, symbol.isMutated)
                     }
+                    mappings[symbol] = CodeFragmentCapturedSymbol(capturedValue, symbol, symbol.resolvedReturnTypeRef)
                 }
             }
             is FirNamedFunctionSymbol -> {
                 if (symbol.isLocal) {
-                    mutableValues[symbol] = CodeFragmentCapturedValue.LocalFunction(symbol.name)
+                    val capturedValue = CodeFragmentCapturedValue.LocalFunction(symbol.name)
+                    val firFunction = symbol.fir
+                    val functionType = firFunction.constructFunctionType(firFunction.specialFunctionTypeKind(session))
+                    val typeRef = buildResolvedTypeRef { type = functionType }
+                    mappings[symbol] = CodeFragmentCapturedSymbol(capturedValue, symbol, typeRef)
                 }
             }
         }
 
         if (symbol.callableId == StandardClassIds.Callables.coroutineContext) {
-            mutableValues[symbol] = CodeFragmentCapturedValue.CoroutineContext
+            val capturedValue = CodeFragmentCapturedValue.CoroutineContext
+            mappings[symbol] = CodeFragmentCapturedSymbol(capturedValue, symbol, symbol.resolvedReturnTypeRef)
         }
     }
 

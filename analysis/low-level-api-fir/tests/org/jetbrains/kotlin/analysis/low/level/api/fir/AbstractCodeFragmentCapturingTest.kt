@@ -9,8 +9,10 @@ import org.jetbrains.kotlin.analysis.low.level.api.fir.api.getFirResolveSession
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.getOrBuildFirFile
 import org.jetbrains.kotlin.analysis.low.level.api.fir.compiler.CodeFragmentCapturedValueAnalyzer
 import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
+import org.jetbrains.kotlin.analysis.test.framework.utils.indented
 import org.jetbrains.kotlin.fir.declarations.FirCodeFragment
 import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
+import org.jetbrains.kotlin.fir.render
 import org.jetbrains.kotlin.fir.renderer.FirRenderer
 import org.jetbrains.kotlin.fir.symbols.lazyResolveToPhase
 import org.jetbrains.kotlin.psi.KtCodeFragment
@@ -32,9 +34,9 @@ abstract class AbstractCodeFragmentCapturingTest : AbstractLowLevelApiCodeFragme
         firCodeFragment.lazyResolveToPhase(FirResolvePhase.BODY_RESOLVE)
 
         val session = resolveSession.useSiteFirSession
-        val capturedValueMappings = CodeFragmentCapturedValueAnalyzer.analyze(session, firCodeFragment)
+        val capturedSymbols = CodeFragmentCapturedValueAnalyzer.analyze(session, firCodeFragment)
 
-        val actualText = capturedValueMappings.entries.joinToString("\n") { (symbol, value) ->
+        val actualText = capturedSymbols.joinToString("\n") { capturedSymbol ->
             val firRenderer = FirRenderer(
                 bodyRenderer = null,
                 classMemberRenderer = null,
@@ -42,10 +44,14 @@ abstract class AbstractCodeFragmentCapturingTest : AbstractLowLevelApiCodeFragme
                 modifierRenderer = null
             )
 
-            value.toString() + " = " + firRenderer.renderElementAsString(symbol.fir)
+            buildString {
+                append(capturedSymbol.value)
+                appendLine().append(firRenderer.renderElementAsString(capturedSymbol.symbol.fir).indented(4))
+                appendLine().append(capturedSymbol.typeRef.render().indented(4))
+            }
         }
 
-        testServices.assertions.assertEqualsToTestDataFileSibling(actualText)
+        testServices.assertions.assertEqualsToTestDataFileSibling(actualText, extension = ".capturing.txt")
     }
 
     override fun configureTest(builder: TestConfigurationBuilder) {

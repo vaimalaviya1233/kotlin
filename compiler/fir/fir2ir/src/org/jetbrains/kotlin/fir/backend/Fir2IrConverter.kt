@@ -288,11 +288,11 @@ class Fir2IrConverter(
 
         val signature = irClass.symbol.signature!!
 
-        val irPrimaryConstructor = symbolTable.declareConstructor(signature, { Fir2IrConstructorSymbol(signature) }) { symbol ->
+        val irPrimaryConstructor = symbolTable.declareConstructor(signature, { Fir2IrConstructorSymbol(signature) }) { irSymbol ->
             irFactory.createConstructor(
                 UNDEFINED_OFFSET, UNDEFINED_OFFSET,
                 IrDeclarationOrigin.DEFINED,
-                symbol,
+                irSymbol,
                 Name.special("<init>"),
                 irClass.visibility,
                 irClass.defaultType,
@@ -312,14 +312,14 @@ class Fir2IrConverter(
             }
         }
 
-        val irFragmentFunction = symbolTable.declareSimpleFunction(signature, { Fir2IrSimpleFunctionSymbol(signature) }) { symbol ->
+        val irFragmentFunction = symbolTable.declareSimpleFunction(signature, { Fir2IrSimpleFunctionSymbol(signature) }) { irSymbol ->
             val lastStatement = codeFragment.block.statements.lastOrNull()
             val returnType = (lastStatement as? FirExpression)?.typeRef?.toIrType(typeConverter) ?: irBuiltIns.unitType
 
             irFactory.createFunction(
                 UNDEFINED_OFFSET, UNDEFINED_OFFSET,
                 IrDeclarationOrigin.DEFINED,
-                symbol,
+                irSymbol,
                 conversionData.methodName,
                 DescriptorVisibilities.PUBLIC,
                 Modality.FINAL,
@@ -335,10 +335,10 @@ class Fir2IrConverter(
                 containerSource = null
             ).apply fragmentFunction@{
                 parent = irClass
-                valueParameters = conversionData.capturedSymbols.mapIndexed { index, capturedValue ->
-                    val isMutated = capturedValue.isMutated
+                valueParameters = conversionData.injectedValues.mapIndexed { index, injectedValue ->
+                    val isMutated = injectedValue.isMutated
 
-                    val capturedValueType = when (val capturedSymbol = capturedValue.symbol) {
+                    val capturedValueType = when (val capturedSymbol = injectedValue.symbol) {
                         is FirCallableSymbol<*> -> capturedSymbol.resolvedReturnTypeRef.toIrType(typeConverter)
                         is FirClassSymbol<*> -> capturedSymbol.defaultType().toFirResolvedTypeRef().toIrType(typeConverter)
                         else -> error("Unexpected symbol type: ${capturedSymbol::class}")
@@ -347,7 +347,7 @@ class Fir2IrConverter(
                     irFactory.createValueParameter(
                         UNDEFINED_OFFSET, UNDEFINED_OFFSET,
                         if (isMutated) IrDeclarationOrigin.SHARED_VARIABLE_IN_EVALUATOR_FRAGMENT else IrDeclarationOrigin.DEFINED,
-                        IrValueParameterSymbolImpl(),
+                        injectedValue.irParameterSymbol,
                         Name.identifier("p$index"),
                         index,
                         capturedValueType,

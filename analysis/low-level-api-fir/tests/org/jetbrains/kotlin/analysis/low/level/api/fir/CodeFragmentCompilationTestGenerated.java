@@ -47,4 +47,92 @@ public class CodeFragmentCompilationTestGenerated extends AbstractCodeFragmentCo
     public void testSimple() throws Exception {
         runTest("analysis/low-level-api-fir/testdata/codeFragments/compilation/simple.kt");
     }
+
+    @Nested
+    @TestMetadata("analysis/low-level-api-fir/testdata/codeFragments/compilation/capturing")
+    @TestDataPath("$PROJECT_ROOT")
+    public class Capturing {
+        @Test
+        public void testAllFilesPresentInCapturing() throws Exception {
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("analysis/low-level-api-fir/testdata/codeFragments/compilation/capturing"), Pattern.compile("^([^.]+)\\.kt$"), null, true);
+        }
+
+        @Test
+        @TestMetadata("contextReceiver.kt")
+        public void testContextReceiver() throws Exception {
+            runTest("analysis/low-level-api-fir/testdata/codeFragments/compilation/capturing/contextReceiver.kt");
+        }
+
+        @Test
+        @TestMetadata("contextReceiverExplicit.kt")
+        public void testContextReceiverExplicit() throws Exception {
+            runTest("analysis/low-level-api-fir/testdata/codeFragments/compilation/capturing/contextReceiverExplicit.kt");
+        }
+
+        @Test
+        @TestMetadata("extensionReceiver.kt")
+        public void testExtensionReceiver() throws Exception {
+            runTest("analysis/low-level-api-fir/testdata/codeFragments/compilation/capturing/extensionReceiver.kt");
+        }
+
+        @Test
+        @TestMetadata("extensionReceiverExplicit.kt")
+        public void testExtensionReceiverExplicit() throws Exception {
+            runTest("analysis/low-level-api-fir/testdata/codeFragments/compilation/capturing/extensionReceiverExplicit.kt");
+        }
+
+        @Test
+        @TestMetadata("extensionReceiverLabeled.kt")
+        public void testExtensionReceiverLabeled() throws Exception {
+            runTest("analysis/low-level-api-fir/testdata/codeFragments/compilation/capturing/extensionReceiverLabeled.kt");
+        }
+
+        @Test
+        @TestMetadata("initializer.kt")
+        public void testInitializer() throws Exception {
+            runTest("analysis/low-level-api-fir/testdata/codeFragments/compilation/capturing/initializer.kt");
+        }
+
+        @Test
+        @TestMetadata("local.kt")
+        public void testLocal() throws Exception {
+            runTest("analysis/low-level-api-fir/testdata/codeFragments/compilation/capturing/local.kt");
+        }
+
+        @Test
+        @TestMetadata("localFunction.kt")
+        public void testLocalFunction() throws Exception {
+            runTest("analysis/low-level-api-fir/testdata/codeFragments/compilation/capturing/localFunction.kt");
+        }
+
+        @Test
+        @TestMetadata("localMutated.kt")
+        public void testLocalMutated() throws Exception {
+            runTest("analysis/low-level-api-fir/testdata/codeFragments/compilation/capturing/localMutated.kt");
+        }
+
+        @Test
+        @TestMetadata("nestedOuterClass.kt")
+        public void testNestedOuterClass() throws Exception {
+            runTest("analysis/low-level-api-fir/testdata/codeFragments/compilation/capturing/nestedOuterClass.kt");
+        }
+
+        @Test
+        @TestMetadata("outerClass.kt")
+        public void testOuterClass() throws Exception {
+            runTest("analysis/low-level-api-fir/testdata/codeFragments/compilation/capturing/outerClass.kt");
+        }
+
+        @Test
+        @TestMetadata("outerClassMutated.kt")
+        public void testOuterClassMutated() throws Exception {
+            runTest("analysis/low-level-api-fir/testdata/codeFragments/compilation/capturing/outerClassMutated.kt");
+        }
+
+        @Test
+        @TestMetadata("valueParameter.kt")
+        public void testValueParameter() throws Exception {
+            runTest("analysis/low-level-api-fir/testdata/codeFragments/compilation/capturing/valueParameter.kt");
+        }
+    }
 }

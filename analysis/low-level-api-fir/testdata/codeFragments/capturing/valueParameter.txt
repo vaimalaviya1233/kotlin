@@ -1,1 +1,3 @@
-Local[name: foo; isMutated: false; displayText: foo] = foo: R|Foo?|
+Local[name: foo; isMutated: false; displayText: foo]
+    foo: R|Foo?|
+    R|Foo?|

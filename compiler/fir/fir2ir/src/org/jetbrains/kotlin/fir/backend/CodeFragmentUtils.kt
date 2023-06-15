@@ -9,16 +9,25 @@ import org.jetbrains.kotlin.fir.declarations.FirCodeFragment
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationDataKey
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationDataRegistry
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
+import org.jetbrains.kotlin.fir.types.FirTypeRef
+import org.jetbrains.kotlin.ir.symbols.IrValueParameterSymbol
+import org.jetbrains.kotlin.ir.symbols.impl.IrValueParameterSymbolImpl
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
 
 class CodeFragmentConversionData(
     val classId: ClassId,
     val methodName: Name,
-    val capturedSymbols: List<CodeFragmentCapturedSymbol>
+    val injectedValues: List<InjectedValue>
 )
 
-class CodeFragmentCapturedSymbol(val symbol: FirBasedSymbol<*>, val isMutated: Boolean)
+class InjectedValue(
+    val symbol: FirBasedSymbol<*>,
+    val typeRef: FirTypeRef,
+    val isMutated: Boolean
+) {
+    val irParameterSymbol: IrValueParameterSymbol = IrValueParameterSymbolImpl()
+}
 
 private object CodeFragmentTowerDataContext : FirDeclarationDataKey()
 
