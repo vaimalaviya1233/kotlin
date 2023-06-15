@@ -20,7 +20,7 @@ fun Project.configureSbom(
     target: String? = null,
     documentName: String? = null,
     gradleConfigurations: Iterable<String> = setOf("runtimeClasspath"),
-    publication: NamedDomainObjectProvider<MavenPublication>? = null
+    publication: NamedDomainObjectProvider<MavenPublication>? = null,
 ): TaskProvider<SpdxSbomTask> {
     val project = this
     val targetName = target ?: "${mainPublicationName}Publication"
@@ -69,6 +69,13 @@ fun Project.configureSbom(
         pluginManager.withPlugin("kotlin-build-publishing") {
             publication.configure {
                 artifact(sbomArtifact)
+            }
+        }
+        if (!pluginManager.hasPlugin("kotlin-build-publishing")) {
+            pluginManager.withPlugin("maven-publish") {
+                publication.configure {
+                    artifact(sbomArtifact)
+                }
             }
         }
     }
