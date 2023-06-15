@@ -8,6 +8,9 @@ plugins {
 }
 
 publish(sbom = false)
+configureSbom(
+    gradleConfigurations = setOf(configurations.archives.name)
+)
 
 val default = configurations.getByName(Dependency.DEFAULT_CONFIGURATION)
 default.extendsFrom(configurations.publishedRuntime.get())
