@@ -57,9 +57,9 @@ class MockLibraryAbiReaderTest {
 
     @Test
     fun testManifestInfo() {
-        val manifestInfo = LibraryAbiReader.readAbiInfo(fakeLibrary).manifestInfo
+        val manifest = LibraryAbiReader.readAbiInfo(fakeLibrary).manifest
 
-        with(manifestInfo) {
+        with(manifest) {
             assertEquals("fake-library", uniqueName)
             assertEquals("NATIVE", platform)
             assertEquals(setOf("ios_arm64"), nativeTargets)

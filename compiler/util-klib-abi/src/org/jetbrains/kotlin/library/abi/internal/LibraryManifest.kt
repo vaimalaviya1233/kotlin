@@ -19,7 +19,7 @@ import java.util.*
  * @property libraryVersion [KLIB_PROPERTY_LIBRARY_VERSION]
  * @property irProvider [KLIB_PROPERTY_IR_PROVIDER]
  */
-data class LibraryManifestInfo(
+data class LibraryManifest(
     val uniqueName: String?,
     val platform: String?,
     val nativeTargets: SortedSet<String>,

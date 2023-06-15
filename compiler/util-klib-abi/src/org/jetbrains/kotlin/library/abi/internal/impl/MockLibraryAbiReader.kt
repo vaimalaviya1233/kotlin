@@ -17,7 +17,7 @@ import java.util.*
 internal object MockLibraryAbiReader {
     fun readAbiInfo(library: File): LibraryAbi {
         return LibraryAbi(
-            manifestInfo = LibraryManifestInfo(
+            manifest = LibraryManifest(
                 uniqueName = library.nameWithoutExtension,
                 platform = "NATIVE",
                 nativeTargets = sortedSetOf("ios_arm64"),
