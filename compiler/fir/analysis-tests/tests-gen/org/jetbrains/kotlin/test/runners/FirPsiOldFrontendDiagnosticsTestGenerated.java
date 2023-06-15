@@ -11174,6 +11174,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
                 }
 
                 @Test
+                @TestMetadata("javaFakeEnumEntries.kt")
+                public void testJavaFakeEnumEntries() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/enum/entries/javaFakeEnumEntries.kt");
+                }
+
+                @Test
                 @TestMetadata("nameShadowingOfExternallyDefinedEntries.kt")
                 public void testNameShadowingOfExternallyDefinedEntries() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/enum/entries/nameShadowingOfExternallyDefinedEntries.kt");
