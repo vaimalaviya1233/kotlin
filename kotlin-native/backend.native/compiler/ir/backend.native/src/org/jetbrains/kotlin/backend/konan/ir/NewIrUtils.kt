@@ -48,9 +48,6 @@ fun IrClass.isNothing() = this.isClassTypeWithSignature(IdSignatureValues.nothin
 
 fun IrClass.getSuperInterfaces() = this.superClasses.map { it.owner }.filter { it.isInterface }
 
-val IrProperty.isReal: Boolean get() = !this.isFakeOverride
-val IrField.isReal: Boolean get() = !this.isFakeOverride
-
 fun IrClass.isSpecialClassWithNoSupertypes() = this.isAny() || this.isNothing()
 
 inline fun <reified T> IrDeclaration.getAnnotationArgumentValue(fqName: FqName, argumentName: String): T? {
