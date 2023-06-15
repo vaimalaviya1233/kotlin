@@ -374,7 +374,7 @@ class Fir2IrDeclarationStorage(
                     createIrParameter(
                         valueParameter, index + contextReceiverParametersCount,
                         useStubForDefaultValueStub = function !is FirConstructor || containingClass?.name != Name.identifier("Enum"),
-                        typeContext,
+                        typeContext = typeContext,
                         skipDefaultParameter = isFakeOverride || origin == IrDeclarationOrigin.DELEGATED_MEMBER
                     ).apply {
                         this.parent = parent
@@ -1167,9 +1167,10 @@ class Fir2IrDeclarationStorage(
         index: Int = UNDEFINED_PARAMETER_INDEX,
         useStubForDefaultValueStub: Boolean = true,
         typeContext: ConversionTypeContext = ConversionTypeContext.DEFAULT,
+        givenOrigin: IrDeclarationOrigin? = null,
         skipDefaultParameter: Boolean = false,
     ): IrValueParameter = convertCatching(valueParameter) {
-        val origin = valueParameter.computeIrOrigin()
+        val origin = givenOrigin ?: valueParameter.computeIrOrigin()
         val type = valueParameter.returnTypeRef.toIrType(typeContext)
         val irParameter = valueParameter.convertWithOffsets { startOffset, endOffset ->
             irFactory.createValueParameter(
