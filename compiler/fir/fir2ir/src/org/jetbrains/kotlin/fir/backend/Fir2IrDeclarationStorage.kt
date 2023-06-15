@@ -1103,7 +1103,9 @@ class Fir2IrDeclarationStorage(
             irParent = irClass,
             typeRef = initializer?.typeRef ?: field.returnTypeRef,
             origin = IrDeclarationOrigin.DELEGATE
-        )
+        ).apply {
+            metadata = FirMetadataSource.Field(field)
+        }
     }
 
     internal fun createIrField(
@@ -1138,6 +1140,7 @@ class Fir2IrDeclarationStorage(
                     isStatic = field.isStatic
                 )
             }.apply {
+                metadata = FirMetadataSource.Field(field)
                 val staticFakeOverrideKey = getFieldStaticFakeOverrideKey(field, containingClassLookupTag)
                 if (staticFakeOverrideKey == null) {
                     fieldCache[field] = this
