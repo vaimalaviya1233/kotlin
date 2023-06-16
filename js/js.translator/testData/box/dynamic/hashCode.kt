@@ -1,3 +1,5 @@
+// IGNORE_BACKEND: JS
+
 fun jsNullUndefinedHashCode() {
     assertEquals(js("null").unsafeCast<Any>().hashCode(), js("null").unsafeCast<Any>().hashCode())
     assertEquals(js("undefined").unsafeCast<Any>().hashCode(), js("undefined").unsafeCast<Any>().hashCode())
@@ -15,6 +17,7 @@ fun jsObjectHashCode() {
     assertEquals(obj1.hashCode(), obj1.hashCode())
     assertEquals(obj2.hashCode(), obj2.hashCode())
     assertEquals(nullProtoObj1.hashCode(), nullProtoObj1.hashCode())
+
     assertEquals(nullProtoObj2.hashCode(), nullProtoObj2.hashCode())
     assertEquals(arr1.hashCode(), arr1.hashCode())
     assertEquals(arr2.hashCode(), arr2.hashCode())
