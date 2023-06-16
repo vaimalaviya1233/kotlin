@@ -162,8 +162,11 @@ class FirMetadataSerializer(
     }
 
     override fun bindFieldMetadata(metadata: MetadataSource.Property, signature: Pair<Type, String>) {
-        val fir = (metadata as FirMetadataSource.Property).fir
-        globalSerializationBindings.put(FirJvmSerializerExtension.FIELD_FOR_PROPERTY, fir, signature)
+        if (metadata !is FirMetadataSource.Property) {
+            // Can be FirMetadataSource.Field, which is used for synthetic delegate fields, which we don't serialize.
+            return
+        }
+        globalSerializationBindings.put(FirJvmSerializerExtension.FIELD_FOR_PROPERTY, metadata.fir, signature)
     }
 }
 
