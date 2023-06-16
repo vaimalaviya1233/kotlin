@@ -128,22 +128,6 @@ internal fun calculateErrorInfo(proto: dynamic): Int {
 
 private fun getPrototypeOf(obj: dynamic) = JsObject.getPrototypeOf(obj)
 
-private fun searchForMetadata(obj: dynamic): Metadata? {
-    if (obj == null) {
-        return null
-    }
-    var metadata: Metadata? = obj.`$metadata$`
-    var currentObject = getPrototypeOf(obj)
-
-    while (metadata == null && currentObject != null) {
-        val currentConstructor = currentObject.constructor
-        metadata = currentConstructor.`$metadata$`
-        currentObject = getPrototypeOf(currentObject)
-    }
-
-    return metadata
-}
-
 private fun isInterfaceImpl(obj: dynamic, iface: Int): Boolean {
     val mask: BitMask = obj.`$imask$`.unsafeCast<BitMask?>() ?: return false
     return mask.isBitSet(iface)
@@ -154,12 +138,14 @@ internal fun isInterface(obj: dynamic, iface: dynamic): Boolean {
 }
 
 internal fun isSuspendFunction(obj: dynamic, arity: Int): Boolean {
-    if (jsTypeOf(obj) == "function") {
+    val objTypeOf = jsTypeOf(obj)
+
+    if (objTypeOf == "function") {
         @Suppress("DEPRECATED_IDENTITY_EQUALS")
         return obj.`$arity`.unsafeCast<Int>() === arity
     }
 
-    if (jsTypeOf(obj) == "object" && jsIn("${'$'}metadata${'$'}", obj.constructor)) {
+    if (objTypeOf == "object" && jsIn("${'$'}metadata${'$'}", obj.constructor)) {
         @Suppress("IMPLICIT_BOXING_IN_IDENTITY_EQUALS")
         return obj.constructor.unsafeCast<Ctor>().`$metadata$`.suspendArity?.let {
             var result = false
@@ -174,18 +160,6 @@ internal fun isSuspendFunction(obj: dynamic, arity: Int): Boolean {
     }
 
     return false
-}
-
-internal fun isObject(obj: dynamic): Boolean {
-    val objTypeOf = jsTypeOf(obj)
-
-    return when (objTypeOf) {
-        "string" -> true
-        "number" -> true
-        "boolean" -> true
-        "function" -> true
-        else -> jsInstanceOf(obj, js("Object"))
-    }
 }
 
 private fun isJsArray(obj: Any): Boolean {
@@ -216,7 +190,7 @@ internal fun jsGetPrototypeOf(jsClass: dynamic) = js("Object").getPrototypeOf(js
 
 internal fun jsIsType(obj: dynamic, jsClass: dynamic): Boolean {
     if (jsClass === js("Object")) {
-        return isObject(obj)
+        return obj != null
     }
 
     if (obj == null || jsClass == null || (jsTypeOf(obj) != "object" && jsTypeOf(obj) != "function")) {
