@@ -349,12 +349,10 @@ object IrTree : AbstractTreeBuilder() {
         }
     }
     val functionWithLateBinding: ElementConfig by element(Declaration) {
-        typeKind = TypeKind.Interface
+        typeKind = TypeKind.Class
 
-        parent(declaration)
+        parent(simpleFunction)
 
-        +symbol(simpleFunctionSymbolType)
-        +field("modality", type<Modality>())
         +field("isBound", boolean, mutable = false)
         generationCallback = {
             addFunction(
@@ -484,6 +482,7 @@ object IrTree : AbstractTreeBuilder() {
     }
     val simpleFunction: ElementConfig by element(Declaration) {
         visitorParent = function
+        isForcedLeaf = true
 
         parent(function)
         parent(overridableDeclaration.withArgs("S" to simpleFunctionSymbolType))
