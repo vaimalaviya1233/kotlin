@@ -15,7 +15,6 @@ import org.jetbrains.kotlin.ir.interpreter.isAccessToNotNullableObject
 import org.jetbrains.kotlin.ir.interpreter.preprocessor.IrInterpreterKCallableNamePreprocessor.Companion.isEnumName
 import org.jetbrains.kotlin.ir.interpreter.preprocessor.IrInterpreterKCallableNamePreprocessor.Companion.isKCallableNameCall
 import org.jetbrains.kotlin.ir.types.*
-import org.jetbrains.kotlin.ir.util.constructors
 import org.jetbrains.kotlin.ir.util.parentAsClass
 import org.jetbrains.kotlin.ir.util.statements
 
@@ -67,6 +66,10 @@ class IrInterpreterCommonChecker : IrInterpreterChecker {
 
         if (expression.dispatchReceiver.isAccessToNotNullableObject()) {
             return expression.isGetterToConstVal()
+        }
+
+        if (expression.isGetterToConstVal() && !data.interpreterConfiguration.inlineConstVal) {
+            return false
         }
 
         val dispatchReceiverComputable = expression.dispatchReceiver?.accept(this, data) ?: true
@@ -169,6 +172,10 @@ class IrInterpreterCommonChecker : IrInterpreterChecker {
     }
 
     override fun visitGetField(expression: IrGetField, data: IrInterpreterCheckerData): Boolean {
+        if (!data.interpreterConfiguration.inlineConstVal) {
+            return false
+        }
+
         val owner = expression.symbol.owner
         val property = owner.correspondingPropertySymbol?.owner
         val fqName = owner.fqName

@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.backend.common.lower.inline.LocalClassesInInlineFunc
 import org.jetbrains.kotlin.backend.common.lower.inline.LocalClassesInInlineLambdasLowering
 import org.jetbrains.kotlin.backend.common.lower.loops.ForLoopsLowering
 import org.jetbrains.kotlin.backend.common.phaser.*
+import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.ir.backend.js.codegen.JsGenerationGranularity
 import org.jetbrains.kotlin.ir.backend.js.lower.*
 import org.jetbrains.kotlin.ir.backend.js.lower.calls.CallsLowering
@@ -834,11 +835,15 @@ private val jsSuspendArityStorePhase = makeDeclarationTransformerPhase(
 )
 
 val constEvaluationPhase = makeJsModulePhase(
-    {
-        ConstEvaluationLowering(
-            it,
-            configuration = IrInterpreterConfiguration(printOnlyExceptionMessage = true, platform = JsPlatforms.defaultJsPlatform)
+    { context ->
+        // We can't inline `const val`s because this lowering can mess up incremental compilation.
+        // For example, if we inline some constant located in `lib` module then we are not going to track and update its value on change.
+        val configuration = IrInterpreterConfiguration(
+            printOnlyExceptionMessage = true,
+            platform = JsPlatforms.defaultJsPlatform,
+            inlineConstVal = false
         )
+        ConstEvaluationLowering(context, configuration = configuration)
     },
     name = "ConstEvaluationLowering",
     description = "Evaluate functions that are marked as `IntrinsicConstEvaluation`",
