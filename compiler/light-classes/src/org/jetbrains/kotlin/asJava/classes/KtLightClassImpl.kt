@@ -69,7 +69,7 @@ abstract class KtLightClassImpl(
     protected open fun computeIsFinal(): Boolean = when {
         classOrObject.hasModifier(KtTokens.FINAL_KEYWORD) -> true
         isAbstract() || isSealed() -> false
-        isEnum -> false
+        isEnum -> true
         !classOrObject.hasModifier(KtTokens.OPEN_KEYWORD) -> {
             val descriptor = lazy { getDescriptor() }
             var modifier = PsiModifier.FINAL
