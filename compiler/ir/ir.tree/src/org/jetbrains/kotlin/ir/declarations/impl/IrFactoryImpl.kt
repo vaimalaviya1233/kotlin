@@ -146,11 +146,25 @@ abstract class AbstractIrFactoryImpl : IrFactory {
         isOperator: Boolean,
         isInfix: Boolean,
         isExternal: Boolean,
+        isFakeOverride: Boolean
     ): IrFunctionWithLateBinding =
         IrFunctionWithLateBindingImpl(
-            startOffset, endOffset, origin, name, visibility, modality, returnType,
-            isInline, isExternal, isTailrec, isSuspend, isOperator, isInfix, isExpect,
-            factory = this
+            startOffset = startOffset,
+            endOffset = endOffset,
+            origin = origin,
+            name = name,
+            visibility = visibility,
+            modality = modality,
+            returnType = returnType,
+            isInline = isInline,
+            isExternal = isExternal,
+            isTailrec = isTailrec,
+            isSuspend = isSuspend,
+            isOperator = isOperator,
+            isInfix = isInfix,
+            isExpect = isExpect,
+            isFakeOverride = isFakeOverride,
+            factory = this,
         )
 
     override fun createLocalDelegatedProperty(
@@ -200,11 +214,23 @@ abstract class AbstractIrFactoryImpl : IrFactory {
         isDelegated: Boolean,
         isExternal: Boolean,
         isExpect: Boolean,
-    ): IrProperty =
+        isFakeOverride: Boolean,
+    ): IrPropertyWithLateBinding =
         IrPropertyWithLateBindingImpl(
-            startOffset, endOffset, origin, name, visibility, modality,
-            isVar, isConst, isLateinit, isDelegated, isExternal, isExpect,
-            factory = this
+            startOffset = startOffset,
+            endOffset = endOffset,
+            origin = origin,
+            name = name,
+            visibility = visibility,
+            modality = modality,
+            isVar = isVar,
+            isConst = isConst,
+            isLateinit = isLateinit,
+            isDelegated = isDelegated,
+            isExternal = isExternal,
+            isExpect = isExpect,
+            isFakeOverride = isFakeOverride,
+            factory = this,
         )
 
     override fun createTypeAlias(

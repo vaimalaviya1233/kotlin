@@ -1,15 +1,32 @@
 /*
- * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2023 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
+// This file was generated automatically. See compiler/ir/ir.tree/tree-generator/ReadMe.md.
+// DO NOT MODIFY IT MANUALLY.
+
 package org.jetbrains.kotlin.ir.declarations
 
-import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.descriptors.ClassKind
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.descriptors.DescriptorVisibility
+import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.descriptors.SourceElement
 import org.jetbrains.kotlin.ir.expressions.IrBlockBody
 import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrExpressionBody
-import org.jetbrains.kotlin.ir.symbols.*
+import org.jetbrains.kotlin.ir.symbols.IrAnonymousInitializerSymbol
+import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
+import org.jetbrains.kotlin.ir.symbols.IrConstructorSymbol
+import org.jetbrains.kotlin.ir.symbols.IrEnumEntrySymbol
+import org.jetbrains.kotlin.ir.symbols.IrFieldSymbol
+import org.jetbrains.kotlin.ir.symbols.IrLocalDelegatedPropertySymbol
+import org.jetbrains.kotlin.ir.symbols.IrPropertySymbol
+import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
+import org.jetbrains.kotlin.ir.symbols.IrTypeAliasSymbol
+import org.jetbrains.kotlin.ir.symbols.IrTypeParameterSymbol
+import org.jetbrains.kotlin.ir.symbols.IrValueParameterSymbol
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedContainerSource
@@ -56,8 +73,8 @@ interface IrFactory {
         returnType: IrType,
         symbol: IrConstructorSymbol,
         isPrimary: Boolean,
-        isExternal: Boolean,
-        containerSource: DeserializedContainerSource? = null
+        isExternal: Boolean = false,
+        containerSource: DeserializedContainerSource? = null,
     ): IrConstructor
 
     fun createEnumEntry(
@@ -84,28 +101,8 @@ interface IrFactory {
         type: IrType,
         isFinal: Boolean,
         isStatic: Boolean,
-        isExternal: Boolean,
+        isExternal: Boolean = false,
     ): IrField
-
-    fun createSimpleFunction(
-        startOffset: Int,
-        endOffset: Int,
-        origin: IrDeclarationOrigin,
-        name: Name,
-        visibility: DescriptorVisibility,
-        isInline: Boolean,
-        isExpect: Boolean,
-        returnType: IrType,
-        modality: Modality,
-        symbol: IrSimpleFunctionSymbol,
-        isTailrec: Boolean,
-        isSuspend: Boolean,
-        isOperator: Boolean,
-        isInfix: Boolean,
-        isExternal: Boolean,
-        containerSource: DeserializedContainerSource? = null,
-        isFakeOverride: Boolean = origin == IrDeclarationOrigin.FAKE_OVERRIDE,
-    ): IrSimpleFunction
 
     fun createFunctionWithLateBinding(
         startOffset: Int,
@@ -121,7 +118,8 @@ interface IrFactory {
         isSuspend: Boolean,
         isOperator: Boolean,
         isInfix: Boolean,
-        isExternal: Boolean,
+        isExternal: Boolean = false,
+        isFakeOverride: Boolean = origin == IrDeclarationOrigin.FAKE_OVERRIDE,
     ): IrFunctionWithLateBinding
 
     fun createLocalDelegatedProperty(
@@ -146,10 +144,10 @@ interface IrFactory {
         isConst: Boolean,
         isLateinit: Boolean,
         isDelegated: Boolean,
-        isExternal: Boolean,
+        isExternal: Boolean = false,
         containerSource: DeserializedContainerSource? = null,
         isExpect: Boolean = false,
-        isFakeOverride: Boolean = origin == IrDeclarationOrigin.FAKE_OVERRIDE
+        isFakeOverride: Boolean = origin == IrDeclarationOrigin.FAKE_OVERRIDE,
     ): IrProperty
 
     fun createPropertyWithLateBinding(
@@ -163,9 +161,30 @@ interface IrFactory {
         isConst: Boolean,
         isLateinit: Boolean,
         isDelegated: Boolean,
-        isExternal: Boolean,
+        isExternal: Boolean = false,
+        isExpect: Boolean = false,
+        isFakeOverride: Boolean = origin == IrDeclarationOrigin.FAKE_OVERRIDE,
+    ): IrPropertyWithLateBinding
+
+    fun createSimpleFunction(
+        startOffset: Int,
+        endOffset: Int,
+        origin: IrDeclarationOrigin,
+        name: Name,
+        visibility: DescriptorVisibility,
+        isInline: Boolean,
         isExpect: Boolean,
-    ): IrProperty
+        returnType: IrType,
+        modality: Modality,
+        symbol: IrSimpleFunctionSymbol,
+        isTailrec: Boolean,
+        isSuspend: Boolean,
+        isOperator: Boolean,
+        isInfix: Boolean,
+        isExternal: Boolean = false,
+        containerSource: DeserializedContainerSource? = null,
+        isFakeOverride: Boolean = origin == IrDeclarationOrigin.FAKE_OVERRIDE,
+    ): IrSimpleFunction
 
     fun createTypeAlias(
         startOffset: Int,
@@ -201,19 +220,14 @@ interface IrFactory {
         varargElementType: IrType?,
         isCrossinline: Boolean,
         isNoinline: Boolean,
-        isHidden: Boolean
+        isHidden: Boolean,
     ): IrValueParameter
 
-    // Bodies
+    fun createBlockBody(startOffset: Int, endOffset: Int): IrBlockBody
 
     fun createExpressionBody(
         startOffset: Int,
         endOffset: Int,
         expression: IrExpression,
     ): IrExpressionBody
-
-    fun createBlockBody(
-        startOffset: Int,
-        endOffset: Int,
-    ): IrBlockBody
 }
