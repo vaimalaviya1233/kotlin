@@ -276,6 +276,10 @@ object NodeConfigurator : AbstractFieldConfigurator<FirTreeBuilder>(FirTreeBuild
             needTransformOtherChildren()
         }
 
+        errorWhenCondition.configure {
+            +fieldList("conditions", expression)
+        }
+
         classLikeDeclaration.configure {
             +symbol("FirClassLikeSymbol", "out FirClassLikeDeclaration")
             +field("deprecationsProvider", deprecationsProviderType).withReplace().apply { isMutable = true }

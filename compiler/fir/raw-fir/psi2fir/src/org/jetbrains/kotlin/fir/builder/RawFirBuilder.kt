@@ -2308,21 +2308,38 @@ open class RawFirBuilder(
                             val ktCondition = entry.conditions.first()
                             buildWhenBranch {
                                 source = entrySource
-                                condition = ((ktCondition as? KtWhenConditionWithExpression)?.expression ?: ktCondition).toFirExpression(
-                                        "No expression in condition with expression",
-                                        DiagnosticKind.ExpressionExpected
-                                    ).let { condition ->
-                                        if (condition is FirErrorExpression && condition.nonExpressionElement == null) {
-                                            condition.replaceNonExpressionElement(
-                                                ktCondition.toFirWhenCondition(
-                                                    ref,
-                                                    { toFirExpression(it) },
-                                                    { toFirOrErrorType() },
-                                                )
-                                            )
-                                            shouldBind = true
+                                condition =
+                                    if (entry.conditions.size == 1 && ktCondition is KtWhenConditionWithExpression && ktCondition.expression != null) {
+                                        ktCondition.expression.toFirExpression(
+                                            "No expression in condition with expression",
+                                            DiagnosticKind.ExpressionExpected,
+                                        )
+                                    } else {
+                                        buildErrorWhenCondition {
+                                            source = entrySource.fakeElement(KtFakeSourceElementKind.WhenCondition)
+                                            entry.conditions.mapTo(conditions) { condition ->
+                                                if (condition is KtWhenConditionWithExpression) {
+                                                    condition.expression.toFirExpression(
+                                                        "No expression in condition with expression",
+                                                        DiagnosticKind.ExpressionExpected
+                                                    )
+                                                } else {
+                                                    shouldBind = true
+                                                    buildErrorExpression {
+                                                        source = condition.toFirSourceElement()
+                                                        nonExpressionElement = condition.toFirWhenCondition(
+                                                            ref,
+                                                            { toFirExpression(it) },
+                                                            { toFirOrErrorType() },
+                                                        )
+                                                        diagnostic = ConeSimpleDiagnostic(
+                                                            "No expression in condition with expression",
+                                                            DiagnosticKind.ExpressionExpected,
+                                                        )
+                                                    }
+                                                }
+                                            }
                                         }
-                                        condition
                                     }
                                 result = branchBody
                             }

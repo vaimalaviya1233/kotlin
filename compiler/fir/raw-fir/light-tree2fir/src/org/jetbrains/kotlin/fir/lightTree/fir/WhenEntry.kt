@@ -6,11 +6,14 @@
 package org.jetbrains.kotlin.fir.lightTree.fir
 
 import com.intellij.lang.LighterASTNode
+import org.jetbrains.kotlin.KtLightSourceElement
 import org.jetbrains.kotlin.fir.builder.buildBalancedOrExpressionTree
 import org.jetbrains.kotlin.fir.diagnostics.ConeSyntaxDiagnostic
 import org.jetbrains.kotlin.fir.expressions.FirBlock
 import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.expressions.buildErrorExpression
+import org.jetbrains.kotlin.fir.expressions.builder.buildErrorWhenCondition
+import org.jetbrains.kotlin.toKtLightSourceElement
 
 data class WhenEntry(
     val conditions: List<FirExpression>,
@@ -24,10 +27,14 @@ data class WhenEntry(
         return buildBalancedOrExpressionTree(conditions)
     }
 
-    fun toFirWhenConditionWithoutSubject(): FirExpression {
-        return when (val condition = conditions.firstOrNull()) {
-            null -> buildErrorExpression(null, ConeSyntaxDiagnostic("No expression in condition with expression"))
-            else -> condition
+    fun toFirWhenConditionWithoutSubject(entrySource: KtLightSourceElement): FirExpression {
+        return when (conditions.size) {
+            0 -> buildErrorExpression(null, ConeSyntaxDiagnostic("No expression in condition with expression"))
+            1 -> conditions.first()
+            else -> buildErrorWhenCondition {
+                source = entrySource
+                conditions += this@WhenEntry.conditions
+            }
         }
     }
 }

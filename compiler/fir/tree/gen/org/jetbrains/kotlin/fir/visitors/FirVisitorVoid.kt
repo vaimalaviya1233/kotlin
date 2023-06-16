@@ -88,6 +88,7 @@ import org.jetbrains.kotlin.fir.expressions.FirIncrementDecrementExpression
 import org.jetbrains.kotlin.fir.expressions.FirEqualityOperatorCall
 import org.jetbrains.kotlin.fir.expressions.FirWhenExpression
 import org.jetbrains.kotlin.fir.expressions.FirWhenBranch
+import org.jetbrains.kotlin.fir.expressions.FirErrorWhenCondition
 import org.jetbrains.kotlin.fir.expressions.FirContextReceiverArgumentListOwner
 import org.jetbrains.kotlin.fir.expressions.FirCheckNotNullCall
 import org.jetbrains.kotlin.fir.expressions.FirElvisExpression
@@ -492,6 +493,10 @@ abstract class FirVisitorVoid : FirVisitor<Unit, Nothing?>() {
 
     open fun visitWhenBranch(whenBranch: FirWhenBranch) {
         visitElement(whenBranch)
+    }
+
+    open fun visitErrorWhenCondition(errorWhenCondition: FirErrorWhenCondition) {
+        visitElement(errorWhenCondition)
     }
 
     open fun visitContextReceiverArgumentListOwner(contextReceiverArgumentListOwner: FirContextReceiverArgumentListOwner) {
@@ -1100,6 +1105,10 @@ abstract class FirVisitorVoid : FirVisitor<Unit, Nothing?>() {
 
     final override fun visitWhenBranch(whenBranch: FirWhenBranch, data: Nothing?) {
         visitWhenBranch(whenBranch)
+    }
+
+    final override fun visitErrorWhenCondition(errorWhenCondition: FirErrorWhenCondition, data: Nothing?) {
+        visitErrorWhenCondition(errorWhenCondition)
     }
 
     final override fun visitContextReceiverArgumentListOwner(contextReceiverArgumentListOwner: FirContextReceiverArgumentListOwner, data: Nothing?) {

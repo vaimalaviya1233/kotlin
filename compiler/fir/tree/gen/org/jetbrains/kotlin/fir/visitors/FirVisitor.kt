@@ -88,6 +88,7 @@ import org.jetbrains.kotlin.fir.expressions.FirIncrementDecrementExpression
 import org.jetbrains.kotlin.fir.expressions.FirEqualityOperatorCall
 import org.jetbrains.kotlin.fir.expressions.FirWhenExpression
 import org.jetbrains.kotlin.fir.expressions.FirWhenBranch
+import org.jetbrains.kotlin.fir.expressions.FirErrorWhenCondition
 import org.jetbrains.kotlin.fir.expressions.FirContextReceiverArgumentListOwner
 import org.jetbrains.kotlin.fir.expressions.FirCheckNotNullCall
 import org.jetbrains.kotlin.fir.expressions.FirElvisExpression
@@ -329,6 +330,8 @@ abstract class FirVisitor<out R, in D> {
     open fun visitWhenExpression(whenExpression: FirWhenExpression, data: D): R  = visitElement(whenExpression, data)
 
     open fun visitWhenBranch(whenBranch: FirWhenBranch, data: D): R  = visitElement(whenBranch, data)
+
+    open fun visitErrorWhenCondition(errorWhenCondition: FirErrorWhenCondition, data: D): R  = visitElement(errorWhenCondition, data)
 
     open fun visitContextReceiverArgumentListOwner(contextReceiverArgumentListOwner: FirContextReceiverArgumentListOwner, data: D): R  = visitElement(contextReceiverArgumentListOwner, data)
 

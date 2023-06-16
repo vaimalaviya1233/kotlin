@@ -88,6 +88,7 @@ import org.jetbrains.kotlin.fir.expressions.FirIncrementDecrementExpression
 import org.jetbrains.kotlin.fir.expressions.FirEqualityOperatorCall
 import org.jetbrains.kotlin.fir.expressions.FirWhenExpression
 import org.jetbrains.kotlin.fir.expressions.FirWhenBranch
+import org.jetbrains.kotlin.fir.expressions.FirErrorWhenCondition
 import org.jetbrains.kotlin.fir.expressions.FirContextReceiverArgumentListOwner
 import org.jetbrains.kotlin.fir.expressions.FirCheckNotNullCall
 import org.jetbrains.kotlin.fir.expressions.FirElvisExpression
@@ -231,6 +232,8 @@ abstract class FirDefaultVisitorVoid : FirVisitorVoid() {
     override fun visitAssignmentOperatorStatement(assignmentOperatorStatement: FirAssignmentOperatorStatement)  = visitStatement(assignmentOperatorStatement)
 
     override fun visitIncrementDecrementExpression(incrementDecrementExpression: FirIncrementDecrementExpression)  = visitExpression(incrementDecrementExpression)
+
+    override fun visitErrorWhenCondition(errorWhenCondition: FirErrorWhenCondition)  = visitExpression(errorWhenCondition)
 
     override fun visitAugmentedArraySetCall(augmentedArraySetCall: FirAugmentedArraySetCall)  = visitStatement(augmentedArraySetCall)
 

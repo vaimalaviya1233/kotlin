@@ -760,7 +760,7 @@ class ExpressionsConverter(
                             result = branch
                         }
                     } else {
-                        val firCondition = entry.toFirWhenConditionWithoutSubject()
+                        val firCondition = entry.toFirWhenConditionWithoutSubject(entrySource)
                         buildWhenBranch {
                             source = entrySource
                             condition = firCondition

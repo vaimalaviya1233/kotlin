@@ -247,6 +247,10 @@ class ExpressionCheckersDiagnosticComponent(
         checkers.allBasicExpressionCheckers.check(qualifiedErrorAccessExpression, data)
     }
 
+    override fun visitErrorWhenCondition(errorWhenCondition: FirErrorWhenCondition, data: CheckerContext) {
+        checkers.allBasicExpressionCheckers.check(errorWhenCondition, data)
+    }
+
     private fun <E : FirStatement> Collection<FirExpressionChecker<E>>.check(
         expression: E,
         context: CheckerContext

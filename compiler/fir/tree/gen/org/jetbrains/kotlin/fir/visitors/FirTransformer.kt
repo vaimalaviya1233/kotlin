@@ -88,6 +88,7 @@ import org.jetbrains.kotlin.fir.expressions.FirIncrementDecrementExpression
 import org.jetbrains.kotlin.fir.expressions.FirEqualityOperatorCall
 import org.jetbrains.kotlin.fir.expressions.FirWhenExpression
 import org.jetbrains.kotlin.fir.expressions.FirWhenBranch
+import org.jetbrains.kotlin.fir.expressions.FirErrorWhenCondition
 import org.jetbrains.kotlin.fir.expressions.FirContextReceiverArgumentListOwner
 import org.jetbrains.kotlin.fir.expressions.FirCheckNotNullCall
 import org.jetbrains.kotlin.fir.expressions.FirElvisExpression
@@ -493,6 +494,10 @@ abstract class FirTransformer<in D> : FirVisitor<FirElement, D>() {
 
     open fun transformWhenBranch(whenBranch: FirWhenBranch, data: D): FirWhenBranch {
         return transformElement(whenBranch, data)
+    }
+
+    open fun transformErrorWhenCondition(errorWhenCondition: FirErrorWhenCondition, data: D): FirStatement {
+        return transformElement(errorWhenCondition, data)
     }
 
     open fun transformContextReceiverArgumentListOwner(contextReceiverArgumentListOwner: FirContextReceiverArgumentListOwner, data: D): FirContextReceiverArgumentListOwner {
@@ -1101,6 +1106,10 @@ abstract class FirTransformer<in D> : FirVisitor<FirElement, D>() {
 
     final override fun visitWhenBranch(whenBranch: FirWhenBranch, data: D): FirWhenBranch {
         return transformWhenBranch(whenBranch, data)
+    }
+
+    final override fun visitErrorWhenCondition(errorWhenCondition: FirErrorWhenCondition, data: D): FirStatement {
+        return transformErrorWhenCondition(errorWhenCondition, data)
     }
 
     final override fun visitContextReceiverArgumentListOwner(contextReceiverArgumentListOwner: FirContextReceiverArgumentListOwner, data: D): FirContextReceiverArgumentListOwner {

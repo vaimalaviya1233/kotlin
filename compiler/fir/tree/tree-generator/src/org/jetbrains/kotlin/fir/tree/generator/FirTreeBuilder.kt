@@ -111,6 +111,7 @@ object FirTreeBuilder : AbstractFirTreeBuilder() {
     val equalityOperatorCall by element(Expression, expression, call)
     val whenExpression by element(Expression, expression, resolvable)
     val whenBranch by element(Expression)
+    val errorWhenCondition by element(Expression, expression)
     val contextReceiverArgumentListOwner by element(Expression)
     val checkNotNullCall by element(Expression, expression, call, resolvable)
     val elvisExpression by element(Expression, expression, resolvable)
