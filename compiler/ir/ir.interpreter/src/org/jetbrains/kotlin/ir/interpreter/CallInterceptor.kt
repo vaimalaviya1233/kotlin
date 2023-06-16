@@ -171,7 +171,11 @@ internal class DefaultCallInterceptor(override val interpreter: IrInterpreter) :
             if (signature.name == "toString") return signature.args[0].value.specialToStringForJs()
             if (signature.name == "toFloat") signature.name = "toDouble"
             signature.args.filter { it.value is Float }.forEach {
-                it.type = if (it.type == "kotlin.Float") "kotlin.Double" else it.type
+                it.type = when (it.type) {
+                    "kotlin.Float" -> "kotlin.Double"
+                    "kotlin.Float?" -> "kotlin.Double?"
+                    else -> it.type
+                }
                 it.value = it.value.toString().toDouble()
             }
         }
