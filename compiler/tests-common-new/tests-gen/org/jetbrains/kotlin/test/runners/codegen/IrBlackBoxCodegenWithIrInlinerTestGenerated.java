@@ -18604,6 +18604,18 @@ public class IrBlackBoxCodegenWithIrInlinerTestGenerated extends AbstractIrBlack
         }
 
         @Test
+        @TestMetadata("staticImportFromObject.kt")
+        public void testStaticImportFromObject() throws Exception {
+            runTest("compiler/testData/codegen/box/fir/staticImportFromObject.kt");
+        }
+
+        @Test
+        @TestMetadata("staticImportViaInheritance.kt")
+        public void testStaticImportViaInheritance() throws Exception {
+            runTest("compiler/testData/codegen/box/fir/staticImportViaInheritance.kt");
+        }
+
+        @Test
         @TestMetadata("SuspendExtension.kt")
         public void testSuspendExtension() throws Exception {
             runTest("compiler/testData/codegen/box/fir/SuspendExtension.kt");
