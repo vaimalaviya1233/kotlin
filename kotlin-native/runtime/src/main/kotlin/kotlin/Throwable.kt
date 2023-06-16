@@ -73,7 +73,7 @@ public open class Throwable(open val message: String?, open val cause: Throwable
 
         private fun StringBuilder.endln() {
             if (printOut) {
-                println_error(this.toString())
+                printlnToStdErr(this.toString())
                 clear()
             } else {
                 appendLine()

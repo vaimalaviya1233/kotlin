@@ -23,8 +23,8 @@ public actual fun print(message: Any?) {
 internal external fun println(message: String)
 
 /** Prints the given [message] and the line separator to the standard error output stream. */
-@GCUnsafeCall("Kotlin_io_Console_println_error")
-internal external fun println_error(message: String)
+@GCUnsafeCall("Kotlin_io_Console_printlnToStdErr")
+internal external fun printlnToStdErr(message: String)
 
 /** Prints the given [message] and the line separator to the standard output stream. */
 public actual fun println(message: Any?) {

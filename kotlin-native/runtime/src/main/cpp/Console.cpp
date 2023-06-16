@@ -15,7 +15,6 @@
  */
 #include <cstdio>
 
-#include "Common.h"
 #include "KAssert.h"
 #include "Memory.h"
 #include "Natives.h"
@@ -60,7 +59,7 @@ void Kotlin_io_Console_print(KString message) {
     konan::consoleWriteUtf8(utf8.c_str(), utf8.size());
 }
 
-void Kotlin_io_Console_print_error(KString message) {
+void Kotlin_io_Console_printToStdErr(KString message) {
     // TODO: system stderr must be aware about UTF-8.
     auto utf8 = kStringToUtf8(message);
     kotlin::ThreadStateGuard guard(kotlin::ThreadState::kNative);
@@ -79,14 +78,14 @@ void Kotlin_io_Console_println(KString message) {
 #endif
 }
 
-void Kotlin_io_Console_println_error(KString message) {
-    Kotlin_io_Console_print_error(message);
+void Kotlin_io_Console_printlnToStdErr(KString message) {
+    Kotlin_io_Console_printToStdErr(message);
 #ifndef KONAN_ANDROID
-    Kotlin_io_Console_println0_error();
+    Kotlin_io_Console_println0ToStdErr();
 #else
     // On Android single print produces logcat entry, so no need in linefeed.
     if (!kotlin::compiler::printToAndroidLogcat()) {
-        Kotlin_io_Console_println0_error();
+        Kotlin_io_Console_println0ToStdErr();
     }
 #endif
 }
@@ -96,8 +95,7 @@ void Kotlin_io_Console_println0() {
     konan::consoleWriteUtf8("\n", 1);
 }
 
-NO_EXTERNAL_CALLS_CHECK
-void Kotlin_io_Console_println0_error() {
+void Kotlin_io_Console_println0ToStdErr() {
     kotlin::ThreadStateGuard guard(kotlin::ThreadState::kNative);
     konan::consoleErrorUtf8("\n", 1);
 }
