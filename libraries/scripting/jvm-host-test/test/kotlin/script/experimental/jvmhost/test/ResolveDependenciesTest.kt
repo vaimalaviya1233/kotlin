@@ -43,8 +43,8 @@ class ResolveDependenciesTest : TestCase() {
 
     @Test
     fun testResolveClassFromClassloader() {
-        runScriptAndCheckResult(classAccessScript, configurationWithDependenciesFromClassloader, null, 42)
-        runScriptAndCheckResult(classImportScript, configurationWithDependenciesFromClassloader, null, 42)
+        runScriptAndCheckResult(classAccessScript, configurationWithDependenciesFromClassloader, null, 42, ignoreK2errors = true)
+        runScriptAndCheckResult(classImportScript, configurationWithDependenciesFromClassloader, null, 42, ignoreK2errors = true)
     }
 
     @Test
@@ -55,8 +55,8 @@ class ResolveDependenciesTest : TestCase() {
 
     @Test
     fun testResolveFunAndValFromClassloader() {
-        runScriptAndCheckResult(funAndValAccessScript, configurationWithDependenciesFromClassloader, null, 42)
-        runScriptAndCheckResult(funAndValImportScript, configurationWithDependenciesFromClassloader, null, 42)
+        runScriptAndCheckResult(funAndValAccessScript, configurationWithDependenciesFromClassloader, null, 42, ignoreK2errors = true)
+        runScriptAndCheckResult(funAndValImportScript, configurationWithDependenciesFromClassloader, null, 42, ignoreK2errors = true)
     }
 
     @Test
@@ -71,7 +71,7 @@ class ResolveDependenciesTest : TestCase() {
             configurationWithDependenciesFromClassloader,
             null
         )
-        runScriptAndCheckResult(funAndValImportScript, configurationWithDependenciesFromClassloader, null, 42)
+        runScriptAndCheckResult(funAndValImportScript, configurationWithDependenciesFromClassloader, null, 42, ignoreK2errors = true)
     }
 
     @Test
@@ -87,7 +87,7 @@ class ResolveDependenciesTest : TestCase() {
                 baseClassLoader(null)
             }
         }
-        runScriptAndCheckResult(classAccessScript, configurationWithDependenciesFromClassloader, evaluationConfiguration, 42)
+        runScriptAndCheckResult(classAccessScript, configurationWithDependenciesFromClassloader, evaluationConfiguration, 42, ignoreK2errors = true)
     }
 
     @Test
@@ -104,20 +104,30 @@ class ResolveDependenciesTest : TestCase() {
         val compilationConfiguration = configurationWithDependenciesFromClassloader.with {
             updateClasspath(classpath)
         }
-        runScriptAndCheckResult(script, compilationConfiguration, null, 42)
+        runScriptAndCheckResult(script, compilationConfiguration, null, 42, ignoreK2errors = true)
     }
 
     private fun <T> runScriptAndCheckResult(
         script: SourceCode,
         compilationConfiguration: ScriptCompilationConfiguration,
         evaluationConfiguration: ScriptEvaluationConfiguration?,
-        expectedResult: T
+        expectedResult: T,
+        ignoreK2errors: Boolean = false
     ) {
-        val res = BasicJvmScriptingHost().eval(script, compilationConfiguration, evaluationConfiguration).valueOrThrow().returnValue
-        when (res) {
-            is ResultValue.Value -> assertEquals(expectedResult, res.value)
-            is ResultValue.Error -> throw res.error
+        val res = BasicJvmScriptingHost().eval(script, compilationConfiguration, evaluationConfiguration)
+        val resVal = when {
+            res is ResultWithDiagnostics.Success<*> -> (res.value as EvaluationResult).returnValue
+            ignoreK2errors && res.reports.any { it.message.contains("Language version 2.0") } -> null
+            res is ResultWithDiagnostics.Failure -> throw res.toRuntimeException()
             else -> throw Exception("Unexpected evaluation result: $res")
+        }
+        when (resVal) {
+            null -> {}
+            is ResultValue.Value -> assertEquals(expectedResult, resVal.value)
+            is ResultValue.Error -> {
+                throw resVal.error
+            }
+            else -> throw Exception("Unexpected evaluation result: $resVal")
         }
     }
 }

@@ -302,9 +302,13 @@ inline fun <R> ResultWithDiagnostics<R>.valueOr(body: (ResultWithDiagnostics.Fai
  * Extracts the result value from the receiver wrapper or throw RuntimeException with diagnostics
  */
 fun <R> ResultWithDiagnostics<R>.valueOrThrow(): R = valueOr {
-    throw RuntimeException(
-        reports.joinToString("\n") { it.exception?.toString() ?: it.message },
-        reports.find { it.exception != null }?.exception
-    )
+    throw it.toRuntimeException()
 }
 
+/**
+ * Create RuntimeException from ResultWithDiagnostics.Failure
+ */
+fun ResultWithDiagnostics.Failure.toRuntimeException() = RuntimeException(
+    reports.joinToString("\n") { it.exception?.toString() ?: it.message },
+    reports.find { it.exception != null }?.exception
+)
