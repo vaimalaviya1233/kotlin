@@ -137,16 +137,16 @@ abstract class AbstractIrFactoryImpl : IrFactory {
         origin: IrDeclarationOrigin,
         name: Name,
         visibility: DescriptorVisibility,
-        modality: Modality,
-        returnType: IrType,
         isInline: Boolean,
-        isExternal: Boolean,
+        isExpect: Boolean,
+        returnType: IrType,
+        modality: Modality,
         isTailrec: Boolean,
         isSuspend: Boolean,
         isOperator: Boolean,
         isInfix: Boolean,
-        isExpect: Boolean,
-    ): IrSimpleFunction =
+        isExternal: Boolean,
+    ): IrFunctionWithLateBinding =
         IrFunctionWithLateBindingImpl(
             startOffset, endOffset, origin, name, visibility, modality, returnType,
             isInline, isExternal, isTailrec, isSuspend, isOperator, isInfix, isExpect,

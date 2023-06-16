@@ -26,15 +26,15 @@ class FakeOverrideCopier(
             customization.origin ?: IrDeclarationOrigin.FAKE_OVERRIDE,
             symbolRenamer.getFunctionName(declaration.symbol),
             declaration.visibility,
-            customization.modality ?: declaration.modality,
-            declaration.returnType,
             isInline = declaration.isInline,
-            isExternal = makeExternal,
+            isExpect = declaration.isExpect,
+            declaration.returnType,
+            customization.modality ?: declaration.modality,
             isTailrec = declaration.isTailrec,
             isSuspend = declaration.isSuspend,
-            isExpect = declaration.isExpect,
             isOperator = declaration.isOperator,
-            isInfix = declaration.isInfix
+            isInfix = declaration.isInfix,
+            isExternal = makeExternal
         ).apply {
             transformAnnotations(declaration)
             copyTypeParametersFrom(declaration)
