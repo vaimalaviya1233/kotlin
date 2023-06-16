@@ -48,7 +48,8 @@ private fun <T : Any> ProjectExtensionDescriptor<T>.registerExtensionIfRequired(
 }
 
 class ScriptingCompilerConfigurationComponentRegistrar : ComponentRegistrar {
-
+    // Actually this plugin don't support K2, but it automatically registered in some cases,
+    //   so for now this flag is just a stub
     override val supportsK2: Boolean
         get() = true
 
@@ -73,35 +74,30 @@ class ScriptingCompilerConfigurationComponentRegistrar : ComponentRegistrar {
             if (messageCollector != null) {
                 project.registerService(ScriptReportSink::class.java, CliScriptReportSink(messageCollector))
             }
-
-            FirExtensionRegistrarAdapter.registerExtension(project, FirScriptingCompilerExtensionRegistrar(hostConfiguration, configuration))
-            FirExtensionRegistrarAdapter.registerExtension(project, FirScriptingSamWithReceiverExtensionRegistrar())
         }
     }
 }
 
-// Currently registering Fir extensions in ScriptingCompilerConfigurationComponentRegistrar
-// TODO: rewrite to the new registar (see also comments below)
-//// Scripting infrastructure still depends on project-based components, therefore we still need a separate registrar above - ScriptingCompilerConfigurationComponentRegistrar
-//// TODO: refactor components and migrate the plugin to the project-independent operation
-//class ScriptingK2CompilerPluginRegistrar : CompilerPluginRegistrar() {
-//    companion object {
-//        fun registerComponents(extensionStorage: ExtensionStorage, compilerConfiguration: CompilerConfiguration) = with(extensionStorage) {
-//            val hostConfiguration = ScriptingHostConfiguration(defaultJvmScriptingHostConfiguration) {
-//                // TODO: add jdk path and other params if needed
-//            }
-//            FirExtensionRegistrarAdapter.registerExtension(FirScriptingCompilerExtensionRegistrar(hostConfiguration, compilerConfiguration))
-//            FirExtensionRegistrarAdapter.registerExtension(FirScriptingSamWithReceiverExtensionRegistrar())
-//        }
-//    }
-//
-//    override fun ExtensionStorage.registerExtensions(configuration: CompilerConfiguration) {
-//        registerComponents(this, configuration)
-//    }
-//
-//    override val supportsK2: Boolean
-//        get() = true
-//}
+// Scripting infrastructure still depends on project-based components, therefore we still need a separate registrar above - ScriptingCompilerConfigurationComponentRegistrar
+// TODO: refactor components and migrate the plugin to the project-independent operation
+class ScriptingK2CompilerPluginRegistrar : CompilerPluginRegistrar() {
+    companion object {
+        fun registerComponents(extensionStorage: ExtensionStorage, compilerConfiguration: CompilerConfiguration) = with(extensionStorage) {
+            val hostConfiguration = ScriptingHostConfiguration(defaultJvmScriptingHostConfiguration) {
+                // TODO: add jdk path and other params if needed
+            }
+            FirExtensionRegistrarAdapter.registerExtension(FirScriptingCompilerExtensionRegistrar(hostConfiguration, compilerConfiguration))
+            FirExtensionRegistrarAdapter.registerExtension(FirScriptingSamWithReceiverExtensionRegistrar())
+        }
+    }
+
+    override fun ExtensionStorage.registerExtensions(configuration: CompilerConfiguration) {
+        registerComponents(this, configuration)
+    }
+
+    override val supportsK2: Boolean
+        get() = true
+}
 
 private inline fun withClassloadingProblemsReporting(messageCollector: MessageCollector?, body: () -> Unit) {
     try {

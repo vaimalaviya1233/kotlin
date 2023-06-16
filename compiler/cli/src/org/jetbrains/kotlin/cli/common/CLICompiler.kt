@@ -31,6 +31,7 @@ import org.jetbrains.kotlin.cli.jvm.plugins.PluginCliParser
 import org.jetbrains.kotlin.cli.plugins.extractPluginClasspathAndOptions
 import org.jetbrains.kotlin.cli.plugins.processCompilerPluginsOptions
 import org.jetbrains.kotlin.compiler.plugin.CommandLineProcessor
+import org.jetbrains.kotlin.compiler.plugin.CompilerPluginRegistrar
 import org.jetbrains.kotlin.compiler.plugin.ComponentRegistrar
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.ir.util.IrMessageLogger
@@ -49,6 +50,8 @@ abstract class CLICompiler<A : CommonCompilerArguments> : CLITool<A>() {
         const val SCRIPT_PLUGIN_REGISTRAR_NAME =
             "org.jetbrains.kotlin.scripting.compiler.plugin.ScriptingCompilerConfigurationComponentRegistrar"
         const val SCRIPT_PLUGIN_COMMANDLINE_PROCESSOR_NAME = "org.jetbrains.kotlin.scripting.compiler.plugin.ScriptingCommandLineProcessor"
+        const val SCRIPT_PLUGIN_K2_REGISTRAR_NAME =
+            "org.jetbrains.kotlin.scripting.compiler.plugin.ScriptingK2CompilerPluginRegistrar"
     }
 
     abstract val defaultPerformanceManager: CommonCompilerPerformanceManager
@@ -185,7 +188,7 @@ abstract class CLICompiler<A : CommonCompilerArguments> : CLITool<A>() {
                     classpath.any { File(it).name.startsWith(PathUtil.KOTLIN_SCRIPTING_COMPILER_PLUGIN_NAME) }
                 } || pluginClasspaths.any { File(it).name.startsWith(PathUtil.KOTLIN_SCRIPTING_COMPILER_PLUGIN_NAME) }
             val explicitOrLoadedScriptingPlugin = explicitScriptingPlugin ||
-                    tryLoadScriptingPluginFromCurrentClassLoader(configuration, pluginOptions)
+                    tryLoadScriptingPluginFromCurrentClassLoader(configuration, pluginOptions, useK2)
             if (!explicitOrLoadedScriptingPlugin) {
                 val kotlinPaths = paths ?: PathUtil.kotlinPathsForCompiler
                 val libPath = kotlinPaths.libPath.takeIf { it.exists() && it.isDirectory } ?: File(".")
@@ -204,17 +207,8 @@ abstract class CLICompiler<A : CommonCompilerArguments> : CLITool<A>() {
             scriptingPluginOptions.add("plugin:kotlin.scripting:disable=true")
         }
 
-        if (useK2) {
-            if (scriptingPluginClasspath.isNotEmpty()) {
-                pluginConfigurations.add(
-                    scriptingPluginClasspath.joinToString(",") +
-                            (if (scriptingPluginOptions.isEmpty()) "" else ":" + scriptingPluginOptions.joinToString(","))
-                )
-            }
-        } else {
-            pluginClasspaths.addAll(scriptingPluginClasspath)
-            pluginOptions.addAll(scriptingPluginOptions)
-        }
+        pluginClasspaths.addAll(scriptingPluginClasspath)
+        pluginOptions.addAll(scriptingPluginOptions)
 
         if (!checkPluginsArguments(messageCollector, useK2, pluginClasspaths, pluginOptions, pluginConfigurations)) {
             return INTERNAL_ERROR
@@ -225,14 +219,21 @@ abstract class CLICompiler<A : CommonCompilerArguments> : CLITool<A>() {
 
     private fun tryLoadScriptingPluginFromCurrentClassLoader(
         configuration: CompilerConfiguration,
-        pluginOptions: List<String>
+        pluginOptions: List<String>,
+        useK2: Boolean
     ): Boolean =
         try {
             val pluginRegistrarClass = PluginCliParser::class.java.classLoader.loadClass(SCRIPT_PLUGIN_REGISTRAR_NAME)
             val pluginRegistrar = (pluginRegistrarClass.getDeclaredConstructor().newInstance() as? ComponentRegistrar)?.also {
                 configuration.add(ComponentRegistrar.PLUGIN_COMPONENT_REGISTRARS, it)
             }
-            if (pluginRegistrar != null) {
+            val pluginK2Registrar = if (useK2) {
+                val pluginK2RegistrarClass = PluginCliParser::class.java.classLoader.loadClass(SCRIPT_PLUGIN_K2_REGISTRAR_NAME)
+                (pluginK2RegistrarClass.getDeclaredConstructor().newInstance() as? CompilerPluginRegistrar)?.also {
+                    configuration.add(CompilerPluginRegistrar.COMPILER_PLUGIN_REGISTRARS, it)
+                }
+            } else null
+            if (pluginRegistrar != null || pluginK2Registrar != null) {
                 processScriptPluginCliOptions(pluginOptions, configuration)
                 true
             } else false

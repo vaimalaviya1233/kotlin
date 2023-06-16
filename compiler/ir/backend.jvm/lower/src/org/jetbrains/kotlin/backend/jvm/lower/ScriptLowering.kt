@@ -240,18 +240,29 @@ private class ScriptsToClassesLowering(val context: JvmBackendContext, val inner
 
         irScriptClass.thisReceiver = scriptTransformer.scriptClassReceiver
 
-        val defaultContext = ScriptToClassTransformerContext(
+        val defaultContextForDeclarations = ScriptToClassTransformerContext(
             valueParameterForScriptThis = irScriptClass.thisReceiver?.symbol,
             fieldForScriptThis = null,
             valueParameterForFieldReceiver = null,
             isInScriptConstructor = false
         )
 
-        fun <E : IrElement> E.patchForClass(): IrElement =
+        val defaultContextForTopLevelStatements = ScriptToClassTransformerContext(
+            valueParameterForScriptThis = irScriptClass.thisReceiver?.symbol,
+            fieldForScriptThis = null,
+            valueParameterForFieldReceiver = null,
+            isInScriptConstructor = true
+        )
+
+        fun <E : IrElement> E.patchDeclarationForClass(): IrElement =
             transform(
                 scriptTransformer,
-                (this as? IrDeclaration)?.let { defaultContext.copy( topLevelDeclaration = it) } ?: defaultContext
+                (this as? IrDeclaration)?.let { defaultContextForDeclarations.copy(topLevelDeclaration = it) } ?: defaultContextForDeclarations
             ).transform(lambdaPatcher, ScriptFixLambdasTransformerContext())
+
+        fun <E : IrElement> E.patchTopLevelStatementForClass(): IrElement =
+            transform(scriptTransformer, defaultContextForTopLevelStatements)
+                .transform(lambdaPatcher, ScriptFixLambdasTransformerContext())
 
         val explicitParametersWithFields = irScript.explicitCallParameters.map { parameter ->
             val field = context.irFactory.createField(
@@ -264,7 +275,7 @@ private class ScriptsToClassesLowering(val context: JvmBackendContext, val inner
             parameter to field
         }
 
-        (irScript.constructor?.patchForClass() as? IrConstructor
+        (irScript.constructor?.patchDeclarationForClass() as? IrConstructor
             ?: createConstructor(irScriptClass, irScript, implicitReceiversFieldsWithParameters)).also { constructor ->
             val explicitParamsStartIndex = if (irScript.earlierScriptsParameter == null) 0 else 1
             val explicitParameters = constructor.valueParameters.subList(
@@ -303,7 +314,7 @@ private class ScriptsToClassesLowering(val context: JvmBackendContext, val inner
                     +irSetField(
                         irGet(irScriptClass.thisReceiver!!),
                         field,
-                        irGet(correspondingParameter.patchForClass() as IrValueParameter)
+                        irGet(correspondingParameter.patchDeclarationForClass() as IrValueParameter)
                     )
                 }
                 +IrInstanceInitializerCallImpl(
@@ -320,11 +331,11 @@ private class ScriptsToClassesLowering(val context: JvmBackendContext, val inner
         irScript.statements.forEach { scriptStatement ->
             when (scriptStatement) {
                 is IrVariable -> {
-                    val copy = scriptStatement.patchForClass() as IrVariable
+                    val copy = scriptStatement.patchDeclarationForClass() as IrVariable
                     irScriptClass.addSimplePropertyFrom(copy)
                 }
                 is IrDeclaration -> {
-                    val copy = scriptStatement.patchForClass() as IrDeclaration
+                    val copy = scriptStatement.patchDeclarationForClass() as IrDeclaration
                     irScriptClass.declarations.add(copy)
                     // temporary way to avoid name clashes
                     // TODO: remove as soon as main generation become an explicit configuration option
@@ -333,7 +344,7 @@ private class ScriptsToClassesLowering(val context: JvmBackendContext, val inner
                     }
                 }
                 else -> {
-                    val transformedStatement = scriptStatement.patchForClass() as IrStatement
+                    val transformedStatement = scriptStatement.patchTopLevelStatementForClass() as IrStatement
                     irScriptClass.addAnonymousInitializer().also { irInitializer ->
                         irInitializer.body =
                             context.createIrBuilder(irInitializer.symbol).irBlockBody {
