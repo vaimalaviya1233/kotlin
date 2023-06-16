@@ -145,9 +145,12 @@ class LauncherScriptTest : TestCaseWithTmpdir() {
             "kotlinc-js",
             "$testDataDirectory/emptyMain.kt",
             "-nowarn",
-            "-Xforce-deprecated-legacy-compiler-usage",
-            "-output",
-            File(tmpdir, "out.js").path,
+            "-Xir-produce-klib-dir",
+            "-Xir-only",
+            "-ir-output-dir",
+            tmpdir.path,
+            "-ir-output-name",
+            "out",
             environment = mapOf("JAVA_HOME" to KtTestUtil.getJdk8Home().absolutePath)
         )
     }
